@@ -1,20 +1,12 @@
 package lt.satsyuk.api.integrationtest;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
 import lt.satsyuk.MainApplication;
 import lt.satsyuk.api.dto.ApiResponse;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -22,42 +14,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
         classes = MainApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-public class KeycloakNegativeIT extends AbstractIntegrationTest {
-
-    public static final String REALMS_PROTOCOL_OPENID_CONNECT_TOKEN = "/realms/.*/protocol/openid-connect/token";
-    public static final String REALMS_PROTOCOL_OPENID_CONNECT_REVOKE = "/realms/.*/protocol/openid-connect/revoke";
-    private static WireMockServer wireMockServer;
-
-    @BeforeAll
-    static void startWireMock() {
-        wireMockServer = new WireMockServer(options().dynamicPort());
-        wireMockServer.start();
-        WireMock.configureFor("localhost", wireMockServer.port());
-    }
-
-    @AfterAll
-    static void stopWireMock() {
-        if (wireMockServer != null && wireMockServer.isRunning()) {
-            wireMockServer.stop();
-        }
-    }
-
-    @DynamicPropertySource
-    static void configureWireMock(DynamicPropertyRegistry registry) {
-        String wiremockUrl = "http://localhost:" + wireMockServer.port();
-        String realm = "test-realm";
-
-        registry.add("keycloak.auth-server-url", () -> wiremockUrl);
-        registry.add("keycloak.realm", () -> realm);
-        registry.add("keycloak.token-url", () -> wiremockUrl + "/realms/" + realm + "/protocol/openid-connect/token");
-        registry.add("keycloak.logout-url", () -> wiremockUrl + "/realms/" + realm + "/protocol/openid-connect/revoke");
-        registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri", () -> wiremockUrl + "/realms/" + realm);
-    }
-
-    @BeforeEach
-    void setUp() {
-        wireMockServer.resetAll();
-    }
+public class KeycloakNegativeIT extends WireMockIntegrationTest {
 
     // ------------------------------------------------------------
     // KEYCLOAK CONNECTION FAILURES
