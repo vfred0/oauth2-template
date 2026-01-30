@@ -7,15 +7,21 @@ import lt.satsyuk.auth.dto.LogoutRequest;
 import lt.satsyuk.auth.dto.RefreshRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@ActiveProfiles("test")
 public abstract class AbstractIntegrationTest {
 
     @Autowired
@@ -23,6 +29,9 @@ public abstract class AbstractIntegrationTest {
 
     @Autowired
     protected TestRestTemplate restTemplate;
+
+    @Autowired
+    protected CacheManager cacheManager;
 
     protected static final String USERNAME = "user";
     protected static final String USER_PASSWORD = "password";
@@ -51,6 +60,25 @@ public abstract class AbstractIntegrationTest {
 
         userUrl = mainUrl + "/user";
         adminUrl = mainUrl + "/admin";
+
+        if (cacheManager != null) {
+            for (String cacheName : cacheManager.getCacheNames()) {
+                if ("filterConfigCache".equals(cacheName)) {
+                    continue;
+                }
+
+                clearCache(cacheName);
+            }
+        }
+    }
+
+    protected void clearCache(String cacheName) {
+        if (cacheManager != null) {
+            Cache cache = cacheManager.getCache(cacheName);
+            if (cache != null) {
+                cache.clear();
+            }
+        }
     }
 
     protected void assertErrorBody(ResponseEntity<ApiResponse<Object>> response, int expectedCode, String expectedMessage) {

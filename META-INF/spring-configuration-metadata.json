@@ -1,0 +1,83 @@
+{
+  "groups": [
+    {
+      "name": "bucket4j",
+      "type": "com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JBootProperties",
+      "sourceType": "com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JBootProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "bucket4j.cache-to-use",
+      "type": "java.lang.String",
+      "description": "Sets the cache implementation which should be auto configured. This property can be used if multiple caches are configured by the starter and you have to choose one due to a startup error. <ul> \t<li>jcache<\/li> <li>hazelcast<\/li> <li>ignite<\/li> <li>redis<\/li> <\/ul>",
+      "sourceType": "com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JBootProperties"
+    },
+    {
+      "name": "bucket4j.default-http-content-type",
+      "type": "java.lang.String",
+      "sourceType": "com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JBootProperties",
+      "defaultValue": "application\/json"
+    },
+    {
+      "name": "bucket4j.default-http-response-body",
+      "type": "java.lang.String",
+      "description": "The HTTP content which should be used in case of rate limiting",
+      "sourceType": "com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JBootProperties",
+      "defaultValue": "{ \"message\": \"Too many requests!\" }"
+    },
+    {
+      "name": "bucket4j.default-http-status-code",
+      "type": "org.springframework.http.HttpStatus",
+      "sourceType": "com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JBootProperties",
+      "defaultValue": "too-many-requests"
+    },
+    {
+      "name": "bucket4j.default-method-metric-tags",
+      "type": "java.util.List<com.giffing.bucket4j.spring.boot.starter.context.properties.MetricTag>",
+      "description": "A list of default metric tags which should be applied to all methods. Additional configuration is necessary as the evaluation context for resolving tag expression is different from filters.",
+      "sourceType": "com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JBootProperties"
+    },
+    {
+      "name": "bucket4j.default-metric-tags",
+      "type": "java.util.List<com.giffing.bucket4j.spring.boot.starter.context.properties.MetricTag>",
+      "description": "A list of default metric tags which should be applied to all filters",
+      "sourceType": "com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JBootProperties"
+    },
+    {
+      "name": "bucket4j.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enables or disables the Bucket4j Spring Boot Starter.",
+      "sourceType": "com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JBootProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "bucket4j.filter-config-cache-name",
+      "type": "java.lang.String",
+      "description": "If Filter configuration caching is enabled, a cache with this name should exist, or it will cause an exception.",
+      "sourceType": "com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JBootProperties",
+      "defaultValue": "filterConfigCache"
+    },
+    {
+      "name": "bucket4j.filter-config-caching-enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JBootProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "bucket4j.filters",
+      "type": "java.util.List<com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JConfiguration>",
+      "sourceType": "com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JBootProperties"
+    },
+    {
+      "name": "bucket4j.methods",
+      "type": "java.util.List<com.giffing.bucket4j.spring.boot.starter.context.properties.MethodProperties>",
+      "description": "Configuration for the {@link RateLimiting} annotation on method level.",
+      "sourceType": "com.giffing.bucket4j.spring.boot.starter.context.properties.Bucket4JBootProperties"
+    }
+  ],
+  "hints": [],
+  "ignored": {
+    "properties": []
+  }
+}
