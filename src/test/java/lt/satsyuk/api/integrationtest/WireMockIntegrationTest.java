@@ -22,6 +22,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -70,7 +71,7 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
     void setup() {
         wireMockServer.resetAll();
 
-        String issuer = base/*"http://localhost:" + wireMockServer.port()*/ + "/realms/" + REALM;
+        String issuer = base + "/realms/" + REALM;
 
         // Discovery
         stubFor(get(urlEqualTo("/realms/" + REALM + "/.well-known/openid-configuration"))
@@ -84,9 +85,9 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
                                 }
                                 """.formatted(
                                 issuer,
-                                base/*"http://localhost:" + wireMockServer.port()*/,
+                                base,
                                 REALM,
-                                base/*"http://localhost:" + wireMockServer.port()*/,
+                                base,
                                 REALM
                         ))));
 
@@ -134,7 +135,7 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
             String username = extract(body, "username");
             String password = extract(body, "password");
 
-            String issuer = base/*"http://localhost:" + wireMockServer.port()*/ + "/realms/" + REALM;
+            String issuer = base + "/realms/" + REALM;
 
             try {
                 if ("admin".equals(username) && "admin".equals(password)) {
@@ -226,8 +227,17 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
                     .subject(username)
                     .issuer(issuer)
                     .expirationTime(Date.from(Instant.now().plusSeconds(300)))
+                    .issueTime(new Date())
+                    .jwtID(UUID.randomUUID().toString())
                     .claim("preferred_username", username)
-                    .claim("realm_access", Map.of("roles", java.util.List.of(role)))
+                    .claim("azp", "spring-app")
+                    .claim("typ", "Bearer")
+                    .claim("scope", "email profile roles offline_access")
+                    .claim("aud", List.of("account"))
+                    .claim("realm_access", Map.of("roles", List.of(role)))
+                    .claim("resource_access", Map.of(
+                            "spring-app", Map.of("roles", List.of(role))
+                    ))
                     .build();
 
             SignedJWT jwt = new SignedJWT(
