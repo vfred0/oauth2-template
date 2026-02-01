@@ -6,6 +6,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,35 +72,45 @@ public class RateLimitingIT extends WireMockIntegrationTest {
     void admin_rate_limit_blocks_after_20_requests() {
         String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
 
-        // First 20 requests should succeed
-        for (int i = 0; i < 20; i++) {
-            ResponseEntity<ApiResponse<Object>> response = requestGet(adminUrl, token);
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        List<HttpStatusCode> statuses = requestAdminStatuses(token, 21);
+        int successCount = 0;
+        int rateLimitedCount = 0;
+
+        for (HttpStatusCode status : statuses) {
+            if (status.equals(HttpStatus.OK)) {
+                successCount++;
+            } else if (status.equals(HttpStatus.TOO_MANY_REQUESTS)) {
+                rateLimitedCount++;
+            }
         }
 
-        // 21st request should be rate limited
-        ResponseEntity<ApiResponse<Object>> response = requestGet(adminUrl, token);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(successCount).isEqualTo(20);
+        assertThat(rateLimitedCount).isEqualTo(1);
     }
 
     @Test
-    void admin_rate_limit_resets_after_one_second() {
+    void admin_rate_limit_resets_after_one_minute() {
         String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
 
-        // Exhaust the rate limit (20 requests)
-        for (int i = 0; i < 20; i++) {
-            ResponseEntity<ApiResponse<Object>> response = requestGet(adminUrl, token);
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        List<HttpStatusCode> statuses = requestAdminStatuses(token, 21);
+        int successCount = 0;
+        int rateLimitedCount = 0;
+
+        for (HttpStatusCode status : statuses) {
+            if (status.equals(HttpStatus.OK)) {
+                successCount++;
+            } else if (status.equals(HttpStatus.TOO_MANY_REQUESTS)) {
+                rateLimitedCount++;
+            }
         }
 
-        // Verify rate limit is active
-        ResponseEntity<ApiResponse<Object>> blockedResponse = requestGet(adminUrl, token);
-        assertThat(blockedResponse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(successCount).isEqualTo(20);
+        assertThat(rateLimitedCount).isEqualTo(1);
 
-        // Wait for rate limit to reset (1 second + buffer)
+        // Wait for rate limit to reset (1 minute + buffer)
         await()
-                .atMost(3, TimeUnit.SECONDS)
-                .pollInterval(200, TimeUnit.MILLISECONDS)
+                .atMost(65, TimeUnit.SECONDS)
+                .pollInterval(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ResponseEntity<ApiResponse<Object>> response = requestGet(adminUrl, token);
                     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -107,13 +124,11 @@ public class RateLimitingIT extends WireMockIntegrationTest {
         int successCount = 0;
         int rateLimitedCount = 0;
 
-        // Make 25 requests
-        for (int i = 0; i < 25; i++) {
-            ResponseEntity<ApiResponse<Object>> response = requestGet(adminUrl, token);
-
-            if (response.getStatusCode().equals(HttpStatus.OK)) {
+        List<HttpStatusCode> statuses = requestAdminStatuses(token, 25);
+        for (HttpStatusCode status : statuses) {
+            if (status.equals(HttpStatus.OK)) {
                 successCount++;
-            } else if (response.getStatusCode().equals(HttpStatus.TOO_MANY_REQUESTS)) {
+            } else if (status.equals(HttpStatus.TOO_MANY_REQUESTS)) {
                 rateLimitedCount++;
             }
         }
@@ -129,10 +144,10 @@ public class RateLimitingIT extends WireMockIntegrationTest {
 
     @Test
     void different_endpoints_have_independent_rate_limits() {
-        // Login endpoint limit
+         String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
 
         // Exhaust login rate limit
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 4; i++) {
             loginAndGetData(USERNAME, USER_PASSWORD);
         }
 
@@ -141,8 +156,32 @@ public class RateLimitingIT extends WireMockIntegrationTest {
         assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
 
         // Admin endpoint should still work (independent rate limit)
-        String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
         ResponseEntity<ApiResponse<Object>> adminResponse = requestGet(adminUrl, token);
         assertThat(adminResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    private List<HttpStatusCode> requestAdminStatuses(String token, int count) {
+        HttpClient client = HttpClient.newHttpClient();
+        List<CompletableFuture<HttpStatusCode>> futures = new ArrayList<>(count);
+
+        for (int i = 0; i < count; i++) {
+            HttpRequest request = HttpRequest.newBuilder(URI.create(adminUrl))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .GET()
+                    .build();
+            futures.add(client.sendAsync(request, HttpResponse.BodyHandlers.discarding())
+                    .thenApply(response -> HttpStatusCode.valueOf(response.statusCode())));
+        }
+
+        List<HttpStatusCode> statuses = new ArrayList<>(count);
+        for (CompletableFuture<HttpStatusCode> future : futures) {
+            try {
+                statuses.add(future.get(5, TimeUnit.SECONDS));
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to execute admin requests", e);
+            }
+        }
+
+        return statuses;
     }
 }

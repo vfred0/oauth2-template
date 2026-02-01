@@ -16,11 +16,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -28,6 +30,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
 
     protected static final String REALMS_PROTOCOL_OPENID_CONNECT_TOKEN = "/realms/.*/protocol/openid-connect/token";
@@ -36,12 +39,14 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
     protected static WireMockServer wireMockServer;
     protected static final String REALM = "test-realm";
 
+    private static String base;
+
     @BeforeAll
     static void startWireMock() {
         wireMockServer = new WireMockServer(
                 WireMockConfiguration.options()
                         .dynamicPort()
-                        .extensions(new UserTokenTransformerV2()) // наш трансформер
+                        .extensions(new UserTokenTransformerV2())
         );
         wireMockServer.start();
         WireMock.configureFor("localhost", wireMockServer.port());
@@ -54,7 +59,7 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
 
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry r) {
-        String base = "http://localhost:" + wireMockServer.port();
+        base = "http://localhost:" + wireMockServer.port();
         r.add("keycloak.auth-server-url", () -> base);
         r.add("keycloak.realm", () -> REALM);
         r.add("keycloak.token-url", () -> base + "/realms/" + REALM + "/protocol/openid-connect/token");
@@ -66,7 +71,7 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
     void setup() {
         wireMockServer.resetAll();
 
-        String issuer = "http://localhost:" + wireMockServer.port() + "/realms/" + REALM;
+        String issuer = base + "/realms/" + REALM;
 
         // Discovery
         stubFor(get(urlEqualTo("/realms/" + REALM + "/.well-known/openid-configuration"))
@@ -80,9 +85,9 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
                                 }
                                 """.formatted(
                                 issuer,
-                                "http://localhost:" + wireMockServer.port(),
+                                base,
                                 REALM,
-                                "http://localhost:" + wireMockServer.port(),
+                                base,
                                 REALM
                         ))));
 
@@ -130,7 +135,7 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
             String username = extract(body, "username");
             String password = extract(body, "password");
 
-            String issuer = "http://localhost:" + wireMockServer.port() + "/realms/" + REALM;
+            String issuer = base + "/realms/" + REALM;
 
             try {
                 if ("admin".equals(username) && "admin".equals(password)) {
@@ -170,7 +175,7 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
         }
 
         private HttpHeaders json() {
-            return new HttpHeaders(new HttpHeader("Content-Type", "application/json"));
+            return new HttpHeaders(new HttpHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE));
         }
 
         private String extract(String body, String key) {
@@ -222,8 +227,17 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
                     .subject(username)
                     .issuer(issuer)
                     .expirationTime(Date.from(Instant.now().plusSeconds(300)))
+                    .issueTime(new Date())
+                    .jwtID(UUID.randomUUID().toString())
                     .claim("preferred_username", username)
-                    .claim("realm_access", Map.of("roles", java.util.List.of(role)))
+                    .claim("azp", "spring-app")
+                    .claim("typ", "Bearer")
+                    .claim("scope", "email profile roles offline_access")
+                    .claim("aud", List.of("account"))
+                    .claim("realm_access", Map.of("roles", List.of(role)))
+                    .claim("resource_access", Map.of(
+                            "spring-app", Map.of("roles", List.of(role))
+                    ))
                     .build();
 
             SignedJWT jwt = new SignedJWT(
