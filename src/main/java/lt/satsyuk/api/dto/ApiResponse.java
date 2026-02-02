@@ -20,6 +20,8 @@ public class ApiResponse<T> {
         INVALID_GRANT(40102, "Invalid grant"),
         INVALID_TOKEN(40103, "Invalid token"),
         FORBIDDEN(40301, "Forbidden"),
+        NOT_FOUND(40401, "Not found"),
+        CONFLICT(40901, "Conflict"),
         INTERNAL_SERVER_ERROR(50000, "Internal server error");
 
         private final int code;

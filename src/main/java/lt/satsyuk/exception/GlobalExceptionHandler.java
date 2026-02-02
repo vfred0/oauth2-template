@@ -34,6 +34,24 @@ public class GlobalExceptionHandler {
                         ApiResponse.ErrorCode.FORBIDDEN.getDescription()));
     }
 
+    @ExceptionHandler(ClientNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleNotFound(ClientNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(ApiResponse.error(ApiResponse.ErrorCode.NOT_FOUND.getCode(),
+                        ex.getMessage()));
+    }
+
+    @ExceptionHandler(PhoneAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<?>> handlePhoneExists(PhoneAlreadyExistsException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(ApiResponse.error(ApiResponse.ErrorCode.CONFLICT.getCode(),
+                        ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<?>> handleGeneric(Exception ex) {
         return ResponseEntity
