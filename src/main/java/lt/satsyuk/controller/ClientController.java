@@ -26,7 +26,7 @@ public class ClientController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('CLIENT_GET')")
-    public ApiResponse<ClientResponse> get(@PathVariable Long id) {
+    public ApiResponse<ClientResponse> get(@PathVariable("id") Long id) {
         return ApiResponse.ok(service.get(id));
     }
 }

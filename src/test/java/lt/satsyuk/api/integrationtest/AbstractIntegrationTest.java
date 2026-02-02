@@ -16,7 +16,10 @@ import org.springframework.http.*;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,6 +47,8 @@ public abstract class AbstractIntegrationTest {
     @LocalServerPort
     protected int port;
 
+    protected String mainUrl;
+
     protected String loginUrl;
     protected String refreshUrl;
     protected String logoutUrl;
@@ -51,15 +56,19 @@ public abstract class AbstractIntegrationTest {
     protected String userUrl;
     protected String adminUrl;
 
+    protected String clientUrl;
+
     @BeforeEach
     void initializeUrls() {
-        String mainUrl = "http://localhost:" + port + "/api";
+        mainUrl = "http://localhost:" + port + "/api";
         loginUrl = mainUrl + "/auth/login";
         refreshUrl = mainUrl + "/auth/refresh";
         logoutUrl = mainUrl + "/auth/logout";
 
         userUrl = mainUrl + "/user";
         adminUrl = mainUrl + "/admin";
+
+        clientUrl = mainUrl + "/clients";
 
         if (cacheManager != null) {
             for (String cacheName : cacheManager.getCacheNames()) {
@@ -81,43 +90,76 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
-    protected void assertErrorBody(ResponseEntity<ApiResponse<Object>> response, int expectedCode, String expectedMessage) {
+    protected void assertErrorBody(ResponseEntity<ApiResponse<Object>> response, int expectedCode, Object expectedMessage) {
         ApiResponse<Object> body = response.getBody();
         assertThat(body).as("Response body should not be null").isNotNull();
         assertThat(body.getCode()).as("Response code should match expected").isEqualTo(expectedCode);
-        assertThat(body.getMessage()).as("Response message should match expected").isEqualTo(expectedMessage);
+        if (expectedMessage instanceof String) {
+            assertThat(body.getMessage()).as("Response message should match expected").isEqualTo(expectedMessage);
+        } else if (expectedMessage instanceof Set<?>) {
+            String msg = body.getMessage();
+            Set<String> actual = Arrays.stream(msg.split(";"))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toSet());
+
+            assertThat(actual).as("Response message should match expected").isEqualTo(expectedMessage);
+        }
     }
 
     protected void assertErrorStatusAndBody(ResponseEntity<ApiResponse<Object>> response,
                                             HttpStatus expectedStatus,
                                             int expectedCode,
-                                            String expectedMessage) {
-        assertThat(response.getStatusCode()).isEqualTo(expectedStatus);
+                                            Object expectedMessage) {
+        assertThat(response.getStatusCode()).as("Response HTTP status should match expected").isEqualTo(expectedStatus);
         assertErrorBody(response, expectedCode, expectedMessage);
     }
 
-    protected ResponseEntity<ApiResponse<Object>> requestPost(String url, Record body) {
+    protected <T> ResponseEntity<ApiResponse<T>> requestPost(String url, String token, Object body, ParameterizedTypeReference<ApiResponse<T>> responseType) {
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Record> entity = new HttpEntity<>(body, headers);
+        if (token != null && !token.isEmpty())
+            headers.setBearerAuth(token);
+        HttpEntity<Object> entity = new HttpEntity<>(body, headers);
+
         return restTemplate.exchange(
                 url,
                 HttpMethod.POST,
                 entity,
-                new ParameterizedTypeReference<ApiResponse<Object>>() {}
+                responseType
         );
     }
 
-    protected ResponseEntity<ApiResponse<Object>> requestGet(String url, String token) {
+    protected ResponseEntity<ApiResponse<Object>> requestPost(String url, String token, Record body) {
+        return requestPost(url, token, body, apiResponseType());
+    }
+
+    protected ResponseEntity<ApiResponse<Object>> requestPost(String url, Record body) {
+        return requestPost(url, null, body);
+    }
+
+    protected <T> ResponseEntity<ApiResponse<T>> requestGet(String url, String token, ParameterizedTypeReference<ApiResponse<T>> responseType) {
+
         HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
         if (token != null && !token.isEmpty())
             headers.setBearerAuth(token);
+
         return restTemplate.exchange(
                 url,
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
-                new ParameterizedTypeReference<ApiResponse<Object>>() {}
+                responseType
         );
+    }
+
+    protected ResponseEntity<ApiResponse<Object>> requestGet(String url, String token) {
+        return requestGet(url, token, apiResponseType());
+    }
+
+    protected ResponseEntity<ApiResponse<Object>> requestGet(String url) {
+        return requestGet(url, null);
     }
 
     protected ResponseEntity<ApiResponse<Object>> loginRequest(String username,
@@ -142,9 +184,16 @@ public abstract class AbstractIntegrationTest {
 
     protected Map<String, Object> loginAndGetData(String username, String password) {
         ResponseEntity<ApiResponse<Object>> response = loginRequest(username, password);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getStatusCode()).as("Login request should return HTTP OK").isEqualTo(HttpStatus.OK);
 
-        return (Map<String, Object>) response.getBody().getData();
+        ApiResponse<Object> body = response.getBody();
+        assertThat(body).as("Login response body should not be null").isNotNull();
+        Object data = body.getData();
+        assertThat(data).as("Login response data should not be null").isNotNull();
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> map = (Map<String, Object>) data;
+        return map;
     }
 
     protected String loginAndGetAccess(String username, String password) {
@@ -175,5 +224,10 @@ public abstract class AbstractIntegrationTest {
 
     protected ResponseEntity<ApiResponse<Object>> refreshRequest(String refreshToken) {
         return refreshRequest(refreshToken, props.getClientId(), props.getClientSecret());
+    }
+
+    // Helper: create ParameterizedTypeReference<ApiResponse<T>> easily
+    protected static <T> ParameterizedTypeReference<ApiResponse<T>> apiResponseType() {
+        return new ParameterizedTypeReference<>() {};
     }
 }
