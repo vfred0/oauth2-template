@@ -2,26 +2,19 @@ package lt.satsyuk.api.integrationtest;
 
 import lt.satsyuk.api.dto.ApiResponse;
 import lt.satsyuk.api.util.KeycloakIntegrationTest;
-import lt.satsyuk.api.util.TestKeycloakContainer;
-import lt.satsyuk.api.util.TestPostgresContainer;
 import lt.satsyuk.dto.ClientResponse;
 import lt.satsyuk.dto.CreateClientRequest;
 import lt.satsyuk.model.Client;
 import lt.satsyuk.repository.ClientRepository;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
-import java.lang.reflect.Method;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @SpringBootTest(
         classes = lt.satsyuk.MainApplication.class,
@@ -29,57 +22,11 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 )
 class ClientIntegrationIT extends KeycloakIntegrationTest {
 
-    static final Object pg = TestPostgresContainer.getInstance();
-
-    @DynamicPropertySource
-    static void registerDatasource(DynamicPropertyRegistry registry) {
-        if (pg != null) {
-            try {
-                Class<?> cls = pg.getClass();
-                Method getJdbc = cls.getMethod("getJdbcUrl");
-                Method getUser = cls.getMethod("getUsername");
-                Method getPass = cls.getMethod("getPassword");
-
-                registry.add("spring.datasource.url", () -> {
-                    try {
-                        Object o = getJdbc.invoke(pg);
-                        return o == null ? null : o.toString();
-                    } catch (Exception e) { return null; }
-                });
-                registry.add("spring.datasource.username", () -> {
-                    try {
-                        Object o = getUser.invoke(pg);
-                        return o == null ? null : o.toString();
-                    } catch (Exception e) { return null; }
-                });
-                registry.add("spring.datasource.password", () -> {
-                    try {
-                        Object o = getPass.invoke(pg);
-                        return o == null ? null : o.toString();
-                    } catch (Exception e) { return null; }
-                });
-            } catch (Exception e) {
-                // ignore — properties won't be registered
-            }
-        }
-    }
-
     @Autowired
     ClientRepository repo;
 
-    @BeforeAll
-    static void checkDocker() {
-        try {
-            // If Postgres or Keycloak containers are not available, skip tests via assumptions
-            boolean ok = (pg == null) || (TestKeycloakContainer.getInstance() == null) || TestKeycloakContainer.getInstance().isRunning();
-            assumeTrue(ok, "Docker/Testcontainers not available");
-        } catch (Exception e) {
-            assumeTrue(false, "Docker is not available");
-        }
-    }
-
     @BeforeEach
-    void clean() {
+    void setUp() {
         repo.deleteAll();
     }
 

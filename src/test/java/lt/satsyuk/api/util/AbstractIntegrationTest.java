@@ -7,7 +7,12 @@ import lt.satsyuk.auth.dto.KeycloakTokenResponse;
 import lt.satsyuk.auth.dto.LoginRequest;
 import lt.satsyuk.auth.dto.LogoutRequest;
 import lt.satsyuk.auth.dto.RefreshRequest;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -17,16 +22,41 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("test")
+@Testcontainers
 public abstract class AbstractIntegrationTest {
+
+    // Testcontainers-managed shared containers for integration tests
+    @Container
+    protected static PostgreSQLContainer<?> pg = new PostgreSQLContainer<>("postgres:16")
+            .withDatabaseName("appdb")
+            .withUsername("app")
+            .withPassword("app")
+            .withReuse(true);
+
+    @DynamicPropertySource
+    static void registerDatasource(DynamicPropertyRegistry registry) {
+        if (pg != null && pg.isRunning()) {
+            registry.add("spring.datasource.url", pg::getJdbcUrl);
+            registry.add("spring.datasource.username", pg::getUsername);
+            registry.add("spring.datasource.password", pg::getPassword);
+        }
+    }
+
+    @BeforeAll
+    static void checkDocker() {
+        assumeTrue(pg != null && pg.isRunning(), "Postgres container must be running");
+    }
 
     @Autowired
     protected KeycloakProperties props;
