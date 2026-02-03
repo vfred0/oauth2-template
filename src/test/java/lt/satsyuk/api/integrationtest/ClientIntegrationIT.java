@@ -1,6 +1,6 @@
 package lt.satsyuk.api.integrationtest;
 
-import lt.satsyuk.api.dto.ApiResponse;
+import lt.satsyuk.dto.ApiResponse;
 import lt.satsyuk.api.util.KeycloakIntegrationTest;
 import lt.satsyuk.dto.ClientResponse;
 import lt.satsyuk.dto.CreateClientRequest;

@@ -1,11 +1,9 @@
-package lt.satsyuk.auth.dto;
+package lt.satsyuk.dto;
 import jakarta.validation.constraints.NotBlank;
 
-public record LoginRequest(
-        @NotBlank(message = "Username is required")
-        String username,
-        @NotBlank(message = "Password is required")
-        String password,
+public record RefreshRequest(
+        @NotBlank(message = "RefreshToken is required")
+        String refreshToken,
         @NotBlank(message = "ClientId is required")
         String clientId,
         @NotBlank(message = "ClientSecret is required")

@@ -1,9 +1,9 @@
 package lt.satsyuk.api.integrationtest;
 
 import lt.satsyuk.MainApplication;
-import lt.satsyuk.api.dto.ApiResponse;
+import lt.satsyuk.dto.ApiResponse;
 import lt.satsyuk.api.util.AbstractIntegrationTest;
-import lt.satsyuk.auth.dto.KeycloakTokenResponse;
+import lt.satsyuk.dto.KeycloakTokenResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;

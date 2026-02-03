@@ -2,12 +2,12 @@ package lt.satsyuk.api;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lt.satsyuk.api.dto.ApiResponse;
+import lt.satsyuk.dto.ApiResponse;
 import lt.satsyuk.auth.KeycloakAuthService;
-import lt.satsyuk.auth.dto.KeycloakTokenResponse;
-import lt.satsyuk.auth.dto.LoginRequest;
-import lt.satsyuk.auth.dto.LogoutRequest;
-import lt.satsyuk.auth.dto.RefreshRequest;
+import lt.satsyuk.dto.KeycloakTokenResponse;
+import lt.satsyuk.dto.LoginRequest;
+import lt.satsyuk.dto.LogoutRequest;
+import lt.satsyuk.dto.RefreshRequest;
 import lt.satsyuk.exception.KeycloakAuthException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

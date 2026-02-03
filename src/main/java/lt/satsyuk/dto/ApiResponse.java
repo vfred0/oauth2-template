@@ -1,4 +1,4 @@
-package lt.satsyuk.api.dto;
+package lt.satsyuk.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

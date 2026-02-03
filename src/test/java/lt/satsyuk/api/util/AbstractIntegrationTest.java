@@ -1,12 +1,12 @@
 package lt.satsyuk.api.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lt.satsyuk.api.dto.ApiResponse;
+import lt.satsyuk.dto.ApiResponse;
 import lt.satsyuk.auth.KeycloakProperties;
-import lt.satsyuk.auth.dto.KeycloakTokenResponse;
-import lt.satsyuk.auth.dto.LoginRequest;
-import lt.satsyuk.auth.dto.LogoutRequest;
-import lt.satsyuk.auth.dto.RefreshRequest;
+import lt.satsyuk.dto.KeycloakTokenResponse;
+import lt.satsyuk.dto.LoginRequest;
+import lt.satsyuk.dto.LogoutRequest;
+import lt.satsyuk.dto.RefreshRequest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.test.context.DynamicPropertyRegistry;

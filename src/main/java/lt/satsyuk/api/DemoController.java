@@ -1,6 +1,6 @@
 package lt.satsyuk.api;
 
-import lt.satsyuk.api.dto.ApiResponse;
+import lt.satsyuk.dto.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

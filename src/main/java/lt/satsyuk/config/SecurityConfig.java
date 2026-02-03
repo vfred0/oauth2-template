@@ -1,6 +1,6 @@
 package lt.satsyuk.config;
 
-import lt.satsyuk.api.dto.ApiResponse;
+import lt.satsyuk.dto.ApiResponse;
 import lt.satsyuk.security.KeycloakRoleConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

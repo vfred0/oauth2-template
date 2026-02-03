@@ -1,7 +1,7 @@
 package lt.satsyuk.controller;
 
 import jakarta.validation.Valid;
-import lt.satsyuk.api.dto.ApiResponse;
+import lt.satsyuk.dto.ApiResponse;
 import lt.satsyuk.dto.ClientResponse;
 import lt.satsyuk.dto.CreateClientRequest;
 import lt.satsyuk.service.ClientService;

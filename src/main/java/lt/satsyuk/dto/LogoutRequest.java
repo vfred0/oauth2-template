@@ -1,4 +1,4 @@
-package lt.satsyuk.auth.dto;
+package lt.satsyuk.dto;
 import jakarta.validation.constraints.NotBlank;
 
 public record LogoutRequest(

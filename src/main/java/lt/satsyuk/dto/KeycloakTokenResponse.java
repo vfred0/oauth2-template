@@ -1,4 +1,4 @@
-package lt.satsyuk.auth.dto;
+package lt.satsyuk.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
