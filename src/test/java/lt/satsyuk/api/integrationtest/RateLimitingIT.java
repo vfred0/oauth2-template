@@ -24,7 +24,7 @@ import static org.awaitility.Awaitility.await;
         classes = MainApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-public class RateLimitingIT extends WireMockIntegrationTest {
+class RateLimitingIT extends WireMockIntegrationTest {
 
     // ------------------------------------------------------------
     // LOGIN RATE LIMIT TESTS (5 requests per minute)
@@ -163,22 +163,19 @@ public class RateLimitingIT extends WireMockIntegrationTest {
     }
 
     private List<HttpStatusCode> requestAdminStatuses(String token, int count) {
-        HttpClient client = HttpClient.newHttpClient();
         List<CompletableFuture<HttpStatusCode>> futures = new ArrayList<>(count);
 
         for (int i = 0; i < count; i++) {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(adminUrl))
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                    .GET()
-                    .build();
-            futures.add(client.sendAsync(request, HttpResponse.BodyHandlers.discarding())
-                    .thenApply(response -> HttpStatusCode.valueOf(response.statusCode())));
+            futures.add(CompletableFuture.supplyAsync(() -> {
+                ResponseEntity<ApiResponse<Object>> resp = requestGet(adminUrl, token);
+                return resp.getStatusCode();
+            }));
         }
 
         List<HttpStatusCode> statuses = new ArrayList<>(count);
         for (CompletableFuture<HttpStatusCode> future : futures) {
             try {
-                statuses.add(future.get(5, TimeUnit.SECONDS));
+                statuses.add(future.get(10, TimeUnit.SECONDS));
             } catch (Exception e) {
                 throw new IllegalStateException("Failed to execute admin requests", e);
             }

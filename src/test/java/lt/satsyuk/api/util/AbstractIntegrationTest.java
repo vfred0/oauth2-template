@@ -1,5 +1,6 @@
 package lt.satsyuk.api.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lt.satsyuk.api.dto.ApiResponse;
 import lt.satsyuk.auth.KeycloakProperties;
 import lt.satsyuk.auth.dto.KeycloakTokenResponse;
@@ -35,6 +36,10 @@ public abstract class AbstractIntegrationTest {
 
     @Autowired
     protected CacheManager cacheManager;
+
+    // ObjectMapper to convert raw map data into POJOs in tests
+    @Autowired
+    protected ObjectMapper objectMapper;
 
     protected static final String USERNAME = "user";
     protected static final String USER_PASSWORD = "password";
@@ -115,17 +120,23 @@ public abstract class AbstractIntegrationTest {
         assertErrorBody(response, expectedCode, expectedMessage);
     }
 
-    protected <T> Object assertStatusAndBodyAndReturnBody(ResponseEntity<ApiResponse<T>> response) {
+    // Make this method fully generic and return T to avoid unchecked casts in tests
+    protected <T> T assertStatusAndBodyAndReturnBody(ResponseEntity<ApiResponse<T>> response) {
         assertThat(response.getStatusCode()).as("Response HTTP status should be OK").isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as("Response body should not be null").isNotNull();
 
-        ApiResponse<?> body = response.getBody();
+        ApiResponse<T> body = response.getBody();
         assertThat(body.getCode()).as("Response code should be zero").isZero();
 
-        Object data = body.getData();
+        T data = body.getData();
         assertThat(data).as("Response data should not be null").isNotNull();
 
-        return (T) data;
+        return data;
+    }
+
+    // Helper: explicit PTR creator for ApiResponse<T>
+    protected static <T> ParameterizedTypeReference<ApiResponse<T>> apiResponseType() {
+        return new ParameterizedTypeReference<>() {};
     }
 
     protected <T> ResponseEntity<ApiResponse<T>> requestPost(String url, String token, Object body, ParameterizedTypeReference<ApiResponse<T>> responseType) {
@@ -236,5 +247,31 @@ public abstract class AbstractIntegrationTest {
 
     protected ResponseEntity<ApiResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken) {
         return refreshRequest(refreshToken, props.getClientId(), props.getClientSecret());
+    }
+
+    // Helper: do POST and return typed data (convert via ObjectMapper)
+    protected <T> T postAndGetData(String url, String token, Object body, Class<T> clazz) {
+        ResponseEntity<ApiResponse<Object>> resp = requestPost(url, token, body, new ParameterizedTypeReference<>() {});
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        ApiResponse<Object> api = resp.getBody();
+        assertThat(api).isNotNull();
+        Object raw = api.getData();
+        assertThat(raw).as("Response data should not be null").isNotNull();
+        T data = objectMapper.convertValue(raw, clazz);
+        assertThat(data).isNotNull();
+        return data;
+    }
+
+    // Helper: do GET and return typed data (convert via ObjectMapper)
+    protected <T> T getAndGetData(String url, String token, Class<T> clazz) {
+        ResponseEntity<ApiResponse<Object>> resp = requestGet(url, token, new ParameterizedTypeReference<>() {});
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        ApiResponse<Object> api = resp.getBody();
+        assertThat(api).isNotNull();
+        Object raw = api.getData();
+        assertThat(raw).as("Response data should not be null").isNotNull();
+        T data = objectMapper.convertValue(raw, clazz);
+        assertThat(data).isNotNull();
+        return data;
     }
 }

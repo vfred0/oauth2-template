@@ -8,15 +8,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
 
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(
         classes = MainApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-public class KeycloakIntegrationIT extends KeycloakIntegrationTest {
+class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
     // ------------------------------------------------------------
     // LOGIN TESTS
@@ -76,8 +74,12 @@ public class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
         assertThat(refreshResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        assertThat(refreshResponse.getBody().getData().getAccessToken()).as("Access token should not be blank").isNotBlank();
-        assertThat(refreshResponse.getBody().getData().getRefreshToken()).as("Refresh token should not be blank").isNotBlank();
+        ApiResponse<KeycloakTokenResponse> refreshApi = refreshResponse.getBody();
+        assertThat(refreshApi).isNotNull();
+        KeycloakTokenResponse refreshData = refreshApi.getData();
+        assertThat(refreshData).isNotNull();
+        assertThat(refreshData.getAccessToken()).as("Access token should not be blank").isNotBlank();
+        assertThat(refreshData.getRefreshToken()).as("Refresh token should not be blank").isNotBlank();
     }
 
     @Test
@@ -143,7 +145,11 @@ public class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        String data = (String) response.getBody().getData();
+        ApiResponse<Object> api = response.getBody();
+        assertThat(api).isNotNull();
+        Object raw = api.getData();
+        assertThat(raw).isNotNull();
+        String data = (String) raw;
 
         assertThat(data).isEqualTo("admin endpoint");
     }
@@ -156,7 +162,11 @@ public class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        String data = (String) response.getBody().getData();
+        ApiResponse<Object> api = response.getBody();
+        assertThat(api).isNotNull();
+        Object raw = api.getData();
+        assertThat(raw).isNotNull();
+        String data = (String) raw;
 
         assertThat(data).isEqualTo("user endpoint");
     }

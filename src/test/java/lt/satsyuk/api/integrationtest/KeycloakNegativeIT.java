@@ -16,7 +16,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
         classes = MainApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-public class KeycloakNegativeIT extends WireMockIntegrationTest {
+class KeycloakNegativeIT extends WireMockIntegrationTest {
 
     // ------------------------------------------------------------
     // KEYCLOAK CONNECTION FAILURES

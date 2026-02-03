@@ -16,7 +16,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.core.ParameterizedTypeReference;
 
 import java.lang.reflect.Method;
 import java.util.Set;
@@ -28,7 +27,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
         classes = lt.satsyuk.MainApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-public class ClientIntegrationIT extends KeycloakIntegrationTest {
+class ClientIntegrationIT extends KeycloakIntegrationTest {
 
     static final Object pg = TestPostgresContainer.getInstance();
 
@@ -42,13 +41,22 @@ public class ClientIntegrationIT extends KeycloakIntegrationTest {
                 Method getPass = cls.getMethod("getPassword");
 
                 registry.add("spring.datasource.url", () -> {
-                    try { return (String) getJdbc.invoke(pg); } catch (Exception e) { return null; }
+                    try {
+                        Object o = getJdbc.invoke(pg);
+                        return o == null ? null : o.toString();
+                    } catch (Exception e) { return null; }
                 });
                 registry.add("spring.datasource.username", () -> {
-                    try { return (String) getUser.invoke(pg); } catch (Exception e) { return null; }
+                    try {
+                        Object o = getUser.invoke(pg);
+                        return o == null ? null : o.toString();
+                    } catch (Exception e) { return null; }
                 });
                 registry.add("spring.datasource.password", () -> {
-                    try { return (String) getPass.invoke(pg); } catch (Exception e) { return null; }
+                    try {
+                        Object o = getPass.invoke(pg);
+                        return o == null ? null : o.toString();
+                    } catch (Exception e) { return null; }
                 });
             } catch (Exception e) {
                 // ignore — properties won't be registered
@@ -81,19 +89,19 @@ public class ClientIntegrationIT extends KeycloakIntegrationTest {
 
         CreateClientRequest req = new CreateClientRequest("John", "Doe", "+37061234567");
 
-        ResponseEntity<ApiResponse<ClientResponse>> resp = requestPost(
-                clientUrl,
-                token,
-                req,
-                new ParameterizedTypeReference<>() {}
-        );
-
-        ClientResponse data = (ClientResponse) assertStatusAndBodyAndReturnBody(resp);
+        ClientResponse data = postAndGetData(clientUrl, token, req, ClientResponse.class);
 
         assertThat(data.phone()).isEqualTo(req.phone());
+        assertThat(data.id()).isNotNull();
 
         // Verify persisted
         assertThat(repo.existsByPhone(req.phone())).isTrue();
+
+        // Verify GET by id returns same data
+        ClientResponse fetched = getAndGetData(clientUrl + "/" + data.id(), token, ClientResponse.class);
+        assertThat(fetched).isNotNull();
+        assertThat(fetched.id()).isEqualTo(data.id());
+        assertThat(fetched.phone()).isEqualTo(data.phone());
     }
 
     @Test
@@ -118,13 +126,7 @@ public class ClientIntegrationIT extends KeycloakIntegrationTest {
 
         String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
 
-        ResponseEntity<ApiResponse<ClientResponse>> resp = requestGet(
-                clientUrl + "/" + saved.getId(),
-                token,
-                new ParameterizedTypeReference<>() {}
-        );
-
-        ClientResponse data = (ClientResponse) assertStatusAndBodyAndReturnBody(resp);
+        ClientResponse data = getAndGetData(clientUrl + "/" + saved.getId(), token, ClientResponse.class);
 
         assertThat(data.id()).isEqualTo(saved.getId());
         assertThat(data.phone()).isEqualTo(saved.getPhone());
