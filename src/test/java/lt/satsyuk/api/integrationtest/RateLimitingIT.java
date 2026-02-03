@@ -8,10 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -45,7 +41,7 @@ class RateLimitingIT extends WireMockIntegrationTest {
     }
 
     @Test
-    void login_rate_limit_resets_after_one_minute() {
+    void login_rate_limit_resets_after_20_seconds() {
 
         // Exhaust the rate limit (5 requests)
         for (int i = 0; i < 5; i++) {
@@ -56,9 +52,9 @@ class RateLimitingIT extends WireMockIntegrationTest {
         ResponseEntity<ApiResponse<KeycloakTokenResponse>> blockedResponse = loginRequest(USERNAME, USER_PASSWORD);
         assertThat(blockedResponse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
 
-        // Wait for rate limit to reset (1 minute + buffer)
+        // Wait for rate limit to reset (20 seconds + buffer)
         await()
-                .atMost(65, TimeUnit.SECONDS)
+                .atMost(25, TimeUnit.SECONDS)
                 .pollInterval(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
@@ -91,7 +87,7 @@ class RateLimitingIT extends WireMockIntegrationTest {
     }
 
     @Test
-    void admin_rate_limit_resets_after_one_minute() {
+    void admin_rate_limit_resets_after_20_seconds() {
         String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
 
         List<HttpStatusCode> statuses = requestAdminStatuses(token, 21);
@@ -109,9 +105,9 @@ class RateLimitingIT extends WireMockIntegrationTest {
         assertThat(successCount).as("Success count should be 20").isEqualTo(20);
         assertThat(rateLimitedCount).as("Rate limited count should be 1").isEqualTo(1);
 
-        // Wait for rate limit to reset (1 minute + buffer)
+        // Wait for rate limit to reset (20 seconds + buffer)
         await()
-                .atMost(65, TimeUnit.SECONDS)
+                .atMost(25, TimeUnit.SECONDS)
                 .pollInterval(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ResponseEntity<ApiResponse<Object>> response = requestGet(adminUrl, token);
