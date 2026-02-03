@@ -2,6 +2,8 @@ package lt.satsyuk.api.integrationtest;
 
 import lt.satsyuk.MainApplication;
 import lt.satsyuk.api.dto.ApiResponse;
+import lt.satsyuk.api.util.KeycloakIntegrationTest;
+import lt.satsyuk.auth.dto.KeycloakTokenResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
@@ -22,13 +24,14 @@ public class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
     @Test
     void login_success() {
-        Map<String, Object> data = loginAndGetData(USERNAME, USER_PASSWORD);
-        assertThat(data).containsKeys("access_token", "refresh_token");
+        KeycloakTokenResponse data = loginAndGetData(USERNAME, USER_PASSWORD);
+        assertThat(data.getAccessToken()).as("Access token should not be blank").isNotBlank();
+        assertThat(data.getRefreshToken()).as("Refresh token should not be blank").isNotBlank();
     }
 
     @Test
     void login_wrong_password() {
-        ResponseEntity<ApiResponse<Object>> response = loginRequest(
+        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(
                 USERNAME,
                 "wrongpassword"
         );
@@ -40,7 +43,7 @@ public class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
     @Test
     void login_unknown_user() {
-        ResponseEntity<ApiResponse<Object>> response = loginRequest(
+        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(
                 "unknownuser",
                 "whatever"
         );
@@ -56,8 +59,9 @@ public class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
     @Test
     void admin_login_success() {
-        Map<String, Object> data = loginAndGetData(ADMIN, ADMIN_PASSWORD);
-        assertThat(data).containsKeys("access_token", "refresh_token");
+        KeycloakTokenResponse data = loginAndGetData(ADMIN, ADMIN_PASSWORD);
+        assertThat(data.getAccessToken()).as("Access token should not be blank").isNotBlank();
+        assertThat(data.getRefreshToken()).as("Refresh token should not be blank").isNotBlank();
     }
 
     // ------------------------------------------------------------
@@ -68,18 +72,17 @@ public class KeycloakIntegrationIT extends KeycloakIntegrationTest {
     void refresh_success() {
         String refreshToken = loginAndGetRefresh(USERNAME, USER_PASSWORD);
 
-        ResponseEntity<ApiResponse<Object>> refreshResponse = refreshRequest(refreshToken);
+        ResponseEntity<ApiResponse<KeycloakTokenResponse>> refreshResponse = refreshRequest(refreshToken);
 
         assertThat(refreshResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        Map<String, Object> refreshData = (Map<String, Object>) refreshResponse.getBody().getData();
-
-        assertThat(refreshData).containsKeys("access_token", "refresh_token");
+        assertThat(refreshResponse.getBody().getData().getAccessToken()).as("Access token should not be blank").isNotBlank();
+        assertThat(refreshResponse.getBody().getData().getRefreshToken()).as("Refresh token should not be blank").isNotBlank();
     }
 
     @Test
     void refresh_wrong_token() {
-        ResponseEntity<ApiResponse<Object>> refreshResponse = refreshRequest("invalid-token");
+        ResponseEntity<ApiResponse<KeycloakTokenResponse>> refreshResponse = refreshRequest("invalid-token");
 
         assertErrorStatusAndBody(refreshResponse, HttpStatus.BAD_REQUEST,
                 ApiResponse.ErrorCode.INVALID_GRANT.getCode(),

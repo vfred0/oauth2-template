@@ -1,4 +1,4 @@
-package lt.satsyuk.api.integrationtest;
+package lt.satsyuk.api.util;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;

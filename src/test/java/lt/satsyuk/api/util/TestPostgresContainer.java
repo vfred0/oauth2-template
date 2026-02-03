@@ -1,4 +1,4 @@
-package lt.satsyuk.api.integrationtest;
+package lt.satsyuk.api.util;
 
 public class TestPostgresContainer {
 

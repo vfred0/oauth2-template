@@ -1,7 +1,8 @@
-package lt.satsyuk.api.integrationtest;
+package lt.satsyuk.api.util;
 
 import lt.satsyuk.api.dto.ApiResponse;
 import lt.satsyuk.auth.KeycloakProperties;
+import lt.satsyuk.auth.dto.KeycloakTokenResponse;
 import lt.satsyuk.auth.dto.LoginRequest;
 import lt.satsyuk.auth.dto.LogoutRequest;
 import lt.satsyuk.auth.dto.RefreshRequest;
@@ -17,7 +18,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -90,8 +90,8 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
-    protected void assertErrorBody(ResponseEntity<ApiResponse<Object>> response, int expectedCode, Object expectedMessage) {
-        ApiResponse<Object> body = response.getBody();
+    protected <T> void assertErrorBody(ResponseEntity<ApiResponse<T>> response, int expectedCode, Object expectedMessage) {
+        ApiResponse<T> body = response.getBody();
         assertThat(body).as("Response body should not be null").isNotNull();
         assertThat(body.getCode()).as("Response code should match expected").isEqualTo(expectedCode);
         if (expectedMessage instanceof String) {
@@ -107,12 +107,25 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
-    protected void assertErrorStatusAndBody(ResponseEntity<ApiResponse<Object>> response,
+    protected <T> void assertErrorStatusAndBody(ResponseEntity<ApiResponse<T>> response,
                                             HttpStatus expectedStatus,
                                             int expectedCode,
                                             Object expectedMessage) {
         assertThat(response.getStatusCode()).as("Response HTTP status should match expected").isEqualTo(expectedStatus);
         assertErrorBody(response, expectedCode, expectedMessage);
+    }
+
+    protected <T> Object assertStatusAndBodyAndReturnBody(ResponseEntity<ApiResponse<T>> response) {
+        assertThat(response.getStatusCode()).as("Response HTTP status should be OK").isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).as("Response body should not be null").isNotNull();
+
+        ApiResponse<?> body = response.getBody();
+        assertThat(body.getCode()).as("Response code should be zero").isZero();
+
+        Object data = body.getData();
+        assertThat(data).as("Response data should not be null").isNotNull();
+
+        return (T) data;
     }
 
     protected <T> ResponseEntity<ApiResponse<T>> requestPost(String url, String token, Object body, ParameterizedTypeReference<ApiResponse<T>> responseType) {
@@ -132,7 +145,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected ResponseEntity<ApiResponse<Object>> requestPost(String url, String token, Record body) {
-        return requestPost(url, token, body, apiResponseType());
+        return requestPost(url, token, body, new ParameterizedTypeReference<>() {});
     }
 
     protected ResponseEntity<ApiResponse<Object>> requestPost(String url, Record body) {
@@ -155,14 +168,14 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected ResponseEntity<ApiResponse<Object>> requestGet(String url, String token) {
-        return requestGet(url, token, apiResponseType());
+        return requestGet(url, token, new ParameterizedTypeReference<>() {});
     }
 
     protected ResponseEntity<ApiResponse<Object>> requestGet(String url) {
         return requestGet(url, null);
     }
 
-    protected ResponseEntity<ApiResponse<Object>> loginRequest(String username,
+    protected ResponseEntity<ApiResponse<KeycloakTokenResponse>> loginRequest(String username,
                                                                String password,
                                                                String clientId,
                                                                String clientSecret) {
@@ -173,35 +186,34 @@ public abstract class AbstractIntegrationTest {
                 clientId,
                 clientSecret
         );
-        return requestPost(loginUrl, request);
+        return requestPost(loginUrl, null, request,
+                new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<ApiResponse<Object>> loginRequest(String username,
+    protected ResponseEntity<ApiResponse<KeycloakTokenResponse>> loginRequest(String username,
                                                                String password) {
 
         return loginRequest(username, password, props.getClientId(), props.getClientSecret());
     }
 
-    protected Map<String, Object> loginAndGetData(String username, String password) {
-        ResponseEntity<ApiResponse<Object>> response = loginRequest(username, password);
+    protected KeycloakTokenResponse loginAndGetData(String username, String password) {
+        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(username, password);
         assertThat(response.getStatusCode()).as("Login request should return HTTP OK").isEqualTo(HttpStatus.OK);
 
-        ApiResponse<Object> body = response.getBody();
+        ApiResponse<KeycloakTokenResponse> body = response.getBody();
         assertThat(body).as("Login response body should not be null").isNotNull();
-        Object data = body.getData();
+        KeycloakTokenResponse data = body.getData();
         assertThat(data).as("Login response data should not be null").isNotNull();
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> map = (Map<String, Object>) data;
-        return map;
+        return data;
     }
 
     protected String loginAndGetAccess(String username, String password) {
-        return (String) loginAndGetData(username, password).get("access_token");
+        return loginAndGetData(username, password).getAccessToken();
     }
 
     protected String loginAndGetRefresh(String username, String password) {
-        return (String) loginAndGetData(username, password).get("refresh_token");
+        return loginAndGetData(username, password).getRefreshToken();
     }
 
     protected ResponseEntity<ApiResponse<Object>> logoutRequest(String refreshToken,
@@ -215,19 +227,14 @@ public abstract class AbstractIntegrationTest {
         return logoutRequest(refreshToken, props.getClientId(), props.getClientSecret());
     }
 
-    protected ResponseEntity<ApiResponse<Object>> refreshRequest(String refreshToken,
+    protected ResponseEntity<ApiResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken,
                                                                 String clientId,
                                                                 String clientSecret) {
         RefreshRequest request = new RefreshRequest(refreshToken, clientId, clientSecret);
-        return requestPost(refreshUrl, request);
+        return requestPost(refreshUrl, null, request, new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<ApiResponse<Object>> refreshRequest(String refreshToken) {
+    protected ResponseEntity<ApiResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken) {
         return refreshRequest(refreshToken, props.getClientId(), props.getClientSecret());
-    }
-
-    // Helper: create ParameterizedTypeReference<ApiResponse<T>> easily
-    protected static <T> ParameterizedTypeReference<ApiResponse<T>> apiResponseType() {
-        return new ParameterizedTypeReference<>() {};
     }
 }

@@ -1,6 +1,9 @@
 package lt.satsyuk.api.integrationtest;
 
 import lt.satsyuk.api.dto.ApiResponse;
+import lt.satsyuk.api.util.KeycloakIntegrationTest;
+import lt.satsyuk.api.util.TestKeycloakContainer;
+import lt.satsyuk.api.util.TestPostgresContainer;
 import lt.satsyuk.dto.ClientResponse;
 import lt.satsyuk.dto.CreateClientRequest;
 import lt.satsyuk.model.Client;
@@ -82,16 +85,11 @@ public class ClientIntegrationIT extends KeycloakIntegrationTest {
                 clientUrl,
                 token,
                 req,
-                new ParameterizedTypeReference<ApiResponse<ClientResponse>>() {}
+                new ParameterizedTypeReference<>() {}
         );
 
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(resp.getBody()).isNotNull();
-        ApiResponse<ClientResponse> body = resp.getBody();
-        assertThat(body.getCode()).isZero();
+        ClientResponse data = (ClientResponse) assertStatusAndBodyAndReturnBody(resp);
 
-        ClientResponse data = body.getData();
-        assertThat(data).isNotNull();
         assertThat(data.phone()).isEqualTo(req.phone());
 
         // Verify persisted
@@ -123,16 +121,11 @@ public class ClientIntegrationIT extends KeycloakIntegrationTest {
         ResponseEntity<ApiResponse<ClientResponse>> resp = requestGet(
                 clientUrl + "/" + saved.getId(),
                 token,
-                new ParameterizedTypeReference<ApiResponse<ClientResponse>>() {}
+                new ParameterizedTypeReference<>() {}
         );
 
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(resp.getBody()).isNotNull();
-        ApiResponse<ClientResponse> body = resp.getBody();
-        assertThat(body.getCode()).isZero();
+        ClientResponse data = (ClientResponse) assertStatusAndBodyAndReturnBody(resp);
 
-        ClientResponse data = body.getData();
-        assertThat(data).isNotNull();
         assertThat(data.id()).isEqualTo(saved.getId());
         assertThat(data.phone()).isEqualTo(saved.getPhone());
     }

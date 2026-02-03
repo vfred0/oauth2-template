@@ -2,6 +2,8 @@ package lt.satsyuk.api.integrationtest;
 
 import lt.satsyuk.MainApplication;
 import lt.satsyuk.api.dto.ApiResponse;
+import lt.satsyuk.api.util.AbstractIntegrationTest;
+import lt.satsyuk.auth.dto.KeycloakTokenResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
@@ -13,7 +15,7 @@ class AuthValidationIT extends AbstractIntegrationTest {
 
     @Test
     void login_emptyFields_badRequest() {
-        ResponseEntity<ApiResponse<Object>> response = loginRequest(
+        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(
                 "",
                 "",
                 "",
@@ -37,7 +39,7 @@ class AuthValidationIT extends AbstractIntegrationTest {
 
     @Test
     void refresh_emptyBody_badRequest() {
-        ResponseEntity<ApiResponse<Object>> response = refreshRequest(
+        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = refreshRequest(
                 "",
                 "",
                 ""
