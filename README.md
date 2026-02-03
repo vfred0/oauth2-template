@@ -404,6 +404,87 @@ Run specific test:
 mvn test -Dtest=KeycloakNegativeIT
 ```
 
+## 🧪 Test helpers & running tests (updates)
+
+Note: The integration-test helpers in `src/test/java/lt/satsyuk/api/util/AbstractIntegrationTest.java` were recently improved to make writing and maintaining tests easier and more robust.
+
+### New test helpers
+
+- `postAndGetData(String url, String token, Object body, Class<T> clazz)`
+  - Sends POST to `url` with optional Bearer `token`, asserts HTTP 200, and converts response `ApiResponse.data` into `clazz` using the autowired `ObjectMapper`.
+
+- `getAndGetData(String url, String token, Class<T> clazz)`
+  - Same as above for GET requests.
+
+- `assertErrorStatusAndBody(ResponseEntity<ApiResponse<T>> resp, HttpStatus expectedStatus, int expectedCode, Object expectedMessage)`
+  - Helper for negative tests: checks HTTP status, ApiResponse.code and message (supports String or Set<String> for validation errors).
+
+Why use them
+- They avoid unsafe unchecked casts (LinkedHashMap → POJO) by converting raw `data` into the requested DTO using Jackson.
+- They make positive test code concise and resilient to deserialization differences.
+
+Example (creating a client and then fetching it by id):
+
+```java
+CreateClientRequest req = new CreateClientRequest("John", "Doe", "+37061234567");
+ClientResponse created = postAndGetData(clientUrl, token, req, ClientResponse.class);
+assertThat(created.id()).isNotNull();
+ClientResponse fetched = getAndGetData(clientUrl + "/" + created.id(), token, ClientResponse.class);
+assertThat(fetched.id()).isEqualTo(created.id());
+assertThat(fetched.phone()).isEqualTo(created.phone());
+```
+
+Additional notes
+- If you need to work with `ResponseEntity<ApiResponse<T>>` directly, helper `apiResponseType()` creates a convenient ParameterizedTypeReference for `ApiResponse<T>`.
+- For negative tests use `assertErrorStatusAndBody(...)` to validate HTTP status, API error code and error message(s).
+
+### Run tests locally
+
+- Run all unit tests:
+
+```bash
+mvn test
+```
+
+- Run all integration tests (including Testcontainers):
+
+```bash
+mvn clean verify -DskipTests=false -DtrimStackTrace=false
+```
+
+- Run a single integration test class (example: `ClientIntegrationIT`):
+
+```bash
+mvn -DskipTests=false "-Dit.test=ClientIntegrationIT" verify -DtrimStackTrace=false
+```
+
+Notes:
+- Ensure Docker is running for Testcontainers-based ITs (Keycloak/Postgres). Tests use assumptions and will skip if required containers are not available.
+- If you encounter ClassCastException (e.g. LinkedHashMap cannot be cast to MyDto), prefer using the helpers above or ensure the request uses an explicit ParameterizedTypeReference<ApiResponse<T>>.
+
+### Quick branch + PR commands
+
+Create a feature branch and push it:
+
+```bash
+git checkout -b add_some_feature
+git add -A
+git commit -m "tests: refactor helpers and cleanup"
+git push -u origin add_some_feature
+```
+
+Create a pull request with GitHub CLI (optional):
+
+```bash
+gh pr create --base master --head add_some_feature --title "tests: refactor helpers & cleanup" --body-file pr_description.md
+```
+
+If `gh` is not available, open the GitHub UI and create a PR from your pushed branch into `master`.
+
+---
+
+If you'd like, I can also add a short `pr_description.md` file to the branch containing a ready-to-paste PR body (title and description) or create the branch/PR for you (requires git/gh access from this environment).
+
 ---
 
 # 🧱 Project Structure
@@ -516,4 +597,3 @@ http://localhost:8081/actuator/health
 # 📄 License
 
 MIT (or any license you prefer).
-```

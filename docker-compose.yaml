@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   # ------------------------------------------------------------
-  # POSTGRESQL
+  # POSTGRESQL (KEYCLOAK)
   # ------------------------------------------------------------
   postgres:
     image: postgres:16
@@ -14,7 +14,22 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-keycloak-data:/var/lib/postgresql/data
+
+  # ------------------------------------------------------------
+  # POSTGRESQL (APPLICATION DB)
+  # ------------------------------------------------------------
+  postgres-app:
+    image: postgres:16
+    container_name: postgres-app
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: appdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-app-data:/var/lib/postgresql/data
 
   # ------------------------------------------------------------
   # KEYCLOAK
@@ -52,9 +67,16 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
+
+      # 👉 Добавляем параметры подключения к новой БД
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-app:5432/appdb
+      SPRING_DATASOURCE_USERNAME: app
+      SPRING_DATASOURCE_PASSWORD: app
+
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
     depends_on:
       - keycloak
+      - postgres-app
       - otel-collector
 
   # ------------------------------------------------------------
@@ -119,7 +141,8 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning
 
 volumes:
-  postgres-data:
+  postgres-keycloak-data:
+  postgres-app-data:
   tempo-data:
   prometheus-data:
   grafana-data:
