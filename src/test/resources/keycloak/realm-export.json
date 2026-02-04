@@ -22,7 +22,6 @@
 
   "roles": {
     "realm": [
-      { "name": "USER", "description": "Basic user role" },
       { "name": "ADMIN", "description": "Administrator role" },
       { "name": "CLIENT_CREATE", "description": "Create client role" },
       { "name": "CLIENT_GET", "description": "Get client role" },
@@ -39,7 +38,7 @@
       "credentials": [
         { "type": "password", "value": "password", "temporary": false }
       ],
-      "realmRoles": ["USER", "CLIENT_CREATE", "CLIENT_GET", "offline_access"]
+      "realmRoles": ["CLIENT_CREATE", "CLIENT_GET", "offline_access"]
     },
     {
       "username": "admin",
