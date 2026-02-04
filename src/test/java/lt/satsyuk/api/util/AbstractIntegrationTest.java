@@ -88,8 +88,6 @@ public abstract class AbstractIntegrationTest {
     protected String refreshUrl;
     protected String logoutUrl;
 
-    protected String adminUrl;
-
     protected String clientUrl;
 
     @BeforeEach
@@ -98,8 +96,6 @@ public abstract class AbstractIntegrationTest {
         loginUrl = mainUrl + "/auth/login";
         refreshUrl = mainUrl + "/auth/refresh";
         logoutUrl = mainUrl + "/auth/logout";
-
-        adminUrl = mainUrl + "/admin";
 
         clientUrl = mainUrl + "/clients";
 

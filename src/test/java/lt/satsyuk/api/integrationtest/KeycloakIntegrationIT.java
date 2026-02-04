@@ -112,47 +112,4 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
                 ApiResponse.ErrorCode.INVALID_TOKEN.getCode(),
                 INVALID_TOKEN);
     }
-
-    // ------------------------------------------------------------
-    // PROTECTED RESOURCES TESTS
-    // ------------------------------------------------------------
-
-    @Test
-    void access_protected_without_token_unauthorized() {
-        ResponseEntity<ApiResponse<Object>> response = requestGet(adminUrl, "");
-
-        assertErrorStatusAndBody(response, HttpStatus.UNAUTHORIZED,
-                ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
-                ApiResponse.ErrorCode.UNAUTHORIZED.getDescription());
-    }
-
-    @Test
-    void user_cannot_access_admin_forbidden() {
-        String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
-
-        ResponseEntity<ApiResponse<Object>> response = requestGet(adminUrl, token);
-
-        assertErrorStatusAndBody(response, HttpStatus.FORBIDDEN,
-                ApiResponse.ErrorCode.FORBIDDEN.getCode(),
-                ApiResponse.ErrorCode.FORBIDDEN.getDescription());
-    }
-
-    @Test
-    void admin_can_access_admin() {
-        String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
-
-        ResponseEntity<ApiResponse<Object>> response = requestGet(adminUrl, token);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        ApiResponse<Object> api = response.getBody();
-        assertThat(api).isNotNull();
-        Object raw = api.getData();
-        assertThat(raw).isNotNull();
-        String data = (String) raw;
-
-        assertThat(data).isEqualTo("admin endpoint");
-    }
-
-
 }

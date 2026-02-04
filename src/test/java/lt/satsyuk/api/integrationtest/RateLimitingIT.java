@@ -63,46 +63,46 @@ class RateLimitingIT extends WireMockIntegrationTest {
     }
 
     // ------------------------------------------------------------
-    // ADMIN RATE LIMIT TESTS (20 requests per second)
+    // CLIENTS RATE LIMIT TESTS (20 requests per second)
     // ------------------------------------------------------------
 
     @Test
-    void admin_rate_limit_blocks_after_20_requests() {
-        String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
+    void clients_rate_limit_blocks_after_20_requests() {
+        String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
 
-        List<HttpStatusCode> statuses = requestAdminStatuses(token, 21);
-        int successCount = 0;
+        List<HttpStatusCode> statuses = requestStatuses(token, 21);
+        int badRequestCount = 0;
         int rateLimitedCount = 0;
 
         for (HttpStatusCode status : statuses) {
-            if (status.equals(HttpStatus.OK)) {
-                successCount++;
+            if (status.equals(HttpStatus.BAD_REQUEST)) {
+                badRequestCount++;
             } else if (status.equals(HttpStatus.TOO_MANY_REQUESTS)) {
                 rateLimitedCount++;
             }
         }
 
-        assertThat(successCount).as("Success count should be 20").isEqualTo(20);
+        assertThat(badRequestCount).as("Bad Request count should be 20").isEqualTo(20);
         assertThat(rateLimitedCount).as("Rate limited count should be 1").isEqualTo(1);
     }
 
     @Test
-    void admin_rate_limit_resets_after_20_seconds() {
-        String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
+    void clients_rate_limit_resets_after_20_seconds() {
+        String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
 
-        List<HttpStatusCode> statuses = requestAdminStatuses(token, 21);
-        int successCount = 0;
+        List<HttpStatusCode> statuses = requestStatuses(token, 21);
+        int badRequestCount = 0;
         int rateLimitedCount = 0;
 
         for (HttpStatusCode status : statuses) {
-            if (status.equals(HttpStatus.OK)) {
-                successCount++;
+            if (status.equals(HttpStatus.BAD_REQUEST)) {
+                badRequestCount++;
             } else if (status.equals(HttpStatus.TOO_MANY_REQUESTS)) {
                 rateLimitedCount++;
             }
         }
 
-        assertThat(successCount).as("Success count should be 20").isEqualTo(20);
+        assertThat(badRequestCount).as("Bad Request count should be 20").isEqualTo(20);
         assertThat(rateLimitedCount).as("Rate limited count should be 1").isEqualTo(1);
 
         // Wait for rate limit to reset (20 seconds + buffer)
@@ -110,29 +110,28 @@ class RateLimitingIT extends WireMockIntegrationTest {
                 .atMost(25, TimeUnit.SECONDS)
                 .pollInterval(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ResponseEntity<ApiResponse<Object>> response = requestGet(adminUrl, token);
-                    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+                    ResponseEntity<ApiResponse<Object>> response = requestGet(clientUrl + "/invalid-id", token);
+                    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
                 });
     }
 
     @Test
-    void admin_rate_limit_allows_exactly_20_requests_per_second() {
-        String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
+    void clients_rate_limit_allows_exactly_20_requests_per_second() {
+        String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
 
-        int successCount = 0;
+        int badRequestCount = 0;
         int rateLimitedCount = 0;
 
-        List<HttpStatusCode> statuses = requestAdminStatuses(token, 25);
+        List<HttpStatusCode> statuses = requestStatuses(token, 25);
         for (HttpStatusCode status : statuses) {
-            if (status.equals(HttpStatus.OK)) {
-                successCount++;
+            if (status.equals(HttpStatus.BAD_REQUEST)) {
+                badRequestCount++;
             } else if (status.equals(HttpStatus.TOO_MANY_REQUESTS)) {
                 rateLimitedCount++;
             }
         }
 
-        // Should have exactly 20 successful requests and 5 rate limited
-        assertThat(successCount).as("Success count should be 20").isEqualTo(20);
+        assertThat(badRequestCount).as("Bad Request count should be 20").isEqualTo(20);
         assertThat(rateLimitedCount).as("Rate limited count should be 5").isEqualTo(5);
     }
 
@@ -142,7 +141,7 @@ class RateLimitingIT extends WireMockIntegrationTest {
 
     @Test
     void different_endpoints_have_independent_rate_limits() {
-         String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
+         String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
 
         // Exhaust login rate limit
         for (int i = 0; i < 4; i++) {
@@ -153,17 +152,17 @@ class RateLimitingIT extends WireMockIntegrationTest {
         ResponseEntity<ApiResponse<KeycloakTokenResponse>> loginResponse = loginRequest(USERNAME, USER_PASSWORD);
         assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
 
-        // Admin endpoint should still work (independent rate limit)
-        ResponseEntity<ApiResponse<Object>> adminResponse = requestGet(adminUrl, token);
-        assertThat(adminResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        // Clients endpoint should still work (independent rate limit)
+        ResponseEntity<ApiResponse<Object>> response = requestGet(clientUrl + "/invalid-id", token);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
-    private List<HttpStatusCode> requestAdminStatuses(String token, int count) {
+    private List<HttpStatusCode> requestStatuses(String token, int count) {
         List<CompletableFuture<HttpStatusCode>> futures = new ArrayList<>(count);
 
         for (int i = 0; i < count; i++) {
             futures.add(CompletableFuture.supplyAsync(() -> {
-                ResponseEntity<ApiResponse<Object>> resp = requestGet(adminUrl, token);
+                ResponseEntity<ApiResponse<Object>> resp = requestGet(clientUrl + "/invalid-id", token);
                 return resp.getStatusCode();
             }));
         }
@@ -173,7 +172,7 @@ class RateLimitingIT extends WireMockIntegrationTest {
             try {
                 statuses.add(future.get(10, TimeUnit.SECONDS));
             } catch (Exception e) {
-                throw new IllegalStateException("Failed to execute admin requests", e);
+                throw new IllegalStateException("Failed to execute clients requests", e);
             }
         }
 
