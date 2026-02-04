@@ -1,4 +1,4 @@
-package lt.satsyuk.api;
+package lt.satsyuk.controller;
 
 import lt.satsyuk.dto.ApiResponse;
 import lombok.extern.slf4j.Slf4j;

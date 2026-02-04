@@ -1,8 +1,9 @@
-package lt.satsyuk.auth;
+package lt.satsyuk.service;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import lt.satsyuk.config.KeycloakProperties;
 import lt.satsyuk.dto.KeycloakTokenResponse;
 import lt.satsyuk.dto.LoginRequest;
 import lt.satsyuk.dto.LogoutRequest;

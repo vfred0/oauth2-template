@@ -2,7 +2,7 @@ package lt.satsyuk.api.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lt.satsyuk.dto.ApiResponse;
-import lt.satsyuk.auth.KeycloakProperties;
+import lt.satsyuk.config.KeycloakProperties;
 import lt.satsyuk.dto.KeycloakTokenResponse;
 import lt.satsyuk.dto.LoginRequest;
 import lt.satsyuk.dto.LogoutRequest;

@@ -417,7 +417,7 @@ Note: The integration-test helpers in `src/test/java/lt/satsyuk/api/util/Abstrac
   - Same as above for GET requests.
 
 - `assertErrorStatusAndBody(ResponseEntity<ApiResponse<T>> resp, HttpStatus expectedStatus, int expectedCode, Object expectedMessage)`
-  - Helper for negative tests: checks HTTP status, ApiResponse.code and message (supports String or Set<String> for validation errors).
+  - Helper for negative tests: checks HTTP status, ApiResponse.code, and message (supports String or Set<String> for validation errors).
 
 Why use them
 - They avoid unsafe unchecked casts (LinkedHashMap → POJO) by converting raw `data` into the requested DTO using Jackson.
@@ -487,62 +487,21 @@ If you'd like, I can also add a short `pr_description.md` file to the branch con
 
 ---
 
-# 🧱 Project Structure
+## 🧱 Project structure
 
-```
-C:.
-├── docker-compose.yaml
-├── pom.xml
-├── README.md
-├── keycloak/
-│   └── realm-export.json
-├── postman/
-│   └── My Collection.postman_collection.json
-└── src
-    ├── main
-    │   ├── java
-    │   │   └── lt
-    │   │       └── satsyuk
-    │   │           ├── MainApplication.java
-    │   │           ├── api
-    │   │           │   ├── AuthController.java
-    │   │           │   ├── DemoController.java
-    │   │           │   └── dto
-    │   │           │       └── ApiResponse.java
-    │   │           ├── auth
-    │   │           │   ├── JsonAuthEntryPoint.java
-    │   │           │   ├── KeycloakAuthService.java
-    │   │           │   ├── KeycloakProperties.java
-    │   │           │   └── dto
-    │   │           │       ├── KeycloakTokenResponse.java
-    │   │           │       ├── LoginRequest.java
-    │   │           │       ├── LogoutRequest.java
-    │   │           │       └── RefreshRequest.java
-    │   │           ├── config
-    │   │           │   ├── RestTemplateConfig.java
-    │   │           │   └── SecurityConfig.java
-    │   │           ├── exception
-    │   │           │   ├── GlobalExceptionHandler.java
-    │   │           │   └── KeycloakAuthException.java
-    │   │           └── security
-    │   │               └── KeycloakRoleConverter.java
-    │   └── resources
-    │       └── application.properties
-    └── test
-        ├── java
-        │   └── lt
-        │       └── satsyuk
-        │           └── api
-        │               └── integrationtest
-        │                   ├── AbstractIntegrationTest.java
-        │                   ├── AuthValidationIT.java
-        │                   ├── KeycloakIntegrationIT.java
-        │                   ├── KeycloakNegativeIT.java
-        │                   └── TestKeycloakContainer.java
-        └── resources
-            ├── application-test.properties
-            └── keycloak-realm.json
-```
+Below is a short project structure: key files and folders with a brief purpose.
+
+- `pom.xml` — Maven build configuration and dependencies.
+- `Dockerfile`, `docker-compose.yaml` — containerization and local environment (Keycloak, Prometheus, Grafana, Tempo).
+- `src/main/java/lt/satsyuk/` — application source code: controllers, services, configurations, and security logic.
+  - notable packages: `api` (controllers/DTOs), `auth` (Keycloak integration), `config`, `exception`, `security`.
+- `src/main/resources/` — configurations and resources (`application.properties`, `logback-spring.xml`, Flyway migrations).
+- `src/test/` — unit and integration tests (Testcontainers, WireMock).
+- `keycloak/` — exported Keycloak realm for local import (`realm-export.json`).
+- `grafana/` — provisioning dashboards and datasources for Grafana.
+- `postman/` — Postman collections for manual API testing.
+- `prometheus.yml`, `tempo.yaml` — monitoring and tracing configurations.
+- `target/` — build artifacts (ignored in VCS).
 
 ---
 

@@ -1,4 +1,4 @@
-package lt.satsyuk.auth;
+package lt.satsyuk.config;
 
 import lombok.Getter;
 import lombok.Setter;
