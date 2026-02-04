@@ -11,7 +11,7 @@ Supported features:
 - 🔄 Token refresh  
 - 🚪 Logout (refresh token revocation)  
 - 🛡 JWT validation via Spring Security  
-- 🎭 Role-based authorization (`USER`, `ADMIN`)  
+- 🎭 Role-based authorization (ADMIN and client roles like CLIENT_CREATE, CLIENT_GET)  
 - 🚦 Configurable rate limiting (Bucket4j)  
 - 🧪 Full integration test suite
 - 📦 Automatic Keycloak realm import (users, roles, mappers)
@@ -50,7 +50,7 @@ Keycloak automatically imports:
 
 - realm `my-realm`
 - users (`user`, `admin`)
-- roles (`USER`, `ADMIN`)
+- roles (`ADMIN`, `CLIENT_CREATE`, `CLIENT_GET`, `offline_access`)
 - client `spring-app`
 - protocol mappers (roles → access_token)
 
@@ -243,33 +243,31 @@ Client
 
 | Role  | Description |
 |-------|-------------|
-| `USER`  | Standard application user |
 | `ADMIN` | Administrative user |
+| `CLIENT_CREATE` | Role used to allow creating clients |
+| `CLIENT_GET` | Role used to allow reading client data |
 
 Assignments:
 
-- `user` → USER
-- `admin` → ADMIN
-
----
+- `user` → `CLIENT_CREATE`, `CLIENT_GET`
+- `admin` → `ADMIN`
 
 ## Role Mapping
 
 Keycloak → Spring Security:
 
 ```
-USER  → ROLE_USER  
-ADMIN → ROLE_ADMIN
+ADMIN -> ROLE_ADMIN
+CLIENT_CREATE -> has role CLIENT_CREATE (checked via @PreAuthorize("hasRole('CLIENT_CREATE')"))
+CLIENT_GET -> has role CLIENT_GET (checked via @PreAuthorize("hasRole('CLIENT_GET')"))
 ```
-
----
 
 ## Access Matrix
 
-| User     | `/api/user` | `/api/admin` |
-|----------|-------------|--------------|
-| user     | ✅ Allowed   | ❌ Forbidden |
-| admin    | ❌ Forbidden | ✅ Allowed   |
+| User     | `POST /api/clients` (create) | `GET /api/clients/{id}` | `GET /api/admin` |
+|----------|-------------------------------|-------------------------|------------------|
+| user     | ✅ Allowed (CLIENT_CREATE)     | ✅ Allowed (CLIENT_GET) | ❌ Forbidden     |
+| admin    | ❌ Forbidden                  | ❌ Forbidden            | ✅ Allowed       |
 
 ---
 
@@ -333,11 +331,14 @@ No changes required in SecurityConfig.
 
 # 🛡 Protected Endpoints
 
-### `/api/user`
-Requires: `ROLE_USER`
-
 ### `/api/admin`
 Requires: `ROLE_ADMIN`
+
+### `/api/clients` (POST)
+Requires: `CLIENT_CREATE`
+
+### `/api/clients/{id}` (GET)
+Requires: `CLIENT_GET`
 
 ---
 

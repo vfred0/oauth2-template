@@ -154,31 +154,5 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
         assertThat(data).isEqualTo("admin endpoint");
     }
 
-    @Test
-    void user_can_access_user_resource() {
-        String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
 
-        ResponseEntity<ApiResponse<Object>> response = requestGet(userUrl, token);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        ApiResponse<Object> api = response.getBody();
-        assertThat(api).isNotNull();
-        Object raw = api.getData();
-        assertThat(raw).isNotNull();
-        String data = (String) raw;
-
-        assertThat(data).isEqualTo("user endpoint");
-    }
-
-    @Test
-    void admin_cannot_access_user_resource() {
-        String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
-
-        ResponseEntity<ApiResponse<Object>> response = requestGet(userUrl, token);
-
-        assertErrorStatusAndBody(response, HttpStatus.FORBIDDEN,
-                ApiResponse.ErrorCode.FORBIDDEN.getCode(),
-                ApiResponse.ErrorCode.FORBIDDEN.getDescription());
-    }
 }

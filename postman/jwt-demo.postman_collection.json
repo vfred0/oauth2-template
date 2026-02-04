@@ -158,28 +158,6 @@
 			"name": "Protected",
 			"item": [
 				{
-					"name": "User Endpoint",
-					"request": {
-						"method": "GET",
-						"header": [
-							{ "key": "Authorization", "value": "Bearer {{access_token}}" }
-						],
-						"url": "{{base_url}}/api/user"
-					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"User endpoint accessible\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});"
-								]
-							}
-						}
-					]
-				},
-				{
 					"name": "Admin Endpoint",
 					"request": {
 						"method": "GET",
@@ -194,12 +172,12 @@
 							"script": {
 								"exec": [
 									"pm.test(\"Admin endpoint returns correct status\", function () {",
-									"    if (pm.response.code === 200) {",
-									"        console.log(\"Admin access granted\");",
-									"    } else {",
-									"        console.log(\"Admin access denied (expected for USER role)\");",
-									"    }",
-									"});"
+										"    if (pm.response.code === 200) {",
+										"        console.log(\"Admin access granted\");",
+										"    } else {",
+										"        console.log(\"Admin access denied (expected for USER role)\");",
+										"    }",
+										"});"
 								]
 							}
 						}
