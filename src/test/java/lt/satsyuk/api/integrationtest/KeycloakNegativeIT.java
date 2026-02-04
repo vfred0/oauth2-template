@@ -199,7 +199,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"invalid_token\"}")));
 
-        ResponseEntity<ApiResponse<Object>> response = logoutRequest(
+        ResponseEntity<ApiResponse<Void>> response = logoutRequest(
                 "invalid-token",
                 "test-client",
                 "test-secret"
@@ -218,7 +218,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"service_unavailable\"}")));
 
-        ResponseEntity<ApiResponse<Object>> response = logoutRequest(
+        ResponseEntity<ApiResponse<Void>> response = logoutRequest(
                 "some-token",
                 "test-client",
                 "test-secret"

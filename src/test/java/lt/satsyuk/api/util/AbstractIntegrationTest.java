@@ -257,14 +257,14 @@ public abstract class AbstractIntegrationTest {
         return loginAndGetData(username, password).getRefreshToken();
     }
 
-    protected ResponseEntity<ApiResponse<Object>> logoutRequest(String refreshToken,
+    protected ResponseEntity<ApiResponse<Void>> logoutRequest(String refreshToken,
                                                                 String clientId,
                                                                 String clientSecret) {
         LogoutRequest logoutRequest = new LogoutRequest(refreshToken, clientId, clientSecret);
-        return requestPost(logoutUrl, logoutRequest);
+        return requestPost(logoutUrl, null, logoutRequest, new ParameterizedTypeReference<ApiResponse<Void>>() {});
     }
 
-    protected ResponseEntity<ApiResponse<Object>> logoutRequest(String refreshToken) {
+    protected ResponseEntity<ApiResponse<Void>> logoutRequest(String refreshToken) {
         return logoutRequest(refreshToken, props.getClientId(), props.getClientSecret());
     }
 

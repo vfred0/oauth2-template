@@ -16,7 +16,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<?>> handleValidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
         String errorMessage = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .reduce((a, b) -> a + "; " + b)
@@ -25,53 +25,53 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.error(ApiResponse.ErrorCode.BAD_REQUEST.getCode(), errorMessage));
+                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.BAD_REQUEST.getCode(), errorMessage));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiResponse<?>> handleAccessDenied(AccessDeniedException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.error(ApiResponse.ErrorCode.FORBIDDEN.getCode(),
+                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.FORBIDDEN.getCode(),
                         ApiResponse.ErrorCode.FORBIDDEN.getDescription()));
     }
 
     @ExceptionHandler(ClientNotFoundException.class)
-    public ResponseEntity<ApiResponse<?>> handleNotFound(ClientNotFoundException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleNotFound(ClientNotFoundException ex) {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.error(ApiResponse.ErrorCode.NOT_FOUND.getCode(),
+                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.NOT_FOUND.getCode(),
                         ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ApiResponse<?>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         String message = String.format("%s is invalid: %s", ex.getName(), ex.getValue());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.error(ApiResponse.ErrorCode.BAD_REQUEST.getCode(), message));
+                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.BAD_REQUEST.getCode(), message));
     }
 
     @ExceptionHandler(PhoneAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse<?>> handlePhoneExists(PhoneAlreadyExistsException ex) {
+    public ResponseEntity<ApiResponse<Void>> handlePhoneExists(PhoneAlreadyExistsException ex) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.error(ApiResponse.ErrorCode.CONFLICT.getCode(),
+                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.CONFLICT.getCode(),
                         ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<?>> handleGeneric(Exception ex) {
+    public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
         log.error("Unhandled exception caught by GlobalExceptionHandler", ex);
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.error(ApiResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
+                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
                         ApiResponse.ErrorCode.INTERNAL_SERVER_ERROR.getDescription()));
     }
 }

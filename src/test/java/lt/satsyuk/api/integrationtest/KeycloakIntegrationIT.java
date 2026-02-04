@@ -99,14 +99,14 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
     void logout_success() {
         String refreshToken = loginAndGetRefresh(USERNAME, USER_PASSWORD);
 
-        ResponseEntity<ApiResponse<Object>> logoutResponse = logoutRequest(refreshToken);
+        ResponseEntity<ApiResponse<Void>> logoutResponse = logoutRequest(refreshToken);
 
         assertThat(logoutResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
     void logout_wrong_token() {
-        ResponseEntity<ApiResponse<Object>> response = logoutRequest("invalid-token");
+        ResponseEntity<ApiResponse<Void>> response = logoutRequest("invalid-token");
 
         assertErrorStatusAndBody(response, HttpStatus.OK,
                 ApiResponse.ErrorCode.INVALID_TOKEN.getCode(),

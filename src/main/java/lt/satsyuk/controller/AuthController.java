@@ -48,15 +48,15 @@ public class AuthController {
 
     // Keycloak 26 revoke: 200 OK даже при ошибке
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Object>> logout(@Valid @RequestBody LogoutRequest req) {
+    public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody LogoutRequest req) {
         try {
             authService.logout(req);
-            return ResponseEntity.ok(ApiResponse.ok(null));
+            return ResponseEntity.ok(ApiResponse.<Void>ok(null));
         } catch (KeycloakAuthException ex) {
             return ResponseEntity
                     .status(ex.getStatus())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(ApiResponse.error(ApiResponse.ErrorCode.INVALID_TOKEN.getCode(), ex.getKeycloakMessage()));
+                    .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.INVALID_TOKEN.getCode(), ex.getKeycloakMessage()));
         }
     }
 }
