@@ -264,10 +264,10 @@ CLIENT_GET -> has role CLIENT_GET (checked via @PreAuthorize("hasRole('CLIENT_GE
 
 ## Access Matrix
 
-| User     | `POST /api/clients` (create) | `GET /api/clients/{id}` | `GET /api/admin` |
-|----------|-------------------------------|-------------------------|------------------|
-| user     | ✅ Allowed (CLIENT_CREATE)     | ✅ Allowed (CLIENT_GET) | ❌ Forbidden     |
-| admin    | ❌ Forbidden                  | ❌ Forbidden            | ✅ Allowed       |
+| User     | `POST /api/clients` (create) | `GET /api/clients/{id}` |
+|----------|-------------------------------|-------------------------|
+| user     | ✅ Allowed (CLIENT_CREATE)     | ✅ Allowed (CLIENT_GET) |
+| admin    | ❌ Forbidden                  | ❌ Forbidden            |
 
 ---
 
@@ -330,9 +330,6 @@ No changes required in SecurityConfig.
 ---
 
 # 🛡 Protected Endpoints
-
-### `/api/admin`
-Requires: `ROLE_ADMIN`
 
 ### `/api/clients` (POST)
 Requires: `CLIENT_CREATE`
@@ -508,7 +505,7 @@ Below is a short project structure: key files and folders with a brief purpose.
 
 # 🛠 Troubleshooting
 
-### ❌ 403 on `/api/user` or `/api/admin`
+### ❌ 403 on `/api/user`
 Check token contains:
 
 ```json
