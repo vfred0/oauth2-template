@@ -133,7 +133,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"token\": \"{{refresh_token}}\",\n  \"clientId\": \"{{client_id}}\",\n  \"clientSecret\": \"{{client_secret}}\"\n}"
+							"raw": "{\n  \"refreshToken\": \"{{refresh_token}}\",\n  \"clientId\": \"{{client_id}}\",\n  \"clientSecret\": \"{{client_secret}}\"\n}"
 						},
 						"url": "{{base_url}}/api/auth/logout"
 					},
@@ -155,57 +155,64 @@
 			]
 		},
 		{
-			"name": "Protected",
+			"name": "Clients",
 			"item": [
 				{
-					"name": "Admin Endpoint",
+					"name": "Create Client",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{access_token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"{{firstName}}\",\n  \"lastName\": \"{{lastName}}\",\n  \"phone\": \"{{phone}}\"\n}"
+						},
+						"url": "{{base_url}}/api/clients"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Create client succeeded\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"const json = pm.response.json();",
+									"pm.test(\"Response contains client id and phone\", function () {",
+									"    pm.expect(json.data.id).to.be.a('number');",
+									"    pm.expect(json.data.phone).to.eql(pm.environment.get(\"phone\"));",
+									"});",
+									"pm.environment.set(\"id_client\", json.data.id);",
+									"console.log(\"Client created, id set in environment\");"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Client",
 					"request": {
 						"method": "GET",
 						"header": [
 							{ "key": "Authorization", "value": "Bearer {{access_token}}" }
 						],
-						"url": "{{base_url}}/api/admin"
+						"url": "{{base_url}}/api/clients/{{id_client}}"
 					},
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Admin endpoint returns correct status\", function () {",
-										"    if (pm.response.code === 200) {",
-										"        console.log(\"Admin access granted\");",
-										"    } else {",
-										"        console.log(\"Admin access denied (expected for USER role)\");",
-										"    }",
-										"});"
-								]
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "Monitoring",
-			"item": [
-				{
-					"name": "Prometheus Metrics",
-					"request": {
-						"method": "GET",
-						"url": "{{base_url}}/actuator/prometheus"
-					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Prometheus endpoint accessible\", function () {",
+									"pm.test(\"Get client succeeded\", function () {",
 									"    pm.response.to.have.status(200);",
 									"});",
-									"",
-									"pm.test(\"Metrics contain http_server_requests\", function () {",
-									"    pm.expect(pm.response.text()).to.include(\"http_server_requests\");",
-									"});"
+									"const json = pm.response.json();",
+									"pm.test(\"Response contains expected id\", function () {",
+									"    pm.expect(json.data.id).to.eql(Number(pm.environment.get(\"id_client\")));",
+									"});",
+									"console.log(\"Fetched client\");"
 								]
 							}
 						}
