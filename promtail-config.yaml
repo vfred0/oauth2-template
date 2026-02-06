@@ -1,0 +1,53 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: system
+    static_configs:
+      - targets: ['localhost']
+        labels:
+          job: varlogs
+          __path__: /var/log/*log
+
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_label_com_docker_swarm_service_name']
+        target_label: service
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: compose_service
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: compose_project
+      - source_labels: ['__meta_docker_container_name']
+        target_label: container
+      - source_labels: ['__meta_docker_container_label_io_kubernetes_pod_namespace']
+        target_label: namespace
+      - source_labels: ['__meta_docker_container_label_io_kubernetes_pod_name']
+        target_label: pod
+      - source_labels: ['__meta_docker_container_label_io_kubernetes_pod_container_name']
+        target_label: container_name
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: job
+      - source_labels: ['__meta_docker_container_id']
+        target_label: container_id
+      - source_labels: ['__path__']
+        target_label: __path__
+
+  # WSL-aware job: if you run Docker Desktop with WSL2 or run Promtail inside WSL,
+  # контейнерные логи обычно доступны по пути /var/lib/docker/containers/*/*.log
+  # Этот job полезен, если docker_sd_configs не доступен (например, Promtail вне docker.sock).
+  - job_name: docker-wsl
+    static_configs:
+      - targets: ['localhost']
+        labels:
+          job: docker-wsl
+          __path__: /var/lib/docker/containers/*/*.log

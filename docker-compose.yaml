@@ -106,6 +106,36 @@ services:
       - tempo-data:/tmp/tempo
 
   # ------------------------------------------------------------
+  # LOKI (LOG STORAGE)
+  # ------------------------------------------------------------
+  loki:
+    image: grafana/loki:2.8.2
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    user: "0"
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+      - loki-wal:/wal
+
+  # ------------------------------------------------------------
+  # PROMTAIL (LOG SHIPPER)
+  # ------------------------------------------------------------
+  promtail:
+    image: grafana/promtail:2.8.2
+    container_name: promtail
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./promtail-config.yaml:/etc/promtail/promtail-config.yaml
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    depends_on:
+      - loki
+
+  # ------------------------------------------------------------
   # PROMETHEUS (METRICS)
   # ------------------------------------------------------------
   prometheus:
@@ -136,6 +166,7 @@ services:
     depends_on:
       - tempo
       - prometheus
+      - loki
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
@@ -146,3 +177,5 @@ volumes:
   tempo-data:
   prometheus-data:
   grafana-data:
+  loki-data:
+  loki-wal:
