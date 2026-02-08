@@ -30,11 +30,11 @@
       },
       "targets": [
         {
-          "expr": "{job=\"varlogs\"}",
+          "expr": "{job=\"jwt-demo\"}",
           "refId": "A"
         }
       ],
-      "title": "Recent logs (varlogs)",
+      "title": "Recent logs (jwt-demo)",
       "type": "logs"
     }
   ],
