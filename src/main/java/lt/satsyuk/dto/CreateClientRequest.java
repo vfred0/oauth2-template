@@ -15,6 +15,6 @@ public record CreateClientRequest(
         String lastName,
 
         @NotBlank(message = "phone is required")
-        @Pattern(regexp = "\\+?[0-9]{7,15}", message = "phone must be valid")
+        @Pattern(regexp = "\\+?\\d{7,15}", message = "phone must be valid")
         String phone
 ) {}
