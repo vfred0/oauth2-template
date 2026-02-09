@@ -26,6 +26,27 @@ import java.util.List;
 @Slf4j
 public class KeycloakAuthService {
 
+    public static final String RESULT = "result";
+    public static final String SUCCESS = "success";
+    public static final String FAILURE = "failure";
+    public static final String CLIENT_ID = "client_id";
+    public static final String CLIENT_SECRET = "client_secret";
+    public static final String INVALID_TOKEN = "invalid_token";
+    public static final String INVALID_GRANT = "invalid_grant";
+    public static final String REFRESH_TOKEN = "refresh_token";
+    private static final String GRANT_TYPE = "grant_type";
+    private static final String SCOPE = "scope";
+    private static final String OFFLINE_ACCESS = "offline_access";
+    private static final String USERNAME = "username";
+    private static final String PASSWORD = "password";
+    private static final String TOKEN = "token";
+    private static final String TOKEN_TYPE_HINT = "token_type_hint";
+    private static final String INVALID_CLIENT = "invalid_client";
+    private static final String NOT_ALLOWED = "not_allowed";
+    private static final String EMPTY_RESPONSE = "Empty response";
+    private static final String LOGIN_FAILED = "Login failed";
+    private static final String REFRESH_FAILED = "Refresh failed";
+    private static final String LOGOUT_FAILED = "Logout failed";
     private final RestTemplate rest;
     private final KeycloakProperties props;
 
@@ -41,32 +62,32 @@ public class KeycloakAuthService {
         this.props = props;
 
         this.loginSuccessCounter = Counter.builder("auth.login")
-                .tag("result", "success")
+                .tag(RESULT, SUCCESS)
                 .description("Successful login attempts")
                 .register(registry);
 
         this.loginFailureCounter = Counter.builder("auth.login")
-                .tag("result", "failure")
+                .tag(RESULT, FAILURE)
                 .description("Failed login attempts")
                 .register(registry);
 
         this.refreshSuccessCounter = Counter.builder("auth.refresh")
-                .tag("result", "success")
+                .tag(RESULT, SUCCESS)
                 .description("Successful token refresh attempts")
                 .register(registry);
 
         this.refreshFailureCounter = Counter.builder("auth.refresh")
-                .tag("result", "failure")
+                .tag(RESULT, FAILURE)
                 .description("Failed token refresh attempts")
                 .register(registry);
 
         this.logoutSuccessCounter = Counter.builder("auth.logout")
-                .tag("result", "success")
+                .tag(RESULT, SUCCESS)
                 .description("Successful logout attempts")
                 .register(registry);
 
         this.logoutFailureCounter = Counter.builder("auth.logout")
-                .tag("result", "failure")
+                .tag(RESULT, FAILURE)
                 .description("Failed logout attempts")
                 .register(registry);
     }
@@ -77,21 +98,17 @@ public class KeycloakAuthService {
     public KeycloakTokenResponse login(LoginRequest req) {
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("client_id", req.clientId());
-        form.add("client_secret", req.clientSecret());
-        form.add("grant_type", "password");
+        form.add(CLIENT_ID, req.clientId());
+        form.add(CLIENT_SECRET, req.clientSecret());
+        form.add(GRANT_TYPE, PASSWORD);
 
         // Required for offline refresh tokens
-        form.add("scope", "offline_access");
+        form.add(SCOPE, OFFLINE_ACCESS);
 
-        form.add("username", req.username());
-        form.add("password", req.password());
+        form.add(USERNAME, req.username());
+        form.add(PASSWORD, req.password());
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-
-        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(form, headers);
+        HttpEntity<MultiValueMap<String, String>> entity = createFormEntity(form);
 
         log.info("➡️  LOGIN request to Keycloak: user={}, clientId={}, realm={}",
                 req.username(), req.clientId(), props.getRealm());
@@ -104,9 +121,9 @@ public class KeycloakAuthService {
 
             if (response.getBody() == null) {
                 throw new KeycloakAuthException(
-                        "Empty response",
+                        EMPTY_RESPONSE,
                         HttpStatus.BAD_REQUEST,
-                        "invalid_grant"
+                        INVALID_GRANT
                 );
             }
 
@@ -119,7 +136,7 @@ public class KeycloakAuthService {
 
             loginFailureCounter.increment();
             throw new KeycloakAuthException(
-                    "Login failed",
+                    LOGIN_FAILED,
                     HttpStatus.valueOf(ex.getStatusCode().value()),
                     extractErrorMessage(ex.getResponseBodyAsString())
             );
@@ -132,19 +149,15 @@ public class KeycloakAuthService {
     public KeycloakTokenResponse refresh(RefreshRequest req) {
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("client_id", req.clientId());
-        form.add("client_secret", req.clientSecret());
-        form.add("grant_type", "refresh_token");
-        form.add("refresh_token", req.refreshToken());
+        form.add(CLIENT_ID, req.clientId());
+        form.add(CLIENT_SECRET, req.clientSecret());
+        form.add(GRANT_TYPE, REFRESH_TOKEN);
+        form.add(REFRESH_TOKEN, req.refreshToken());
 
         // Required for offline refresh tokens in Keycloak 26
-        form.add("scope", "offline_access");
+        form.add(SCOPE, OFFLINE_ACCESS);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-
-        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(form, headers);
+        HttpEntity<MultiValueMap<String, String>> entity = createFormEntity(form);
 
         log.info("➡️  REFRESH request to Keycloak: clientId={}, realm={}",
                 req.clientId(), props.getRealm());
@@ -157,9 +170,9 @@ public class KeycloakAuthService {
 
             if (response.getBody() == null) {
                 throw new KeycloakAuthException(
-                        "Empty response",
+                        EMPTY_RESPONSE,
                         HttpStatus.BAD_REQUEST,
-                        "invalid_grant"
+                        INVALID_GRANT
                 );
             }
 
@@ -172,7 +185,7 @@ public class KeycloakAuthService {
 
             refreshFailureCounter.increment();
             throw new KeycloakAuthException(
-                    "Refresh failed",
+                    REFRESH_FAILED,
                     HttpStatus.valueOf(ex.getStatusCode().value()),
                     extractErrorMessage(ex.getResponseBodyAsString())
             );
@@ -185,16 +198,12 @@ public class KeycloakAuthService {
     public void logout(LogoutRequest req) {
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("client_id", req.clientId());
-        form.add("client_secret", req.clientSecret());
-        form.add("token", req.refreshToken());
-        form.add("token_type_hint", "refresh_token");
+        form.add(CLIENT_ID, req.clientId());
+        form.add(CLIENT_SECRET, req.clientSecret());
+        form.add(TOKEN, req.refreshToken());
+        form.add(TOKEN_TYPE_HINT, REFRESH_TOKEN);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-
-        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(form, headers);
+        HttpEntity<MultiValueMap<String, String>> entity = createFormEntity(form);
 
         log.info("➡️  REVOKE request to Keycloak: clientId={}, realm={}",
                 req.clientId(), props.getRealm());
@@ -206,12 +215,12 @@ public class KeycloakAuthService {
             log.info("⬅️  REVOKE response: status={}, body={}",
                     response.getStatusCode(), response.getBody());
 
-            if (response.getBody() != null && response.getBody().contains("invalid_token")) {
+            if (response.getBody() != null && response.getBody().contains(INVALID_TOKEN)) {
                 logoutFailureCounter.increment();
                 throw new KeycloakAuthException(
-                        "invalid_token",
+                        INVALID_TOKEN,
                         HttpStatus.valueOf(response.getStatusCode().value()),
-                        "invalid_token"
+                        INVALID_TOKEN
                 );
             }
 
@@ -223,7 +232,7 @@ public class KeycloakAuthService {
 
             logoutFailureCounter.increment();
             throw new KeycloakAuthException(
-                    "Logout failed",
+                    LOGOUT_FAILED,
                     HttpStatus.valueOf(ex.getStatusCode().value()),
                     extractErrorMessage(ex.getResponseBodyAsString())
             );
@@ -234,11 +243,18 @@ public class KeycloakAuthService {
     // UNIFIED ERROR PARSER
     // ------------------------------------------------------------
     private String extractErrorMessage(String body) {
-        if (body == null) return "invalid_grant";
-        if (body.contains("invalid_token")) return "invalid_token";
-        if (body.contains("invalid_grant")) return "invalid_grant";
-        if (body.contains("invalid_client")) return "invalid_client";
-        if (body.contains("not_allowed")) return "not_allowed";
-        return "invalid_grant";
+        if (body == null) return INVALID_GRANT;
+        if (body.contains(INVALID_TOKEN)) return INVALID_TOKEN;
+        if (body.contains(INVALID_GRANT)) return INVALID_GRANT;
+        if (body.contains(INVALID_CLIENT)) return INVALID_CLIENT;
+        if (body.contains(NOT_ALLOWED)) return NOT_ALLOWED;
+        return INVALID_GRANT;
+    }
+
+    private HttpEntity<MultiValueMap<String, String>> createFormEntity(MultiValueMap<String, String> form) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        return new HttpEntity<>(form, headers);
     }
 }
