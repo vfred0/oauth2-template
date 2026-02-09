@@ -9,6 +9,9 @@ RUN mvn clean package -DskipTests spring-boot:repackage
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+RUN addgroup -S app && adduser -S app -G app
+COPY --from=build /app/target/*.jar /app/app.jar
+RUN chown -R app:app /app
+USER app
 EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]
