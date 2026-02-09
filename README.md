@@ -40,6 +40,21 @@ Supported features:
 
 ## 🚀 Running the Project
 
+### 0. Configure environment variables
+
+Create a `.env` file from the template and set real values:
+
+```bash
+copy .env.example .env
+```
+
+Required variables:
+
+- `KEYCLOAK_DB_PASSWORD`
+- `APP_DB_PASSWORD`
+- `KEYCLOAK_ADMIN_PASSWORD`
+- `GRAFANA_ADMIN_PASSWORD`
+
 ### 1. Start Keycloak (with automatic realm import)
 
 ```bash
