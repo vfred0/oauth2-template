@@ -14,6 +14,7 @@
         <lombok.version>1.18.32</lombok.version>
         <mapstruct.version>1.6.3</mapstruct.version>
         <flyway.version>10.22.0</flyway.version>
+        <jacoco.version>0.8.12</jacoco.version>
     </properties>
 
     <dependencyManagement>
@@ -251,6 +252,59 @@
                 </configuration>
             </plugin>
 
+            <!-- JaCoCo -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <destFile>${project.build.directory}/jacoco-ut.exec</destFile>
+                            <propertyName>jacoco.agent.ut</propertyName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>prepare-agent-integration</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>prepare-agent-integration</goal>
+                        </goals>
+                        <configuration>
+                            <destFile>${project.build.directory}/jacoco-it.exec</destFile>
+                            <propertyName>jacoco.agent.it</propertyName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>report-ut</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/jacoco-ut.exec</dataFile>
+                            <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>report-it</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-integration</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/jacoco-it.exec</dataFile>
+                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- Surefire (unit tests) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -258,6 +312,7 @@
                 <version>3.1.2</version>
                 <configuration>
                     <useModulePath>false</useModulePath>
+                    <argLine>${jacoco.agent.ut}</argLine>
                     <includes>
                         <include>**/*Test*.java</include>
                     </includes>
@@ -274,6 +329,7 @@
                 <version>3.1.2</version>
                 <configuration>
                     <useModulePath>false</useModulePath>
+                    <argLine>${jacoco.agent.it}</argLine>
                     <includes>
                         <include>**/*IT*.java</include>
                     </includes>
