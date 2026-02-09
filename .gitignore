@@ -6,9 +6,7 @@ target/
 .idea/
 /.output.txt
 
-*.iws
-*.iml
-*.ipr
+.env
 
 ### Eclipse ###
 .apt_generated
