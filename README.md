@@ -108,6 +108,26 @@ All credentials are provided dynamically by the client.
 
 ---
 
+## 🧪 Test Coverage
+
+Unit test coverage report:
+
+```pwsh
+mvn test
+```
+
+Integration test coverage report:
+
+```pwsh
+mvn verify
+```
+
+Reports are generated at:
+- `target/site/jacoco/index.html`
+- `target/site/jacoco-it/index.html`
+
+---
+
 # 🧩 Architecture
 
 ## High-level flow
