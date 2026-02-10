@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -22,6 +24,28 @@ jobs:
       - name: Build and verify
         run: mvn -B -ntp verify
 
+      - name: SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+        run: >-
+          mvn -B -ntp sonar:sonar
+          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.projectKey=${SONAR_PROJECT_KEY}
+          -Dsonar.organization=${SONAR_ORGANIZATION}
+          -Dsonar.junit.reportPaths=target/surefire-reports,target/failsafe-reports
+
+      - name: Upload JUnit XML reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-xml-reports
+          path: |
+            target/surefire-reports/*.xml
+            target/failsafe-reports/*.xml
+          if-no-files-found: warn
+
       - name: Upload JaCoCo IT report
         if: always()
         uses: actions/upload-artifact@v4
@@ -29,4 +53,3 @@ jobs:
           name: jacoco-it-report
           path: target/site/jacoco-it
           if-no-files-found: warn
-
