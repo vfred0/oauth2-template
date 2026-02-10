@@ -24,42 +24,23 @@ jobs:
       - name: Build and verify
         run: mvn -B -ntp verify
 
-      - name: List JUnit report files
-        if: always()
-        run: |
-          echo "Surefire reports:"
-          ls -la target/surefire-reports || true
-          echo "Failsafe reports:"
-          ls -la target/failsafe-reports || true
-
-      - name: Debug JUnit report paths
-        if: always()
-        run: |
-          pwd
-          echo "Find XML reports under target:"
-          find target -type f -name "*.xml" -maxdepth 3 || true
-
-      - name: Test Summary
+      - name: Unit Test Summary
         if: always()
         uses: dorny/test-reporter@v1
         with:
-          name: JUnit Test Summary
-          path: |
-            target/surefire-reports/*.xml
-            target/failsafe-reports/*.xml
+          name: Unit Tests (JUnit)
+          path: target/surefire-reports/*.xml
           reporter: java-junit
           fail-on-error: false
 
-      - name: Validate SonarCloud vars
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
-          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
-        run: |
-          if [ -z "${SONAR_PROJECT_KEY}" ] || [ -z "${SONAR_ORGANIZATION}" ] || [ -z "${SONAR_TOKEN}" ]; then
-            echo "Missing SonarCloud vars/secret. Set SONAR_PROJECT_KEY, SONAR_ORGANIZATION, SONAR_TOKEN."
-            exit 1
-          fi
+      - name: Integration Test Summary
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Integration Tests (JUnit)
+          path: target/failsafe-reports/*.xml
+          reporter: java-junit
+          fail-on-error: false
 
       - name: SonarCloud analysis
         env:
