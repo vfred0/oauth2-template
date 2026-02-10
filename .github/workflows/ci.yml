@@ -32,6 +32,13 @@ jobs:
           echo "Failsafe reports:"
           ls -la target/failsafe-reports || true
 
+      - name: Debug JUnit report paths
+        if: always()
+        run: |
+          pwd
+          echo "Find XML reports under target:"
+          find target -type f -name "*.xml" -maxdepth 3 || true
+
       - name: Test Summary
         if: always()
         uses: dorny/test-reporter@v1
