@@ -108,8 +108,8 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
     void logout_wrong_token() {
         ResponseEntity<ApiResponse<Void>> response = logoutRequest("invalid-token");
 
-        assertErrorStatusAndBody(response, HttpStatus.OK,
+        assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
                 ApiResponse.ErrorCode.INVALID_TOKEN.getCode(),
-                INVALID_TOKEN);
+                INVALID_GRANT);
     }
 }

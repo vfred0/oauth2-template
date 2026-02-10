@@ -33,9 +33,16 @@ public abstract class KeycloakIntegrationTest extends AbstractIntegrationTest {
             registry.add("keycloak.auth-server-url", () -> authServerUrl);
             registry.add("keycloak.realm", () -> realm);
             registry.add("keycloak.token-url", () -> authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token");
-            registry.add("keycloak.logout-url", () -> authServerUrl + "/realms/" + realm + "/protocol/openid-connect/revoke");
-            registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
-                    () -> authServerUrl + "/realms/" + realm);
+            registry.add("keycloak.logout-url", () -> authServerUrl + "/realms/" + realm + "/protocol/openid-connect/logout");
+            registry.add("keycloak.introspection-url", () -> authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token/introspect");
+            registry.add("spring.security.oauth2.resourceserver.opaque-token.introspection-uri",
+                    () -> authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token/introspect");
+            registry.add("spring.security.oauth2.resourceserver.opaque-token.client-id",
+                    () -> "resource-server");
+            registry.add("spring.security.oauth2.resourceserver.opaque-token.client-secret",
+                    () -> "resource-server-secret");
+            registry.add("keycloak.resource-client-id", () -> "resource-server");
+            registry.add("keycloak.resource-client-secret", () -> "resource-server-secret");
         }
     }
 }

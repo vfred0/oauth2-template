@@ -39,8 +39,6 @@ public class KeycloakAuthService {
     private static final String OFFLINE_ACCESS = "offline_access";
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
-    private static final String TOKEN = "token";
-    private static final String TOKEN_TYPE_HINT = "token_type_hint";
     private static final String INVALID_CLIENT = "invalid_client";
     private static final String NOT_ALLOWED = "not_allowed";
     private static final String EMPTY_RESPONSE = "Empty response";
@@ -193,26 +191,25 @@ public class KeycloakAuthService {
     }
 
     // ------------------------------------------------------------
-    // LOGOUT (REVOKE)
+    // LOGOUT
     // ------------------------------------------------------------
     public void logout(LogoutRequest req) {
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add(CLIENT_ID, req.clientId());
         form.add(CLIENT_SECRET, req.clientSecret());
-        form.add(TOKEN, req.refreshToken());
-        form.add(TOKEN_TYPE_HINT, REFRESH_TOKEN);
+        form.add(REFRESH_TOKEN, req.refreshToken());
 
         HttpEntity<MultiValueMap<String, String>> entity = createFormEntity(form);
 
-        log.info("➡️  REVOKE request to Keycloak: clientId={}, realm={}",
+        log.info("➡️  LOGOUT request to Keycloak: clientId={}, realm={}",
                 req.clientId(), props.getRealm());
 
         try {
             ResponseEntity<String> response =
                     rest.postForEntity(props.getLogoutUrl(), entity, String.class);
 
-            log.info("⬅️  REVOKE response: status={}, body={}",
+            log.info("⬅️  LOGOUT response: status={}, body={}",
                     response.getStatusCode(), response.getBody());
 
             if (response.getBody() != null && response.getBody().contains(INVALID_TOKEN)) {
@@ -227,7 +224,7 @@ public class KeycloakAuthService {
             logoutSuccessCounter.increment();
 
         } catch (HttpStatusCodeException ex) {
-            log.error("❌ REVOKE error: status={}, body={}",
+            log.error("❌ LOGOUT error: status={}, body={}",
                     ex.getStatusCode(), ex.getResponseBodyAsString());
 
             logoutFailureCounter.increment();
