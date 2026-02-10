@@ -5,6 +5,10 @@ on:
     branches: ["**"]
   pull_request:
 
+permissions:
+  contents: read
+  checks: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,7 +33,7 @@ jobs:
         uses: dorny/test-reporter@v1
         with:
           name: Unit Tests (JUnit)
-          path: target/surefire-reports/*.xml
+          path: target/surefire-reports/TEST-*.xml
           reporter: java-junit
           fail-on-error: false
 
@@ -38,7 +42,7 @@ jobs:
         uses: dorny/test-reporter@v1
         with:
           name: Integration Tests (JUnit)
-          path: target/failsafe-reports/*.xml
+          path: target/failsafe-reports/TEST-*.xml
           reporter: java-junit
           fail-on-error: false
 
