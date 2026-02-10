@@ -193,11 +193,11 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
 
     @Test
     void logout_invalid_token() {
-        stubFor(post(urlPathMatching(REALMS_PROTOCOL_OPENID_CONNECT_REVOKE))
+        stubFor(post(urlPathMatching(REALMS_PROTOCOL_OPENID_CONNECT_LOGOUT))
                 .willReturn(aResponse()
-                        .withStatus(HttpStatus.OK.value())
+                        .withStatus(HttpStatus.BAD_REQUEST.value())
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
-                        .withBody("{\"error\":\"invalid_token\"}")));
+                        .withBody("{\"error\":\"invalid_grant\"}")));
 
         ResponseEntity<ApiResponse<Void>> response = logoutRequest(
                 "invalid-token",
@@ -205,14 +205,14 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                 "test-secret"
         );
 
-        assertErrorStatusAndBody(response, HttpStatus.OK,
+        assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
                 ApiResponse.ErrorCode.INVALID_TOKEN.getCode(),
-                INVALID_TOKEN);
+                INVALID_GRANT);
     }
 
     @Test
     void logout_keycloak_unavailable() {
-        stubFor(post(urlPathMatching(REALMS_PROTOCOL_OPENID_CONNECT_REVOKE))
+        stubFor(post(urlPathMatching(REALMS_PROTOCOL_OPENID_CONNECT_LOGOUT))
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.SERVICE_UNAVAILABLE.value())
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)

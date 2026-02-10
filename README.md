@@ -3,14 +3,16 @@
 Dynamic authentication with client-provided `client_id` and `client_secret`
 
 This project implements a clean, production-ready OAuth2 proxy in front of Keycloak.  
-The backend does **not** store `client_id` or `client_secret`.  
+The backend does **not** store client credentials for login/refresh/logout.  
 Instead, the client sends them in each authentication request, making the system flexible, multi-tenant, and secure.
+
+For **opaque token introspection**, the resource server uses **service credentials** (env vars) to validate tokens and enable immediate logout.
 
 Supported features:
 - 🔑 Username/password login  
 - 🔄 Token refresh  
 - 🚪 Logout (refresh token revocation)  
-- 🛡 JWT validation via Spring Security  
+- 🛡 Opaque token validation via Spring Security introspection  
 - 🎭 Role-based authorization (ADMIN and client roles like CLIENT_CREATE, CLIENT_GET)  
 - 🚦 Configurable rate limiting (Bucket4j)  
 - 🧪 Full integration test suite
@@ -55,6 +57,11 @@ Required variables:
 - `KEYCLOAK_ADMIN_PASSWORD`
 - `GRAFANA_ADMIN_PASSWORD`
 
+Resource server introspection credentials (confidential client in Keycloak):
+
+- `KEYCLOAK_RESOURCE_CLIENT_ID`
+- `KEYCLOAK_RESOURCE_CLIENT_SECRET`
+
 ### 1. Start Keycloak (with automatic realm import)
 
 ```bash
@@ -97,14 +104,21 @@ server.port=8081
 keycloak.realm=my-realm
 keycloak.auth-server-url=http://localhost:8080
 
+# Service credentials for introspection (resource server)
+keycloak.resource-client-id=${KEYCLOAK_RESOURCE_CLIENT_ID}
+keycloak.resource-client-secret=${KEYCLOAK_RESOURCE_CLIENT_SECRET}
+
 keycloak.token-url=${keycloak.auth-server-url}/realms/${keycloak.realm}/protocol/openid-connect/token
 keycloak.logout-url=${keycloak.auth-server-url}/realms/${keycloak.realm}/protocol/openid-connect/logout
+keycloak.introspection-url=${keycloak.auth-server-url}/realms/${keycloak.realm}/protocol/openid-connect/token/introspect
 
-spring.security.oauth2.resourceserver.jwt.issuer-uri=${keycloak.auth-server-url}/realms/${keycloak.realm}
+spring.security.oauth2.resourceserver.opaque-token.introspection-uri=${keycloak.introspection-url}
+spring.security.oauth2.resourceserver.opaque-token.client-id=${keycloak.resource-client-id}
+spring.security.oauth2.resourceserver.opaque-token.client-secret=${keycloak.resource-client-secret}
 ```
 
-The backend **does not store** any client credentials.  
-All credentials are provided dynamically by the client.
+The backend **does not store** client credentials for login/refresh/logout.  
+The resource server uses **service credentials** (env vars) for introspection.
 
 ---
 
@@ -153,16 +167,16 @@ Reports are generated at:
 The project uses a **clean, layered security architecture** combining:
 
 - Keycloak for authentication and role assignment
-- Spring Security for JWT validation
+- Spring Security for **opaque token introspection**
 - Method-level authorization via `@PreAuthorize`
-- A custom `KeycloakRoleConverter` for mapping Keycloak roles to Spring authorities
+- A custom role converter for mapping Keycloak roles to Spring authorities
 
 This ensures a clear separation of responsibilities:
 
 | Layer | Responsibility |
 |-------|----------------|
 | **Keycloak** | Authentication, issuing tokens, storing users, roles, and mappers |
-| **Spring Security** | Validating JWT, extracting authorities, enforcing access rules |
+| **Spring Security** | Introspecting tokens, extracting authorities, enforcing access rules |
 | **Controllers** | Declaring authorization rules via annotations |
 
 ---

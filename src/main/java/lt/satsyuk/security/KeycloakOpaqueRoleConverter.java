@@ -3,24 +3,26 @@ package lt.satsyuk.security;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Component
-public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
+public class KeycloakOpaqueRoleConverter implements Converter<Map<String, Object>, Collection<GrantedAuthority>> {
 
     @Override
-    public Collection<GrantedAuthority> convert(Jwt jwt) {
-
+    public Collection<GrantedAuthority> convert(Map<String, Object> attributes) {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
+
+        if (attributes == null) {
+            return authorities;
+        }
 
         // -----------------------------
         // 1. Realm roles
         // -----------------------------
-        Map<String, Object> realmAccess = jwt.getClaim("realm_access");
-        if (realmAccess != null) {
+        Object realmAccessObj = attributes.get("realm_access");
+        if (realmAccessObj instanceof Map<?, ?> realmAccess) {
             Object rolesObj = realmAccess.get("roles");
             if (rolesObj instanceof List<?> roles) {
                 roles.forEach(r -> authorities.add(new SimpleGrantedAuthority("ROLE_" + r)));
@@ -30,8 +32,8 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
         // -----------------------------
         // 2. Client roles (resource_access.<client>.roles)
         // -----------------------------
-        Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
-        if (resourceAccess != null) {
+        Object resourceAccessObj = attributes.get("resource_access");
+        if (resourceAccessObj instanceof Map<?, ?> resourceAccess) {
             resourceAccess.forEach((client, access) -> {
                 if (access instanceof Map<?, ?> accessMap) {
                     Object rolesObj = accessMap.get("roles");
@@ -45,3 +47,4 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
         return authorities;
     }
 }
+

@@ -1,16 +1,16 @@
 package lt.satsyuk.config;
 
-import lt.satsyuk.dto.ApiResponse;
-import lt.satsyuk.security.KeycloakRoleConverter;
+import lt.satsyuk.auth.JsonAccessDeniedHandler;
+import lt.satsyuk.auth.JsonAuthEntryPoint;
+import lt.satsyuk.security.KeycloakOpaqueRoleConverter;
+import lt.satsyuk.security.KeycloakOpaqueTokenIntrospector;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -20,7 +20,9 @@ public class SecurityConfig {
     @Bean
     @SuppressWarnings("java:S4502") // Stateless REST API uses Bearer JWT; no cookies, so CSRF is not applicable.
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                  JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
+                                                   OpaqueTokenIntrospector opaqueTokenIntrospector,
+                                                   JsonAuthEntryPoint jsonAuthEntryPoint,
+                                                   JsonAccessDeniedHandler jsonAccessDeniedHandler) throws Exception {
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -33,36 +35,27 @@ public class SecurityConfig {
                 )
 
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
+                        .opaqueToken(opaque -> opaque.introspector(opaqueTokenIntrospector))
+                        .authenticationEntryPoint(jsonAuthEntryPoint)
+                        .accessDeniedHandler(jsonAccessDeniedHandler)
                 )
 
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((req, res, e) -> {
-                            res.setStatus(HttpStatus.UNAUTHORIZED.value());
-                            res.setContentType(MediaType.APPLICATION_JSON.toString());
-                            res.getWriter().write(String.format("""
-                                {"code":%d,"message":"%s"}
-                            """, ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
-                                    ApiResponse.ErrorCode.UNAUTHORIZED.getDescription()));
-
-                        })
-                        .accessDeniedHandler((req, res, e) -> {
-                            res.setStatus(HttpStatus.FORBIDDEN.value());
-                            res.setContentType(MediaType.APPLICATION_JSON.toString());
-                            res.getWriter().write(String.format("""
-                                {"code":%d,"message":"%s"}
-                            """, ApiResponse.ErrorCode.FORBIDDEN.getCode(),
-                                    ApiResponse.ErrorCode.FORBIDDEN.getDescription()));
-                        })
+                        .authenticationEntryPoint(jsonAuthEntryPoint)
+                        .accessDeniedHandler(jsonAccessDeniedHandler)
                 );
 
         return http.build();
     }
 
     @Bean
-    public JwtAuthenticationConverter jwtAuthenticationConverter(KeycloakRoleConverter keycloakRoleConverter) {
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(keycloakRoleConverter);
-        return converter;
+    public OpaqueTokenIntrospector opaqueTokenIntrospector(KeycloakProperties props,
+                                                           KeycloakOpaqueRoleConverter roleConverter) {
+        return new KeycloakOpaqueTokenIntrospector(
+                props.getIntrospectionUrl(),
+                props.getResourceClientId(),
+                props.getResourceClientSecret(),
+                roleConverter
+        );
     }
 }

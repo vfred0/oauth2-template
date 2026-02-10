@@ -16,8 +16,12 @@ public class KeycloakProperties {
 
     private String tokenUrl;
     private String logoutUrl;
+    private String introspectionUrl;
 
-    // опционально — дефолты
+    // optional - defaults
     private String clientId;
     private String clientSecret;
+
+    private String resourceClientId;
+    private String resourceClientSecret;
 }

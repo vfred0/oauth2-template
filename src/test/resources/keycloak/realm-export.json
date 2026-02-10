@@ -84,6 +84,31 @@
         "offline_access"
       ],
       "optionalClientScopes": []
+    },
+    {
+      "clientId": "resource-server",
+      "enabled": true,
+      "protocol": "openid-connect",
+
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "resource-server-secret",
+
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "implicitFlowEnabled": false,
+
+      "attributes": {
+        "oauth2.device.authorization.grant.enabled": "false",
+        "token.exchange.enabled": "false"
+      },
+
+      "redirectUris": [],
+      "webOrigins": [],
+
+      "defaultClientScopes": [],
+      "optionalClientScopes": []
     }
   ],
 

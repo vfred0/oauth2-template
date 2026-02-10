@@ -34,7 +34,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
 
     protected static final String REALMS_PROTOCOL_OPENID_CONNECT_TOKEN = "/realms/.*/protocol/openid-connect/token";
-    protected static final String REALMS_PROTOCOL_OPENID_CONNECT_REVOKE = "/realms/.*/protocol/openid-connect/revoke";
+    protected static final String REALMS_PROTOCOL_OPENID_CONNECT_LOGOUT = "/realms/.*/protocol/openid-connect/logout";
+    protected static final String REALMS_PROTOCOL_OPENID_CONNECT_INTROSPECT = "/realms/.*/protocol/openid-connect/token/introspect";
 
     protected static WireMockServer wireMockServer;
     protected static final String REALM = "test-realm";
@@ -63,8 +64,14 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
         r.add("keycloak.auth-server-url", () -> base);
         r.add("keycloak.realm", () -> REALM);
         r.add("keycloak.token-url", () -> base + "/realms/" + REALM + "/protocol/openid-connect/token");
-        r.add("keycloak.logout-url", () -> base + "/realms/" + REALM + "/protocol/openid-connect/revoke");
-        r.add("spring.security.oauth2.resourceserver.jwt.issuer-uri", () -> base + "/realms/" + REALM);
+        r.add("keycloak.logout-url", () -> base + "/realms/" + REALM + "/protocol/openid-connect/logout");
+        r.add("keycloak.introspection-url", () -> base + "/realms/" + REALM + "/protocol/openid-connect/token/introspect");
+        r.add("spring.security.oauth2.resourceserver.opaque-token.introspection-uri",
+                () -> base + "/realms/" + REALM + "/protocol/openid-connect/token/introspect");
+        r.add("spring.security.oauth2.resourceserver.opaque-token.client-id", () -> "resource-server");
+        r.add("spring.security.oauth2.resourceserver.opaque-token.client-secret", () -> "resource-server-secret");
+        r.add("keycloak.resource-client-id", () -> "resource-server");
+        r.add("keycloak.resource-client-secret", () -> "resource-server-secret");
     }
 
     @BeforeEach
@@ -80,8 +87,8 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
                         .withBody("""
                                 {
                                   "issuer": "%s",
-                                  "jwks_uri": "%s/realms/%s/protocol/openid-connect/certs",
-                                  "token_endpoint": "%s/realms/%s/protocol/openid-connect/token"
+                                  "token_endpoint": "%s/realms/%s/protocol/openid-connect/token",
+                                  "introspection_endpoint": "%s/realms/%s/protocol/openid-connect/token/introspect"
                                 }
                                 """.formatted(
                                 issuer,
@@ -91,21 +98,30 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
                                 REALM
                         ))));
 
-        // JWKS
-        stubFor(get(urlEqualTo("/realms/" + REALM + "/protocol/openid-connect/certs"))
-                .willReturn(aResponse()
-                        .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
-                        .withBody(JwtTestUtil.getJwksJson())));
-
         // Token endpoint — трансформер обработает только если тест НЕ переопределил stubFor(...)
         stubFor(post(urlEqualTo("/realms/" + REALM + "/protocol/openid-connect/token"))
                 .willReturn(aResponse()
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withTransformers("user-token-transformer-v2")));
 
+        // Introspection
+        stubFor(post(urlEqualTo("/realms/" + REALM + "/protocol/openid-connect/token/introspect"))
+                .willReturn(aResponse()
+                        .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                        .withBody("""
+                                {
+                                  "active": true,
+                                  "username": "user",
+                                  "client_id": "spring-app",
+                                  "azp": "spring-app",
+                                  "realm_access": {"roles": ["CLIENT_CREATE", "CLIENT_GET"]},
+                                  "resource_access": {"spring-app": {"roles": ["CLIENT_CREATE", "CLIENT_GET"]}}
+                                }
+                                """)));
+
         // Logout
-        stubFor(post(urlEqualTo("/realms/" + REALM + "/protocol/openid-connect/revoke"))
-                .willReturn(aResponse().withStatus(200)));
+        stubFor(post(urlEqualTo("/realms/" + REALM + "/protocol/openid-connect/logout"))
+                .willReturn(aResponse().withStatus(204)));
     }
 
     // -------------------------------------------------------------------------

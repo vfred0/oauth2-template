@@ -15,6 +15,7 @@
         <mapstruct.version>1.6.3</mapstruct.version>
         <flyway.version>10.22.0</flyway.version>
         <jacoco.version>0.8.12</jacoco.version>
+        <oauth2.oidc.sdk.version>11.9.1</oauth2.oidc.sdk.version>
         <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml,target/site/jacoco-it/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
@@ -219,6 +220,13 @@
             <artifactId>wiremock-standalone</artifactId>
             <version>3.3.1</version>
             <scope>test</scope>
+        </dependency>
+
+        <!-- Nimbus OAuth2 SDK (required for opaque token introspection) -->
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>oauth2-oidc-sdk</artifactId>
+            <version>${oauth2.oidc.sdk.version}</version>
         </dependency>
 
     </dependencies>

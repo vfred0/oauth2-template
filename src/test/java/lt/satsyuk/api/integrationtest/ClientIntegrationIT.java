@@ -4,6 +4,7 @@ import lt.satsyuk.dto.ApiResponse;
 import lt.satsyuk.api.util.KeycloakIntegrationTest;
 import lt.satsyuk.dto.ClientResponse;
 import lt.satsyuk.dto.CreateClientRequest;
+import lt.satsyuk.dto.KeycloakTokenResponse;
 import lt.satsyuk.model.Client;
 import lt.satsyuk.repository.ClientRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -98,6 +99,24 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         ResponseEntity<ApiResponse<Object>> resp = requestGet(clientUrl + "/" + saved.getId());
 
         assertErrorStatusAndBody(resp, HttpStatus.UNAUTHORIZED,
+                ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
+                ApiResponse.ErrorCode.UNAUTHORIZED.getDescription());
+    }
+
+    @Test
+    void get_client_unauthorized_after_logout() {
+        Client saved = repo.save(Client.builder().firstName("Alice").lastName("Smith").phone("+37060000000").build());
+        KeycloakTokenResponse tokens = loginAndGetData(USERNAME, USER_PASSWORD);
+        String accessToken = tokens.getAccessToken();
+
+        ResponseEntity<ApiResponse<Object>> resp = requestGet(clientUrl + "/" + saved.getId(), accessToken);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<ApiResponse<Void>> logoutResponse = logoutRequest(tokens.getRefreshToken());
+        assertThat(logoutResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<ApiResponse<Object>> errorResponse = requestGet(clientUrl + "/" + saved.getId(), accessToken);
+        assertErrorStatusAndBody(errorResponse, HttpStatus.UNAUTHORIZED,
                 ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
                 ApiResponse.ErrorCode.UNAUTHORIZED.getDescription());
     }
