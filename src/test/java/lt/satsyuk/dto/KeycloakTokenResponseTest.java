@@ -24,12 +24,14 @@ class KeycloakTokenResponseTest {
 
         KeycloakTokenResponse response = objectMapper.readValue(json, KeycloakTokenResponse.class);
 
-        assertThat(response.getAccessToken()).isEqualTo("access");
-        assertThat(response.getRefreshToken()).isEqualTo("refresh");
-        assertThat(response.getTokenType()).isEqualTo("Bearer");
-        assertThat(response.getExpiresIn()).isEqualTo(3600L);
-        assertThat(response.getRefreshExpiresIn()).isEqualTo(7200L);
-        assertThat(response.getScope()).isEqualTo("openid");
+        assertThat(response)
+                .extracting(KeycloakTokenResponse::getAccessToken,
+                        KeycloakTokenResponse::getRefreshToken,
+                        KeycloakTokenResponse::getTokenType,
+                        KeycloakTokenResponse::getExpiresIn,
+                        KeycloakTokenResponse::getRefreshExpiresIn,
+                        KeycloakTokenResponse::getScope)
+                .containsExactly("access", "refresh", "Bearer", 3600L, 7200L, "openid");
     }
 
     @Test

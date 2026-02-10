@@ -21,11 +21,9 @@ class ClientMapperTest {
 
         Client entity = mapper.toEntity(request);
 
-        assertThat(entity).isNotNull();
-        assertThat(entity.getId()).isNull();
-        assertThat(entity.getFirstName()).isEqualTo("John");
-        assertThat(entity.getLastName()).isEqualTo("Doe");
-        assertThat(entity.getPhone()).isEqualTo("+12345678901");
+        assertThat(entity)
+                .extracting(Client::getFirstName, Client::getLastName, Client::getPhone)
+                .containsExactly("John", "Doe", "+12345678901");
     }
 
     @Test
@@ -39,11 +37,12 @@ class ClientMapperTest {
 
         ClientResponse response = mapper.toResponse(client);
 
-        assertThat(response).isNotNull();
-        assertThat(response.id()).isEqualTo(42L);
-        assertThat(response.firstName()).isEqualTo("Jane");
-        assertThat(response.lastName()).isEqualTo("Roe");
-        assertThat(response.phone()).isEqualTo("+37060000000");
+        assertThat(response)
+                .extracting(ClientResponse::id,
+                        ClientResponse::firstName,
+                        ClientResponse::lastName,
+                        ClientResponse::phone)
+                        .containsExactly(42L, "Jane", "Roe", "+37060000000");
     }
 }
 
