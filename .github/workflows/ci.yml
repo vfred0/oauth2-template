@@ -28,14 +28,21 @@ jobs:
       - name: Build and verify
         run: mvn -B -ntp verify
 
-      - name: Test Summary
+      - name: Unit Test Summary
         if: always()
         uses: dorny/test-reporter@v1
         with:
-          name: JUnit Test Summary
-          path: |
-            target/surefire-reports/TEST-*.xml
-            target/failsafe-reports/TEST-*.xml
+          name: Unit Tests (JUnit)
+          path: target/surefire-reports/TEST-*.xml
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Integration Test Summary
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Integration Tests (JUnit)
+          path: target/failsafe-reports/TEST-*.xml
           reporter: java-junit
           fail-on-error: false
 
