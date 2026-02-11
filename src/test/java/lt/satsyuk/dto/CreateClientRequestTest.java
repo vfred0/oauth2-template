@@ -14,6 +14,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CreateClientRequestTest {
 
+    public static final String JOHN = "John";
+    public static final String DOE = "Doe";
+    public static final String PHONE = "+12345678901";
     private static ValidatorFactory validatorFactory;
     private static Validator validator;
 
@@ -33,9 +36,9 @@ class CreateClientRequestTest {
     @Test
     void validRequestHasNoViolations() {
         CreateClientRequest request = new CreateClientRequest(
-                "John",
-                "Doe",
-                "+12345678901"
+                JOHN,
+                DOE,
+                PHONE
         );
 
         Set<ConstraintViolation<CreateClientRequest>> violations = validator.validate(request);
@@ -47,8 +50,8 @@ class CreateClientRequestTest {
     void blankFirstNameIsRejected() {
         CreateClientRequest request = new CreateClientRequest(
                 " ",
-                "Doe",
-                "+12345678901"
+                DOE,
+                PHONE
         );
 
         Set<ConstraintViolation<CreateClientRequest>> violations = validator.validate(request);
@@ -63,9 +66,9 @@ class CreateClientRequestTest {
     @Test
     void blankLastNameIsRejected() {
         CreateClientRequest request = new CreateClientRequest(
-                "John",
+                JOHN,
                 "",
-                "+12345678901"
+                PHONE
         );
 
         Set<ConstraintViolation<CreateClientRequest>> violations = validator.validate(request);
@@ -80,8 +83,8 @@ class CreateClientRequestTest {
     @Test
     void blankPhoneIsRejected() {
         CreateClientRequest request = new CreateClientRequest(
-                "John",
-                "Doe",
+                JOHN,
+                DOE,
                 ""
         );
 
@@ -99,8 +102,8 @@ class CreateClientRequestTest {
         String tooLong = "a".repeat(101);
         CreateClientRequest request = new CreateClientRequest(
                 tooLong,
-                "Doe",
-                "+12345678901"
+                DOE,
+                PHONE
         );
 
         Set<ConstraintViolation<CreateClientRequest>> violations = validator.validate(request);
@@ -113,9 +116,9 @@ class CreateClientRequestTest {
     void lastNameOverMaxLengthIsRejected() {
         String tooLong = "b".repeat(101);
         CreateClientRequest request = new CreateClientRequest(
-                "John",
+                JOHN,
                 tooLong,
-                "+12345678901"
+                PHONE
         );
 
         Set<ConstraintViolation<CreateClientRequest>> violations = validator.validate(request);
@@ -127,8 +130,8 @@ class CreateClientRequestTest {
     @Test
     void phonePatternIsRejected() {
         CreateClientRequest request = new CreateClientRequest(
-                "John",
-                "Doe",
+                JOHN,
+                DOE,
                 "12-345"
         );
 
@@ -144,13 +147,13 @@ class CreateClientRequestTest {
     @Test
     void phonePatternAcceptsMinAndMaxLengths() {
         CreateClientRequest min = new CreateClientRequest(
-                "John",
-                "Doe",
+                JOHN,
+                DOE,
                 "1234567"
         );
         CreateClientRequest max = new CreateClientRequest(
-                "John",
-                "Doe",
+                JOHN,
+                DOE,
                 "+123456789012345"
         );
 

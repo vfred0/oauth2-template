@@ -23,6 +23,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 )
 class ClientIntegrationIT extends KeycloakIntegrationTest {
 
+    public static final String JOHN = "John";
+    public static final String DOE = "Doe";
+    public static final String ALICE = "Alice";
+    public static final String SMITH = "Smith";
+    public static final String PHONE = "+37061234567";
     @Autowired
     ClientRepository repo;
 
@@ -35,7 +40,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
     void create_client_success_and_persistence() {
         String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
 
-        CreateClientRequest req = new CreateClientRequest("John", "Doe", "+37061234567");
+        CreateClientRequest req = new CreateClientRequest(JOHN, DOE, PHONE);
 
         ClientResponse data = postAndGetData(clientUrl, token, req, ClientResponse.class);
 
@@ -55,11 +60,11 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
     @Test
     void create_client_duplicate_phone_conflict() {
         // prepare existing
-        Client existing = Client.builder().firstName("Jane").lastName("Roe").phone("+37061234567").build();
+        Client existing = Client.builder().firstName("Jane").lastName("Roe").phone(PHONE).build();
         repo.save(existing);
 
         String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
-        CreateClientRequest req = new CreateClientRequest("John", "Doe", "+37061234567");
+        CreateClientRequest req = new CreateClientRequest(JOHN, DOE, PHONE);
 
         ResponseEntity<ApiResponse<Object>> resp = requestPost(clientUrl, token, req);
 
@@ -70,7 +75,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
 
     @Test
     void get_client_success() {
-        Client saved = repo.save(Client.builder().firstName("Alice").lastName("Smith").phone("+37060000000").build());
+        Client saved = repo.save(Client.builder().firstName(ALICE).lastName(SMITH).phone("+37060000000").build());
 
         String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
 
@@ -105,7 +110,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
 
     @Test
     void get_client_unauthorized_after_logout() {
-        Client saved = repo.save(Client.builder().firstName("Alice").lastName("Smith").phone("+37060000000").build());
+        Client saved = repo.save(Client.builder().firstName(ALICE).lastName(SMITH).phone("+37060000000").build());
         KeycloakTokenResponse tokens = loginAndGetData(USERNAME, USER_PASSWORD);
         String accessToken = tokens.getAccessToken();
 
@@ -173,7 +178,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
     void create_client_validation_error() {
         String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
         // invalid phone and missing firstName
-        CreateClientRequest req = new CreateClientRequest("", "Doe", "abc");
+        CreateClientRequest req = new CreateClientRequest("", DOE, "abc");
 
         ResponseEntity<ApiResponse<Object>> response = requestPost(clientUrl, token, req);
 
