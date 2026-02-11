@@ -3,8 +3,8 @@ package lt.satsyuk.security;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.DefaultOAuth2AuthenticatedPrincipal;
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
-import org.springframework.security.oauth2.server.resource.introspection.NimbusOpaqueTokenIntrospector;
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector;
+import org.springframework.security.oauth2.server.resource.introspection.SpringOpaqueTokenIntrospector;
 
 import java.util.Collection;
 
@@ -17,7 +17,10 @@ public class KeycloakOpaqueTokenIntrospector implements OpaqueTokenIntrospector 
                                            String clientId,
                                            String clientSecret,
                                            KeycloakOpaqueRoleConverter roleConverter) {
-        this.delegate = new NimbusOpaqueTokenIntrospector(introspectionUrl, clientId, clientSecret);
+        this.delegate = SpringOpaqueTokenIntrospector.withIntrospectionUri(introspectionUrl)
+                .clientId(clientId)
+                .clientSecret(clientSecret)
+                .build();
         this.roleConverter = roleConverter;
     }
 
