@@ -125,7 +125,7 @@
 					]
 				},
 				{
-					"name": "Revoke Token (Logout)",
+					"name": "Logout",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -146,7 +146,7 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"console.log(\"Refresh token revoked\");"
+									"console.log(\"Logout succeeded\");"
 								]
 							}
 						}
