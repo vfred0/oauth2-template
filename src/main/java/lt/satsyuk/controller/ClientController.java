@@ -1,5 +1,10 @@
 package lt.satsyuk.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lt.satsyuk.dto.ApiResponse;
 import lt.satsyuk.dto.ClientResponse;
@@ -10,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/clients")
+@Tag(name = "Clients", description = "Client management")
+@SecurityRequirement(name = "bearerAuth")
 public class ClientController {
 
     private final ClientService service;
@@ -20,12 +27,30 @@ public class ClientController {
 
     @PostMapping
     @PreAuthorize("hasRole('CLIENT_CREATE')")
+    @Operation(summary = "Create client", description = "Creates a new client.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Client created",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = lt.satsyuk.dto.ApiResponse.class)))
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json"))
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @Content(mediaType = "application/json"))
     public ApiResponse<ClientResponse> create(@Valid @RequestBody CreateClientRequest req) {
         return ApiResponse.ok(service.create(req));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('CLIENT_GET')")
+    @Operation(summary = "Get client", description = "Returns client by id.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Client found",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = lt.satsyuk.dto.ApiResponse.class)))
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json"))
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @Content(mediaType = "application/json"))
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found",
+            content = @Content(mediaType = "application/json"))
     public ApiResponse<ClientResponse> get(@PathVariable("id") Long id) {
         return ApiResponse.ok(service.get(id));
     }
