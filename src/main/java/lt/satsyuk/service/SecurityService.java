@@ -11,9 +11,11 @@ import java.util.Map;
 @Service
 public class SecurityService {
 
+    public static final String ANONYMOUS = "anonymous";
+
     public String clientId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return "anonymous";
+        if (auth == null) return ANONYMOUS;
 
         if (auth instanceof JwtAuthenticationToken jwtAuth) {
             return jwtAuth.getToken().getClaimAsString("azp");
@@ -23,17 +25,17 @@ public class SecurityService {
             return extractClientId(bearerAuth.getTokenAttributes());
         }
 
-        return "anonymous";
+        return ANONYMOUS;
     }
 
     public String username() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return "anonymous";
+        if (auth == null) return ANONYMOUS;
         return auth.getName();
     }
 
     private String extractClientId(Map<String, Object> attributes) {
-        if (attributes == null) return "anonymous";
+        if (attributes == null) return ANONYMOUS;
         Object azp = attributes.get("azp");
         if (azp instanceof String azpStr) {
             return azpStr;
@@ -44,6 +46,6 @@ public class SecurityService {
             return clientIdStr;
         }
 
-        return "anonymous";
+        return ANONYMOUS;
     }
 }
