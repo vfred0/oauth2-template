@@ -7,6 +7,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class KeycloakTokenResponseTest {
 
+    public static final String ACCESS = "access";
+    public static final String REFRESH = "refresh";
+    public static final String BEARER = "Bearer";
+    public static final String OPENID = "openid";
+    public static final long EXPIRES_IN = 3600L;
+    public static final long REFRESH_EXPIRES_IN = 7200L;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
@@ -31,18 +37,18 @@ class KeycloakTokenResponseTest {
                         KeycloakTokenResponse::getExpiresIn,
                         KeycloakTokenResponse::getRefreshExpiresIn,
                         KeycloakTokenResponse::getScope)
-                .containsExactly("access", "refresh", "Bearer", 3600L, 7200L, "openid");
+                .containsExactly(ACCESS, REFRESH, BEARER, EXPIRES_IN, REFRESH_EXPIRES_IN, OPENID);
     }
 
     @Test
     void serializesToSnakeCaseFields() throws Exception {
         KeycloakTokenResponse response = new KeycloakTokenResponse()
-                .setAccessToken("access")
-                .setRefreshToken("refresh")
-                .setTokenType("Bearer")
-                .setExpiresIn(3600L)
-                .setRefreshExpiresIn(7200L)
-                .setScope("openid");
+                .setAccessToken(ACCESS)
+                .setRefreshToken(REFRESH)
+                .setTokenType(BEARER)
+                .setExpiresIn(EXPIRES_IN)
+                .setRefreshExpiresIn(REFRESH_EXPIRES_IN)
+                .setScope(OPENID);
 
         String json = objectMapper.writeValueAsString(response);
 
@@ -54,5 +60,35 @@ class KeycloakTokenResponseTest {
                 .contains("\"refresh_expires_in\":7200")
                 .contains("\"scope\":\"openid\"");
     }
-}
 
+    @Test
+    void supportsEqualsHashCodeAndToString() {
+        KeycloakTokenResponse first = new KeycloakTokenResponse()
+                .setAccessToken(ACCESS)
+                .setRefreshToken(REFRESH)
+                .setTokenType(BEARER)
+                .setExpiresIn(EXPIRES_IN)
+                .setRefreshExpiresIn(REFRESH_EXPIRES_IN)
+                .setScope(OPENID);
+        KeycloakTokenResponse same = new KeycloakTokenResponse()
+                .setAccessToken(ACCESS)
+                .setRefreshToken(REFRESH)
+                .setTokenType(BEARER)
+                .setExpiresIn(EXPIRES_IN)
+                .setRefreshExpiresIn(REFRESH_EXPIRES_IN)
+                .setScope(OPENID);
+        KeycloakTokenResponse different = new KeycloakTokenResponse()
+                .setAccessToken("different")
+                .setRefreshToken(REFRESH)
+                .setTokenType(BEARER)
+                .setExpiresIn(EXPIRES_IN)
+                .setRefreshExpiresIn(REFRESH_EXPIRES_IN)
+                .setScope(OPENID);
+
+        assertThat(first)
+                .isEqualTo(same)
+                .hasSameHashCodeAs(same)
+                .isNotEqualTo(different)
+                .asString().contains("accessToken=access");
+    }
+}
