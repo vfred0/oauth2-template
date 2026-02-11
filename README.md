@@ -20,13 +20,14 @@ Supported features:
 - 🧪 WireMock for negative testing (network failures, timeouts, error responses)
 - 📊 OpenTelemetry tracing and JSON logging
 - 📈 Prometheus metrics via Actuator
+- 📚 Swagger/OpenAPI documentation
 
 ---
 
 ## 📦 Tech Stack
 
 - Java 17
-- Spring Boot 3.2
+- Spring Boot 3.5
 - Spring Security (Resource Server)
 - Spring Web (REST)
 - Keycloak 26+
@@ -93,6 +94,29 @@ Application runs at:
 ```
 http://localhost:8081
 ```
+
+Swagger UI:
+
+```
+http://localhost:8081/swagger-ui/index.html
+```
+
+OpenAPI JSON:
+
+```
+http://localhost:8081/v3/api-docs
+```
+
+---
+
+## 📚 Swagger / OpenAPI
+
+The OpenAPI spec is generated automatically at runtime. Use Swagger UI to explore and try endpoints.
+
+Helpful links:
+
+- Swagger UI: `http://localhost:8081/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8081/v3/api-docs`
 
 ---
 

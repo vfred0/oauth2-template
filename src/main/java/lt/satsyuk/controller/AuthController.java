@@ -1,5 +1,9 @@
 package lt.satsyuk.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lt.satsyuk.dto.ApiResponse;
@@ -16,11 +20,18 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "Auth", description = "Keycloak authentication endpoints")
 public class AuthController {
 
     private final KeycloakAuthService authService;
 
     @PostMapping("/login")
+    @Operation(summary = "Login and obtain tokens", description = "Authenticates user and returns access/refresh tokens.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Tokens issued",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = lt.satsyuk.dto.ApiResponse.class)))
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json"))
     public ResponseEntity<ApiResponse<KeycloakTokenResponse>> login(@Valid @RequestBody LoginRequest req) {
         try {
             KeycloakTokenResponse tokens = authService.login(req);
@@ -34,6 +45,12 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @Operation(summary = "Refresh tokens", description = "Exchanges refresh token for a new access token.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Tokens refreshed",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = lt.satsyuk.dto.ApiResponse.class)))
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid grant",
+            content = @Content(mediaType = "application/json"))
     public ResponseEntity<ApiResponse<KeycloakTokenResponse>> refresh(@Valid @RequestBody RefreshRequest req) {
         try {
             KeycloakTokenResponse tokens = authService.refresh(req);
@@ -48,6 +65,11 @@ public class AuthController {
 
     // Keycloak 26 revoke: 200 OK даже при ошибке
     @PostMapping("/logout")
+    @Operation(summary = "Logout", description = "Revokes the refresh token in Keycloak.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Logged out",
+            content = @Content(mediaType = "application/json"))
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid token",
+            content = @Content(mediaType = "application/json"))
     public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody LogoutRequest req) {
         try {
             authService.logout(req);
