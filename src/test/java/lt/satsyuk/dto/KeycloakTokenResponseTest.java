@@ -91,4 +91,58 @@ class KeycloakTokenResponseTest {
                 .isNotEqualTo(different)
                 .asString().contains("accessToken=access");
     }
+
+    @Test
+    void equalsHandlesNullAndDifferentTypes() {
+        KeycloakTokenResponse response = new KeycloakTokenResponse()
+                .setAccessToken(ACCESS)
+                .setRefreshToken(REFRESH);
+
+        assertThat(response)
+                .isEqualTo(response)
+                .isNotNull();
+    }
+
+    @Test
+    void equalsAndHashCodeWorkWithNullFields() {
+        KeycloakTokenResponse first = new KeycloakTokenResponse()
+                .setAccessToken(null)
+                .setRefreshToken(REFRESH)
+                .setTokenType(null)
+                .setExpiresIn(0L)
+                .setRefreshExpiresIn(0L)
+                .setScope(null);
+        KeycloakTokenResponse same = new KeycloakTokenResponse()
+                .setAccessToken(null)
+                .setRefreshToken(REFRESH)
+                .setTokenType(null)
+                .setExpiresIn(0L)
+                .setRefreshExpiresIn(0L)
+                .setScope(null);
+        KeycloakTokenResponse different = new KeycloakTokenResponse()
+                .setAccessToken(ACCESS)
+                .setRefreshToken(REFRESH)
+                .setTokenType(null)
+                .setExpiresIn(0L)
+                .setRefreshExpiresIn(0L)
+                .setScope(null);
+
+        assertThat(first)
+                .isEqualTo(same)
+                .hasSameHashCodeAs(same)
+                .isNotEqualTo(different)
+                .asString().contains("accessToken=null");
+    }
+
+    @Test
+    void chainedSettersReturnSameInstance() {
+        KeycloakTokenResponse response = new KeycloakTokenResponse();
+
+        assertThat(response.setAccessToken(ACCESS)).isSameAs(response);
+        assertThat(response.setRefreshToken(REFRESH)).isSameAs(response);
+        assertThat(response.setTokenType(BEARER)).isSameAs(response);
+        assertThat(response.setExpiresIn(EXPIRES_IN)).isSameAs(response);
+        assertThat(response.setRefreshExpiresIn(REFRESH_EXPIRES_IN)).isSameAs(response);
+        assertThat(response.setScope(OPENID)).isSameAs(response);
+    }
 }
