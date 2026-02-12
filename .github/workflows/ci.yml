@@ -25,6 +25,11 @@ jobs:
           java-version: "17"
           cache: maven
 
+      - name: Update Docker CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+
       - name: Cache SonarQube packages
         uses: actions/cache@v4
         with:
