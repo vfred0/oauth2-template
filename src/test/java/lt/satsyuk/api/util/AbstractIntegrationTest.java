@@ -22,7 +22,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -37,19 +38,33 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 public abstract class AbstractIntegrationTest {
 
     // Testcontainers-managed shared containers for integration tests
+    private static final String DB_NAME = "appdb";
+    private static final String DB_USER = "app";
+    private static final String DB_PASS = "app";
+    private static final int POSTGRES_PORT = 5432;
+    public static final String RESPONSE_MESSAGE_SHOULD_MATCH_EXPECTED = "Response message should match expected";
+    public static final String RESPONSE_BODY_SHOULD_NOT_BE_NULL = "Response body should not be null";
+    public static final String RESPONSE_DATA_SHOULD_NOT_BE_NULL = "Response data should not be null";
+    public static final String RESPONSE_HTTP_STATUS_SHOULD_BE_OK = "Response HTTP status should be OK";
+    public static final String RESPONSE_CODE_SHOULD_BE_ZERO = "Response code should be zero";
+    public static final String RESPONSE_HTTP_STATUS_SHOULD_MATCH_EXPECTED = "Response HTTP status should match expected";
+    public static final String RESPONSE_CODE_SHOULD_MATCH_EXPECTED = "Response code should match expected";
+
     @Container
-    protected static PostgreSQLContainer<?> pg = new PostgreSQLContainer<>("postgres:16")
-            .withDatabaseName("appdb")
-            .withUsername("app")
-            .withPassword("app")
+    protected static GenericContainer<?> pg = new GenericContainer<>(DockerImageName.parse("postgres:16"))
+            .withEnv("POSTGRES_DB", DB_NAME)
+            .withEnv("POSTGRES_USER", DB_USER)
+            .withEnv("POSTGRES_PASSWORD", DB_PASS)
+            .withExposedPorts(POSTGRES_PORT)
             .withReuse(true);
 
     @DynamicPropertySource
     static void registerDatasource(DynamicPropertyRegistry registry) {
         if (pg != null && pg.isRunning()) {
-            registry.add("spring.datasource.url", pg::getJdbcUrl);
-            registry.add("spring.datasource.username", pg::getUsername);
-            registry.add("spring.datasource.password", pg::getPassword);
+            String jdbcUrl = "jdbc:postgresql://" + pg.getHost() + ":" + pg.getMappedPort(POSTGRES_PORT) + "/" + DB_NAME;
+            registry.add("spring.datasource.url", () -> jdbcUrl);
+            registry.add("spring.datasource.username", () -> DB_USER);
+            registry.add("spring.datasource.password", () -> DB_PASS);
         }
     }
 
@@ -77,7 +92,6 @@ public abstract class AbstractIntegrationTest {
     protected static final String ADMIN_PASSWORD = "admin";
     protected static final String INVALID_GRANT = "invalid_grant";
     protected static final String INVALID_CLIENT = "invalid_client";
-    protected static final String INVALID_TOKEN = "invalid_token";
 
     @LocalServerPort
     protected int port;
@@ -121,10 +135,10 @@ public abstract class AbstractIntegrationTest {
 
     protected <T> void assertErrorBody(ResponseEntity<ApiResponse<T>> response, int expectedCode, Object expectedMessage) {
         ApiResponse<T> body = response.getBody();
-        assertThat(body).as("Response body should not be null").isNotNull();
-        assertThat(body.getCode()).as("Response code should match expected").isEqualTo(expectedCode);
+        assertThat(body).as(RESPONSE_BODY_SHOULD_NOT_BE_NULL).isNotNull();
+        assertThat(body.getCode()).as(RESPONSE_CODE_SHOULD_MATCH_EXPECTED).isEqualTo(expectedCode);
         if (expectedMessage instanceof String) {
-            assertThat(body.getMessage()).as("Response message should match expected").isEqualTo(expectedMessage);
+            assertThat(body.getMessage()).as(RESPONSE_MESSAGE_SHOULD_MATCH_EXPECTED).isEqualTo(expectedMessage);
         } else if (expectedMessage instanceof Set<?>) {
             String msg = body.getMessage();
             Set<String> actual = Arrays.stream(msg.split(";"))
@@ -132,7 +146,7 @@ public abstract class AbstractIntegrationTest {
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.toSet());
 
-            assertThat(actual).as("Response message should match expected").isEqualTo(expectedMessage);
+            assertThat(actual).as(RESPONSE_MESSAGE_SHOULD_MATCH_EXPECTED).isEqualTo(expectedMessage);
         }
     }
 
@@ -140,41 +154,45 @@ public abstract class AbstractIntegrationTest {
                                             HttpStatus expectedStatus,
                                             int expectedCode,
                                             Object expectedMessage) {
-        assertThat(response.getStatusCode()).as("Response HTTP status should match expected").isEqualTo(expectedStatus);
+        assertThat(response.getStatusCode()).as(RESPONSE_HTTP_STATUS_SHOULD_MATCH_EXPECTED).isEqualTo(expectedStatus);
         assertErrorBody(response, expectedCode, expectedMessage);
     }
 
     // Make this method fully generic and return T to avoid unchecked casts in tests
-    protected <T> T assertStatusAndBodyAndReturnBody(ResponseEntity<ApiResponse<T>> response) {
-        assertThat(response.getStatusCode()).as("Response HTTP status should be OK").isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).as("Response body should not be null").isNotNull();
+    protected <T> T assertStatusAndBodyAndReturnBody(ResponseEntity<ApiResponse<T>> response, Class<T> clazz) {
+        assertThat(response.getStatusCode()).as(RESPONSE_HTTP_STATUS_SHOULD_BE_OK).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).as(RESPONSE_BODY_SHOULD_NOT_BE_NULL).isNotNull();
 
-        ApiResponse<T> body = response.getBody();
-        assertThat(body.getCode()).as("Response code should be zero").isZero();
+        ApiResponse<T> api = response.getBody();
+        assertThat(api).as(RESPONSE_BODY_SHOULD_NOT_BE_NULL).isNotNull();
+        assertThat(api.getCode()).as(RESPONSE_CODE_SHOULD_BE_ZERO).isZero();
 
-        T data = body.getData();
-        assertThat(data).as("Response data should not be null").isNotNull();
+        Object raw = api.getData();
+        assertThat(raw).as(RESPONSE_DATA_SHOULD_NOT_BE_NULL).isNotNull();
+
+        T data = objectMapper.convertValue(raw, clazz);
+        assertThat(data).as(RESPONSE_DATA_SHOULD_NOT_BE_NULL).isNotNull();
 
         return data;
     }
 
-    // Helper: explicit PTR creator for ApiResponse<T>
-    protected static <T> ParameterizedTypeReference<ApiResponse<T>> apiResponseType() {
-        return new ParameterizedTypeReference<>() {};
-    }
-
-    protected <T> ResponseEntity<ApiResponse<T>> requestPost(String url, String token, Object body, ParameterizedTypeReference<ApiResponse<T>> responseType) {
-
+    private HttpHeaders createHeaders(String token) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         if (token != null && !token.isEmpty())
             headers.setBearerAuth(token);
-        HttpEntity<Object> entity = new HttpEntity<>(body, headers);
+
+        return headers;
+    }
+
+    protected <T> ResponseEntity<ApiResponse<T>> requestPost(String url, String token, Object body, ParameterizedTypeReference<ApiResponse<T>> responseType) {
+
+        HttpHeaders headers = createHeaders(token);
 
         return restTemplate.exchange(
                 url,
                 HttpMethod.POST,
-                entity,
+                new HttpEntity<>(body, headers),
                 responseType
         );
     }
@@ -189,10 +207,7 @@ public abstract class AbstractIntegrationTest {
 
     protected <T> ResponseEntity<ApiResponse<T>> requestGet(String url, String token, ParameterizedTypeReference<ApiResponse<T>> responseType) {
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        if (token != null && !token.isEmpty())
-            headers.setBearerAuth(token);
+        HttpHeaders headers = createHeaders(token);
 
         return restTemplate.exchange(
                 url,
@@ -221,8 +236,7 @@ public abstract class AbstractIntegrationTest {
                 clientId,
                 clientSecret
         );
-        return requestPost(loginUrl, null, request,
-                new ParameterizedTypeReference<>() {});
+        return requestPost(loginUrl, null, request, new ParameterizedTypeReference<>() {});
     }
 
     protected ResponseEntity<ApiResponse<KeycloakTokenResponse>> loginRequest(String username,
@@ -233,14 +247,8 @@ public abstract class AbstractIntegrationTest {
 
     protected KeycloakTokenResponse loginAndGetData(String username, String password) {
         ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(username, password);
-        assertThat(response.getStatusCode()).as("Login request should return HTTP OK").isEqualTo(HttpStatus.OK);
 
-        ApiResponse<KeycloakTokenResponse> body = response.getBody();
-        assertThat(body).as("Login response body should not be null").isNotNull();
-        KeycloakTokenResponse data = body.getData();
-        assertThat(data).as("Login response data should not be null").isNotNull();
-
-        return data;
+        return assertStatusAndBodyAndReturnBody(response, KeycloakTokenResponse.class);
     }
 
     protected String loginAndGetAccess(String username, String password) {
@@ -275,27 +283,13 @@ public abstract class AbstractIntegrationTest {
 
     // Helper: do POST and return typed data (convert via ObjectMapper)
     protected <T> T postAndGetData(String url, String token, Object body, Class<T> clazz) {
-        ResponseEntity<ApiResponse<Object>> resp = requestPost(url, token, body, new ParameterizedTypeReference<>() {});
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        ApiResponse<Object> api = resp.getBody();
-        assertThat(api).isNotNull();
-        Object raw = api.getData();
-        assertThat(raw).as("Response data should not be null").isNotNull();
-        T data = objectMapper.convertValue(raw, clazz);
-        assertThat(data).isNotNull();
-        return data;
+        ResponseEntity<ApiResponse<T>> resp = requestPost(url, token, body, new ParameterizedTypeReference<>() {});
+        return assertStatusAndBodyAndReturnBody(resp, clazz);
     }
 
     // Helper: do GET and return typed data (convert via ObjectMapper)
     protected <T> T getAndGetData(String url, String token, Class<T> clazz) {
-        ResponseEntity<ApiResponse<Object>> resp = requestGet(url, token, new ParameterizedTypeReference<>() {});
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        ApiResponse<Object> api = resp.getBody();
-        assertThat(api).isNotNull();
-        Object raw = api.getData();
-        assertThat(raw).as("Response data should not be null").isNotNull();
-        T data = objectMapper.convertValue(raw, clazz);
-        assertThat(data).isNotNull();
-        return data;
+        ResponseEntity<ApiResponse<T>> resp = requestGet(url, token, new ParameterizedTypeReference<>() {});
+        return assertStatusAndBodyAndReturnBody(resp, clazz);
     }
 }
