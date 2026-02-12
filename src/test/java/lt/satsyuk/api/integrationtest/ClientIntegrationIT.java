@@ -42,7 +42,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
 
         CreateClientRequest req = new CreateClientRequest(JOHN, DOE, PHONE);
 
-        ClientResponse data = postAndGetData(clientUrl, token, req, ClientResponse.class);
+        ClientResponse data = postAndReturnData(clientUrl, token, req, ClientResponse.class);
 
         assertThat(data.phone()).isEqualTo(req.phone());
         assertThat(data.id()).isNotNull();
@@ -51,7 +51,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         assertThat(repo.existsByPhone(req.phone())).isTrue();
 
         // Verify GET by id returns same data
-        ClientResponse fetched = getAndGetData(clientUrl + "/" + data.id(), token, ClientResponse.class);
+        ClientResponse fetched = getAndReturnData(clientUrl + "/" + data.id(), token, ClientResponse.class);
         assertThat(fetched).isNotNull();
         assertThat(fetched.id()).isEqualTo(data.id());
         assertThat(fetched.phone()).isEqualTo(data.phone());
@@ -79,7 +79,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
 
         String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
 
-        ClientResponse data = getAndGetData(clientUrl + "/" + saved.getId(), token, ClientResponse.class);
+        ClientResponse data = getAndReturnData(clientUrl + "/" + saved.getId(), token, ClientResponse.class);
 
         assertThat(data.id()).isEqualTo(saved.getId());
         assertThat(data.phone()).isEqualTo(saved.getPhone());

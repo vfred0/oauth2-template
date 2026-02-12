@@ -22,8 +22,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -41,7 +40,6 @@ public abstract class AbstractIntegrationTest {
     private static final String DB_NAME = "appdb";
     private static final String DB_USER = "app";
     private static final String DB_PASS = "app";
-    private static final int POSTGRES_PORT = 5432;
     public static final String RESPONSE_MESSAGE_SHOULD_MATCH_EXPECTED = "Response message should match expected";
     public static final String RESPONSE_BODY_SHOULD_NOT_BE_NULL = "Response body should not be null";
     public static final String RESPONSE_DATA_SHOULD_NOT_BE_NULL = "Response data should not be null";
@@ -49,23 +47,24 @@ public abstract class AbstractIntegrationTest {
     public static final String RESPONSE_CODE_SHOULD_BE_ZERO = "Response code should be zero";
     public static final String RESPONSE_HTTP_STATUS_SHOULD_MATCH_EXPECTED = "Response HTTP status should match expected";
     public static final String RESPONSE_CODE_SHOULD_MATCH_EXPECTED = "Response code should match expected";
+    private static final String RESPONSE_MESSAGE_SHOULD_NOT_BE_NULL = "Response message should not be null";
+    public static final String FILTER_CONFIG_CACHE = "filterConfigCache";
 
     @Container
-    protected static GenericContainer<?> pg = new GenericContainer<>(DockerImageName.parse("postgres:16"))
-            .withEnv("POSTGRES_DB", DB_NAME)
-            .withEnv("POSTGRES_USER", DB_USER)
-            .withEnv("POSTGRES_PASSWORD", DB_PASS)
-            .withExposedPorts(POSTGRES_PORT)
+    protected static PostgreSQLContainer pg = new PostgreSQLContainer("postgres:16")
+            .withDatabaseName(DB_NAME)
+            .withUsername(DB_USER)
+            .withPassword(DB_PASS)
             .withReuse(true);
 
     @DynamicPropertySource
     static void registerDatasource(DynamicPropertyRegistry registry) {
-        if (pg != null && pg.isRunning()) {
-            String jdbcUrl = "jdbc:postgresql://" + pg.getHost() + ":" + pg.getMappedPort(POSTGRES_PORT) + "/" + DB_NAME;
-            registry.add("spring.datasource.url", () -> jdbcUrl);
-            registry.add("spring.datasource.username", () -> DB_USER);
-            registry.add("spring.datasource.password", () -> DB_PASS);
+        if (!pg.isRunning()) {
+            pg.start();
         }
+        registry.add("spring.datasource.url", pg::getJdbcUrl);
+        registry.add("spring.datasource.username", pg::getUsername);
+        registry.add("spring.datasource.password", pg::getPassword);
     }
 
     @BeforeAll
@@ -115,7 +114,7 @@ public abstract class AbstractIntegrationTest {
 
         if (cacheManager != null) {
             for (String cacheName : cacheManager.getCacheNames()) {
-                if ("filterConfigCache".equals(cacheName)) {
+                if (FILTER_CONFIG_CACHE.equals(cacheName)) {
                     continue;
                 }
 
@@ -141,6 +140,7 @@ public abstract class AbstractIntegrationTest {
             assertThat(body.getMessage()).as(RESPONSE_MESSAGE_SHOULD_MATCH_EXPECTED).isEqualTo(expectedMessage);
         } else if (expectedMessage instanceof Set<?>) {
             String msg = body.getMessage();
+            assertThat(msg).as(RESPONSE_MESSAGE_SHOULD_NOT_BE_NULL).isNotNull();
             Set<String> actual = Arrays.stream(msg.split(";"))
                     .map(String::trim)
                     .filter(s -> !s.isEmpty())
@@ -179,8 +179,9 @@ public abstract class AbstractIntegrationTest {
     private HttpHeaders createHeaders(String token) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        if (token != null && !token.isEmpty())
+        if (token != null && !token.isEmpty()) {
             headers.setBearerAuth(token);
+        }
 
         return headers;
     }
@@ -282,13 +283,13 @@ public abstract class AbstractIntegrationTest {
     }
 
     // Helper: do POST and return typed data (convert via ObjectMapper)
-    protected <T> T postAndGetData(String url, String token, Object body, Class<T> clazz) {
+    protected <T> T postAndReturnData(String url, String token, Object body, Class<T> clazz) {
         ResponseEntity<ApiResponse<T>> resp = requestPost(url, token, body, new ParameterizedTypeReference<>() {});
         return assertStatusAndBodyAndReturnBody(resp, clazz);
     }
 
     // Helper: do GET and return typed data (convert via ObjectMapper)
-    protected <T> T getAndGetData(String url, String token, Class<T> clazz) {
+    protected <T> T getAndReturnData(String url, String token, Class<T> clazz) {
         ResponseEntity<ApiResponse<T>> resp = requestGet(url, token, new ParameterizedTypeReference<>() {});
         return assertStatusAndBodyAndReturnBody(resp, clazz);
     }
