@@ -1,6 +1,7 @@
 package lt.satsyuk.security;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
@@ -11,12 +12,9 @@ import java.util.*;
 public class KeycloakOpaqueRoleConverter implements Converter<Map<String, Object>, Collection<GrantedAuthority>> {
 
     @Override
-    public Collection<GrantedAuthority> convert(Map<String, Object> attributes) {
+    @SuppressWarnings("java:S2638")
+    public @NonNull Collection<GrantedAuthority> convert(@NonNull Map<String, Object> attributes) {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
-
-        if (attributes == null) {
-            return authorities;
-        }
 
         // -----------------------------
         // 1. Realm roles
@@ -47,4 +45,3 @@ public class KeycloakOpaqueRoleConverter implements Converter<Map<String, Object
         return authorities;
     }
 }
-
