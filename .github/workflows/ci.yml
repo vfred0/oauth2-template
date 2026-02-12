@@ -39,6 +39,11 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      - name: Update Docker CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+
       - name: Build and verify
         run: mvn -B -ntp verify
 
