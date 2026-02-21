@@ -148,7 +148,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
 
         assertErrorStatusAndBody(resp, HttpStatus.BAD_REQUEST,
                 ApiResponse.ErrorCode.BAD_REQUEST.getCode(),
-                "id is invalid: invalid-id");
+                "Invalid value: invalid-id");
     }
 
     // negative tests

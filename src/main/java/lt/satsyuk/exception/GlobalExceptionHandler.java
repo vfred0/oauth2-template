@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ClientNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotFound(ClientNotFoundException ex) {
-        String message = messageService.getMessage(ex.getMessageCode(), ex.getClientId());
+        String message = messageService.getMessage(ex.getMessageCode(), new Object[]{String.valueOf(ex.getClientId())});
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -55,7 +55,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        String message = messageService.getMessage("error.typeMismatch", ex.getName(), ex.getValue());
+        String message = messageService.getMessage("error.typeMismatch", new Object[]{String.valueOf(ex.getValue())});
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PhoneAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Void>> handlePhoneExists(PhoneAlreadyExistsException ex) {
-        String message = messageService.getMessage(ex.getMessageCode(), ex.getPhone());
+        String message = messageService.getMessage(ex.getMessageCode(), new Object[]{String.valueOf(ex.getPhone())});
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .contentType(MediaType.APPLICATION_JSON)
