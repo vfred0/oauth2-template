@@ -34,20 +34,6 @@ public class MessageService {
         return MessageFormat.format(pattern, args);
     }
 
-    public String getMessage(String code, String defaultMessage) {
-        Locale locale = getCurrentLocale();
-        return messageSource.getMessage(code, null, defaultMessage, locale);
-    }
-
-    public String getMessage(String code, String defaultMessage, Object[] args) {
-        Locale locale = getCurrentLocale();
-        String pattern = messageSource.getMessage(code, null, defaultMessage, locale);
-        if (args == null || args.length == 0) {
-            return pattern;
-        }
-        return MessageFormat.format(pattern, args);
-    }
-
     private Locale getCurrentLocale() {
         var requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (requestAttributes != null) {
