@@ -4,16 +4,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
 public record LoginRequest(
-        @NotBlank(message = "Username is required")
+        @NotBlank(message = "{validation.username.required}")
         @Schema(example = "jdoe")
         String username,
-        @NotBlank(message = "Password is required")
+        @NotBlank(message = "{validation.password.required}")
         @Schema(example = "P@ssw0rd!")
         String password,
-        @NotBlank(message = "ClientId is required")
+        @NotBlank(message = "{validation.clientId.required}")
         @Schema(example = "spring-app")
         String clientId,
-        @NotBlank(message = "ClientSecret is required")
+        @NotBlank(message = "{validation.clientSecret.required}")
         @Schema(example = "spring-app-secret")
         String clientSecret
 ) {}

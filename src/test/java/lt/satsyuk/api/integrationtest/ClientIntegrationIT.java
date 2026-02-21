@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 
 import java.util.Set;
@@ -147,7 +148,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
 
         assertErrorStatusAndBody(resp, HttpStatus.BAD_REQUEST,
                 ApiResponse.ErrorCode.BAD_REQUEST.getCode(),
-                "id is invalid: invalid-id");
+                "Invalid value: invalid-id");
     }
 
     // negative tests
@@ -185,6 +186,35 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         Set<String> expected = Set.of(
                 "phone: phone must be valid",
                 "firstName: firstName is required"
+        );
+
+        assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
+                ApiResponse.ErrorCode.BAD_REQUEST.getCode(),
+                expected);
+    }
+
+    @Test
+    void create_client_validation_error_russian_locale() {
+        String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
+        // invalid phone and missing firstName
+        CreateClientRequest req = new CreateClientRequest("", DOE, "abc");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(token);
+        headers.set("Accept-Language", "ru");
+        HttpEntity<Object> entity = new HttpEntity<>(req, headers);
+
+        ResponseEntity<ApiResponse<Object>> response = restTemplate.exchange(
+                clientUrl,
+                HttpMethod.POST,
+                entity,
+                new ParameterizedTypeReference<>() {}
+        );
+
+        Set<String> expected = Set.of(
+                "phone: Неверный формат телефона",
+                "firstName: Имя обязательно"
         );
 
         assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,

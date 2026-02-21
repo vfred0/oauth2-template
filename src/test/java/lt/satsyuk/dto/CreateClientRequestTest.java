@@ -59,7 +59,7 @@ class CreateClientRequestTest {
         assertThat(violations)
                 .anySatisfy(violation -> {
                     assertThat(violation.getPropertyPath()).hasToString("firstName");
-                    assertThat(violation.getMessage()).isEqualTo("firstName is required");
+                    assertThat(violation.getMessage()).isEqualTo("{validation.firstName.required}");
                 });
     }
 
@@ -76,7 +76,7 @@ class CreateClientRequestTest {
         assertThat(violations)
                 .anySatisfy(violation -> {
                     assertThat(violation.getPropertyPath()).hasToString("lastName");
-                    assertThat(violation.getMessage()).isEqualTo("lastName is required");
+                    assertThat(violation.getMessage()).isEqualTo("{validation.lastName.required}");
                 });
     }
 
@@ -93,7 +93,7 @@ class CreateClientRequestTest {
         assertThat(violations)
                 .anySatisfy(violation -> {
                     assertThat(violation.getPropertyPath()).hasToString("phone");
-                    assertThat(violation.getMessage()).isEqualTo("phone is required");
+                    assertThat(violation.getMessage()).isEqualTo("{validation.phone.required}");
                 });
     }
 
@@ -140,7 +140,7 @@ class CreateClientRequestTest {
         assertThat(violations)
                 .anySatisfy(violation -> {
                     assertThat(violation.getPropertyPath()).hasToString("phone");
-                    assertThat(violation.getMessage()).isEqualTo("phone must be valid");
+                    assertThat(violation.getMessage()).isEqualTo("{validation.phone.invalid}");
                 });
     }
 
