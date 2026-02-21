@@ -1,5 +1,6 @@
 package lt.satsyuk.service;
 
+import lombok.AllArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -10,15 +11,11 @@ import java.text.MessageFormat;
 import java.util.Locale;
 
 @Service
+@AllArgsConstructor
 public class MessageService {
 
     private final MessageSource messageSource;
     private final LocaleResolver localeResolver;
-
-    public MessageService(MessageSource messageSource, LocaleResolver localeResolver) {
-        this.messageSource = messageSource;
-        this.localeResolver = localeResolver;
-    }
 
     public String getMessage(String code) {
         Locale locale = getCurrentLocale();

@@ -76,7 +76,7 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
         ApiResponse<KeycloakTokenResponse> refreshApi = refreshResponse.getBody();
         assertThat(refreshApi).isNotNull();
-        KeycloakTokenResponse refreshData = refreshApi.getData();
+        KeycloakTokenResponse refreshData = refreshApi.data();
         assertThat(refreshData).isNotNull();
         assertThat(refreshData.getAccessToken()).as("Access token should not be blank").isNotBlank();
         assertThat(refreshData.getRefreshToken()).as("Refresh token should not be blank").isNotBlank();

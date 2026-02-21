@@ -135,11 +135,11 @@ public abstract class AbstractIntegrationTest {
     protected <T> void assertErrorBody(ResponseEntity<ApiResponse<T>> response, int expectedCode, Object expectedMessage) {
         ApiResponse<T> body = response.getBody();
         assertThat(body).as(RESPONSE_BODY_SHOULD_NOT_BE_NULL).isNotNull();
-        assertThat(body.getCode()).as(RESPONSE_CODE_SHOULD_MATCH_EXPECTED).isEqualTo(expectedCode);
+        assertThat(body.code()).as(RESPONSE_CODE_SHOULD_MATCH_EXPECTED).isEqualTo(expectedCode);
         if (expectedMessage instanceof String) {
-            assertThat(body.getMessage()).as(RESPONSE_MESSAGE_SHOULD_MATCH_EXPECTED).isEqualTo(expectedMessage);
+            assertThat(body.message()).as(RESPONSE_MESSAGE_SHOULD_MATCH_EXPECTED).isEqualTo(expectedMessage);
         } else if (expectedMessage instanceof Set<?>) {
-            String msg = body.getMessage();
+            String msg = body.message();
             assertThat(msg).as(RESPONSE_MESSAGE_SHOULD_NOT_BE_NULL).isNotNull();
             Set<String> actual = Arrays.stream(msg.split(";"))
                     .map(String::trim)
@@ -165,9 +165,9 @@ public abstract class AbstractIntegrationTest {
 
         ApiResponse<T> api = response.getBody();
         assertThat(api).as(RESPONSE_BODY_SHOULD_NOT_BE_NULL).isNotNull();
-        assertThat(api.getCode()).as(RESPONSE_CODE_SHOULD_BE_ZERO).isZero();
+        assertThat(api.code()).as(RESPONSE_CODE_SHOULD_BE_ZERO).isZero();
 
-        Object raw = api.getData();
+        Object raw = api.data();
         assertThat(raw).as(RESPONSE_DATA_SHOULD_NOT_BE_NULL).isNotNull();
 
         T data = objectMapper.convertValue(raw, clazz);

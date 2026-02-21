@@ -1,6 +1,8 @@
 package lt.satsyuk.exception;
 
-@lombok.Getter
+import lombok.Getter;
+
+@Getter
 public class ClientNotFoundException extends RuntimeException {
     private final Long clientId;
 
