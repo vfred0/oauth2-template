@@ -2,10 +2,10 @@ package lt.satsyuk.dto;
 import jakarta.validation.constraints.NotBlank;
 
 public record LogoutRequest(
-        @NotBlank(message = "RefreshToken is required")
+        @NotBlank(message = "{validation.refreshToken.required}")
         String refreshToken,
-        @NotBlank(message = "ClientId is required")
+        @NotBlank(message = "{validation.clientId.required}")
         String clientId,
-        @NotBlank(message = "ClientSecret is required")
+        @NotBlank(message = "{validation.clientSecret.required}")
         String clientSecret
 ) {}

@@ -7,18 +7,18 @@ import jakarta.validation.constraints.Size;
 
 public record CreateClientRequest(
 
-        @NotBlank(message = "firstName is required")
+        @NotBlank(message = "{validation.firstName.required}")
         @Size(max = 100)
         @Schema(example = "John")
         String firstName,
 
-        @NotBlank(message = "lastName is required")
+        @NotBlank(message = "{validation.lastName.required}")
         @Size(max = 100)
         @Schema(example = "Doe")
         String lastName,
 
-        @NotBlank(message = "phone is required")
-        @Pattern(regexp = "\\+?\\d{7,15}", message = "phone must be valid")
+        @NotBlank(message = "{validation.phone.required}")
+        @Pattern(regexp = "\\+?\\d{7,15}", message = "{validation.phone.invalid}")
         @Schema(example = "+37060000000")
         String phone
 ) {}

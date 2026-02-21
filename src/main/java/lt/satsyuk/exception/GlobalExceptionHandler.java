@@ -1,7 +1,10 @@
 package lt.satsyuk.exception;
 
 import lt.satsyuk.dto.ApiResponse;
+import lt.satsyuk.service.MessageService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,14 +16,18 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final MessageSource messageSource;
+    private final MessageService messageService;
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
         String errorMessage = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .reduce((a, b) -> a + "; " + b)
-                .orElse("Validation failed");
+                .orElseGet(() -> messageService.getMessage("error.validation.failed"));
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -34,21 +41,21 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.FORBIDDEN.getCode(),
-                        ApiResponse.ErrorCode.FORBIDDEN.getDescription()));
+                        messageService.getMessage("api.error.forbidden")));
     }
 
     @ExceptionHandler(ClientNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotFound(ClientNotFoundException ex) {
+        String message = messageService.getMessage(ex.getMessageCode(), ex.getClientId());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.NOT_FOUND.getCode(),
-                        ex.getMessage()));
+                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.NOT_FOUND.getCode(), message));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        String message = String.format("%s is invalid: %s", ex.getName(), ex.getValue());
+        String message = messageService.getMessage("error.typeMismatch", ex.getName(), ex.getValue());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -57,11 +64,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PhoneAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Void>> handlePhoneExists(PhoneAlreadyExistsException ex) {
+        String message = messageService.getMessage(ex.getMessageCode(), ex.getPhone());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.CONFLICT.getCode(),
-                        ex.getMessage()));
+                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.CONFLICT.getCode(), message));
     }
 
     @ExceptionHandler(Exception.class)
@@ -72,6 +79,6 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
-                        ApiResponse.ErrorCode.INTERNAL_SERVER_ERROR.getDescription()));
+                        messageService.getMessage("api.error.internalServerError")));
     }
 }
