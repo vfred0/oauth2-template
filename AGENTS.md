@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Project snapshot
-- `jwt-demo` is a Spring Boot 3.5 / Java 21 OAuth2 proxy in front of Keycloak, not an identity store. The backend deliberately does **not** persist login/refresh/logout client credentials; callers send `clientId`/`clientSecret` on each auth request (`README.md`, `src/main/java/lt/satsyuk/service/KeycloakAuthService.java`).
+- `jwt-demo` is a Spring Boot 4.0.3 / Java 21 OAuth2 proxy in front of Keycloak, not an identity store. The backend deliberately does **not** persist login/refresh/logout client credentials; callers send `clientId`/`clientSecret` on each auth request (`README.md`, `src/main/java/lt/satsyuk/service/KeycloakAuthService.java`).
 - There are two distinct auth paths: `/api/auth/**` forwards form-encoded requests to Keycloak via `KeycloakAuthService`, while protected endpoints validate bearer tokens through **opaque introspection** using separate resource-server credentials from env (`src/main/java/lt/satsyuk/config/SecurityConfig.java`, `src/main/java/lt/satsyuk/security/KeycloakOpaqueTokenIntrospector.java`, `src/main/resources/application.properties`).
 - Business data is local PostgreSQL only for the `client` table; auth state stays in Keycloak. Persistence changes usually touch Flyway migration + JPA entity + repository + mapper + service + integration test together (`src/main/resources/db/migration/V1__create_client_table.sql`, `src/main/java/lt/satsyuk/model/Client.java`).
 

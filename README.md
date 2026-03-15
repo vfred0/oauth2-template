@@ -27,7 +27,7 @@ Supported features:
 ## 📦 Tech Stack
 
 - Java 21
-- Spring Boot 3.5
+- Spring Boot 4.0.3
 - Spring Security (Resource Server)
 - Spring Web (REST)
 - Keycloak 26+
