@@ -21,7 +21,7 @@ Thank you for your interest in contributing! This document provides guidelines a
 
 | Tool               | Version   |
 |--------------------|-----------|
-| Java (JDK)         | 17+       |
+| Java (JDK)         | 21+       |
 | Maven              | 3.9+      |
 | Docker Desktop     | 4.28.x    |
 | Git                | 2.40+     |
@@ -90,7 +90,7 @@ src/test/java/lt/satsyuk/
 
 ### General
 
-- **Java version**: 17 (use records, sealed classes, text blocks where appropriate)
+- **Java version**: 21 (use records, sealed classes, text blocks where appropriate)
 - **Formatting**: Follow standard Java conventions; use IDE auto-format
 - **No warnings**: Code should compile without warnings
 
