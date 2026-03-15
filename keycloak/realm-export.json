@@ -92,7 +92,7 @@
 
       "publicClient": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "resource-server-secret",
+      "secret": "A64B28FBDC31B2BC068CAFC793DB5FEA",
 
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
