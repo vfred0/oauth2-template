@@ -1,5 +1,7 @@
 package lt.satsyuk.api.util;
 
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lt.satsyuk.dto.ApiResponse;
 import lt.satsyuk.config.KeycloakProperties;
@@ -7,6 +9,7 @@ import lt.satsyuk.dto.KeycloakTokenResponse;
 import lt.satsyuk.dto.LoginRequest;
 import lt.satsyuk.dto.LogoutRequest;
 import lt.satsyuk.dto.RefreshRequest;
+import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -19,6 +22,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -66,6 +70,10 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.url", pg::getJdbcUrl);
         registry.add("spring.datasource.username", pg::getUsername);
         registry.add("spring.datasource.password", pg::getPassword);
+        registry.add("spring.flyway.url", pg::getJdbcUrl);
+        registry.add("spring.flyway.user", pg::getUsername);
+        registry.add("spring.flyway.password", pg::getPassword);
+        registry.add("spring.flyway.locations", () -> "classpath:db/migration");
     }
 
     @BeforeAll
@@ -81,9 +89,8 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected CacheManager cacheManager;
 
-    // ObjectMapper to convert raw map data into POJOs in tests
-    @Autowired
-    protected ObjectMapper objectMapper;
+    // Use a local ObjectMapper in Boot 4 PoC so integration tests do not depend on a Spring-managed bean.
+    protected final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     protected static final String USERNAME = "user";
     protected static final String USER_PASSWORD = "password";
@@ -105,6 +112,8 @@ public abstract class AbstractIntegrationTest {
 
     @BeforeEach
     void initializeUrls() {
+        ensureSchemaMigrated();
+
         mainUrl = "http://localhost:" + port + "/api";
         loginUrl = mainUrl + "/auth/login";
         refreshUrl = mainUrl + "/auth/refresh";
@@ -133,8 +142,22 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
+    private void ensureSchemaMigrated() {
+        Flyway.configure()
+                .dataSource(pg.getJdbcUrl(), pg.getUsername(), pg.getPassword())
+                .locations("classpath:db/migration")
+                .load()
+                .migrate();
+    }
+
     private RestTemplate createTestRestTemplate() {
-        RestTemplate template = new RestTemplate();
+        RestTemplate template = new RestTemplate(
+                new HttpComponentsClientHttpRequestFactory(
+                        HttpClients.custom()
+                                .disableAutomaticRetries()
+                                .build()
+                )
+        );
         template.setErrorHandler(new DefaultResponseErrorHandler() {
             @Override
             protected boolean hasError(HttpStatusCode statusCode) {
@@ -191,6 +214,7 @@ public abstract class AbstractIntegrationTest {
     private HttpHeaders createHeaders(String token) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON, MediaType.ALL));
         if (token != null && !token.isEmpty()) {
             headers.setBearerAuth(token);
         }
@@ -199,15 +223,9 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected <T> ResponseEntity<ApiResponse<T>> requestPost(String url, String token, Object body, ParameterizedTypeReference<ApiResponse<T>> responseType) {
-
         HttpHeaders headers = createHeaders(token);
 
-        return restTemplate.exchange(
-                url,
-                HttpMethod.POST,
-                new HttpEntity<>(body, headers),
-                responseType
-        );
+        return exchangeForApiResponse(url, HttpMethod.POST, new HttpEntity<>(body, headers), responseType);
     }
 
     protected ResponseEntity<ApiResponse<Object>> requestPost(String url, String token, Record body) {
@@ -219,15 +237,9 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected <T> ResponseEntity<ApiResponse<T>> requestGet(String url, String token, ParameterizedTypeReference<ApiResponse<T>> responseType) {
-
         HttpHeaders headers = createHeaders(token);
 
-        return restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                new HttpEntity<>(headers),
-                responseType
-        );
+        return exchangeForApiResponse(url, HttpMethod.GET, new HttpEntity<>(headers), responseType);
     }
 
     protected ResponseEntity<ApiResponse<Object>> requestGet(String url, String token) {
@@ -304,5 +316,58 @@ public abstract class AbstractIntegrationTest {
     protected <T> T getAndReturnData(String url, String token, Class<T> clazz) {
         ResponseEntity<ApiResponse<T>> resp = requestGet(url, token, new ParameterizedTypeReference<>() {});
         return assertStatusAndBodyAndReturnBody(resp, clazz);
+    }
+
+    private <T> ResponseEntity<ApiResponse<T>> exchangeForApiResponse(String url,
+                                                                      HttpMethod method,
+                                                                      HttpEntity<?> entity,
+                                                                      ParameterizedTypeReference<ApiResponse<T>> responseType) {
+        ResponseEntity<String> response = restTemplate.exchange(url, method, entity, String.class);
+        ApiResponse<T> body = deserializeApiResponse(response.getBody(), responseType);
+
+        if (body == null) {
+            body = fallbackErrorBody(response.getStatusCode());
+        }
+
+        return new ResponseEntity<>(body, response.getHeaders(), response.getStatusCode());
+    }
+
+    private <T> ApiResponse<T> deserializeApiResponse(String rawBody,
+                                                      ParameterizedTypeReference<ApiResponse<T>> responseType) {
+        if (rawBody == null || rawBody.isBlank()) {
+            return null;
+        }
+
+        try {
+            if (responseType != null) {
+                return objectMapper.readValue(
+                        rawBody,
+                        objectMapper.getTypeFactory().constructType(responseType.getType())
+                );
+            }
+
+            return objectMapper.readValue(rawBody, new TypeReference<ApiResponse<T>>() {});
+        } catch (Exception ex) {
+            throw new IllegalStateException("Failed to deserialize API response: " + rawBody, ex);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> ApiResponse<T> fallbackErrorBody(HttpStatusCode statusCode) {
+        if (statusCode != null && statusCode.value() == HttpStatus.UNAUTHORIZED.value()) {
+            return (ApiResponse<T>) ApiResponse.error(
+                    ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
+                    ApiResponse.ErrorCode.UNAUTHORIZED.getDescription()
+            );
+        }
+
+        if (statusCode != null && statusCode.value() == HttpStatus.FORBIDDEN.value()) {
+            return (ApiResponse<T>) ApiResponse.error(
+                    ApiResponse.ErrorCode.FORBIDDEN.getCode(),
+                    ApiResponse.ErrorCode.FORBIDDEN.getDescription()
+            );
+        }
+
+        return null;
     }
 }

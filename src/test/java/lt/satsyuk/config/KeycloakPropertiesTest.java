@@ -7,6 +7,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Duration;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KeycloakPropertiesTest {
@@ -23,6 +25,8 @@ class KeycloakPropertiesTest {
                 "keycloak.token-url=http://token",
                 "keycloak.logout-url=http://logout",
                 "keycloak.introspection-url=http://introspect",
+                "keycloak.connect-timeout=3s",
+                "keycloak.read-timeout=4s",
                 "keycloak.client-id=client",
                 "keycloak.client-secret=secret",
                 "keycloak.resource-client-id=resource-client",
@@ -35,6 +39,8 @@ class KeycloakPropertiesTest {
             assertThat(props.getTokenUrl()).isEqualTo("http://token");
             assertThat(props.getLogoutUrl()).isEqualTo("http://logout");
             assertThat(props.getIntrospectionUrl()).isEqualTo("http://introspect");
+            assertThat(props.getConnectTimeout()).isEqualTo(Duration.ofSeconds(3));
+            assertThat(props.getReadTimeout()).isEqualTo(Duration.ofSeconds(4));
             assertThat(props.getClientId()).isEqualTo("client");
             assertThat(props.getClientSecret()).isEqualTo("secret");
             assertThat(props.getResourceClientId()).isEqualTo("resource-client");
