@@ -22,7 +22,7 @@ The backend does not store client credentials for login/refresh/logout — the c
 ### Technology Stack
 | Category | Technology |
 |----------|------------|
-| Language | Java 17 |
+| Language | Java 21 |
 | Framework | Spring Boot 3.5 |
 | Security | Spring Security (Resource Server) |
 | Authentication | Keycloak 26+ |
@@ -88,7 +88,7 @@ The backend does not store client credentials for login/refresh/logout — the c
 ## Build and Run
 
 ### Prerequisites
-- Java 17+
+- Java 21+
 - Maven 3.9+
 - Docker Desktop 4.28.x (for Testcontainers)
 
@@ -193,7 +193,7 @@ Response:
 ## Development Guidelines
 
 ### Coding Style
-- Java 17 with records for DTOs
+- Java 21 with records for DTOs
 - Lombok to reduce boilerplate
 - MapStruct for DTO-entity mapping
 - Validation annotations in DTOs (`@NotBlank`, `@Pattern`, `@Size`)
@@ -240,7 +240,7 @@ Response:
 
 ### GitHub Actions (`.github/workflows/ci.yml`)
 1. Checkout code
-2. Install JDK 17
+2. Install JDK 21
 3. Cache Maven and SonarQube packages
 4. Build and test: `mvn -B -ntp verify`
 5. Test reports (JUnit)

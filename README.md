@@ -26,7 +26,7 @@ Supported features:
 
 ## 📦 Tech Stack
 
-- Java 17
+- Java 21
 - Spring Boot 3.5
 - Spring Security (Resource Server)
 - Spring Web (REST)
