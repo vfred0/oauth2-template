@@ -16,13 +16,14 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.springframework.web.client.DefaultResponseErrorHandler;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -75,8 +76,7 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected KeycloakProperties props;
 
-    @Autowired
-    protected TestRestTemplate restTemplate;
+    protected RestTemplate restTemplate;
 
     @Autowired
     protected CacheManager cacheManager;
@@ -111,6 +111,7 @@ public abstract class AbstractIntegrationTest {
         logoutUrl = mainUrl + "/auth/logout";
 
         clientUrl = mainUrl + "/clients";
+        restTemplate = createTestRestTemplate();
 
         if (cacheManager != null) {
             for (String cacheName : cacheManager.getCacheNames()) {
@@ -130,6 +131,17 @@ public abstract class AbstractIntegrationTest {
                 cache.clear();
             }
         }
+    }
+
+    private RestTemplate createTestRestTemplate() {
+        RestTemplate template = new RestTemplate();
+        template.setErrorHandler(new DefaultResponseErrorHandler() {
+            @Override
+            protected boolean hasError(HttpStatusCode statusCode) {
+                return false;
+            }
+        });
+        return template;
     }
 
     protected <T> void assertErrorBody(ResponseEntity<ApiResponse<T>> response, int expectedCode, Object expectedMessage) {
