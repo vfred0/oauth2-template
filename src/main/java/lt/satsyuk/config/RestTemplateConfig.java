@@ -1,7 +1,6 @@
 package lt.satsyuk.config;
 
-import org.springframework.boot.actuate.metrics.web.client.ObservationRestTemplateCustomizer;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import io.micrometer.observation.ObservationRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
@@ -10,7 +9,9 @@ import org.springframework.web.client.RestTemplate;
 public class RestTemplateConfig {
 
     @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder, ObservationRestTemplateCustomizer customizer) {
-        return builder.additionalCustomizers(customizer).build();
+    public RestTemplate restTemplate(ObservationRegistry observationRegistry) {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setObservationRegistry(observationRegistry);
+        return restTemplate;
     }
 }
