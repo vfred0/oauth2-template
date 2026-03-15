@@ -23,7 +23,7 @@ The backend does not store client credentials for login/refresh/logout — the c
 | Category | Technology |
 |----------|------------|
 | Language | Java 21 |
-| Framework | Spring Boot 3.5 |
+| Framework | Spring Boot 4.0.3 |
 | Security | Spring Security (Resource Server) |
 | Authentication | Keycloak 26+ |
 | Database | PostgreSQL 16 |

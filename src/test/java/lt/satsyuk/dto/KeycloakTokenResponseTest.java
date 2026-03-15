@@ -41,6 +41,33 @@ class KeycloakTokenResponseTest {
     }
 
     @Test
+    void ignoresUnknownFieldsFromKeycloak() throws Exception {
+        String json = """
+                {
+                  "access_token": "access",
+                  "refresh_token": "refresh",
+                  "token_type": "Bearer",
+                  "expires_in": 3600,
+                  "refresh_expires_in": 7200,
+                  "scope": "openid",
+                  "not-before-policy": 0,
+                  "session_state": "session-id"
+                }
+                """;
+
+        KeycloakTokenResponse response = objectMapper.readValue(json, KeycloakTokenResponse.class);
+
+        assertThat(response)
+                .extracting(KeycloakTokenResponse::getAccessToken,
+                        KeycloakTokenResponse::getRefreshToken,
+                        KeycloakTokenResponse::getTokenType,
+                        KeycloakTokenResponse::getExpiresIn,
+                        KeycloakTokenResponse::getRefreshExpiresIn,
+                        KeycloakTokenResponse::getScope)
+                .containsExactly(ACCESS, REFRESH, BEARER, EXPIRES_IN, REFRESH_EXPIRES_IN, OPENID);
+    }
+
+    @Test
     void serializesToSnakeCaseFields() throws Exception {
         KeycloakTokenResponse response = new KeycloakTokenResponse()
                 .setAccessToken(ACCESS)

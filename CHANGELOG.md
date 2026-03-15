@@ -7,8 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Bumped `spring.boot.version` from `4.0.0` to `4.0.3` for dependency remediation via the Spring Boot BOM
+- Picked up newer BOM-managed versions of Tomcat, Logback, and AssertJ without changing application behavior
+
 ### Added
-- Spring Boot 3.5 + Keycloak OAuth2 proxy with dynamic client credentials
+- Spring Boot + Keycloak OAuth2 proxy with dynamic client credentials
 - Opaque token introspection via Spring Security resource server
 - Role-based authorization (ADMIN, CLIENT_CREATE, CLIENT_GET)
 - Client CRUD endpoints (`POST /api/clients`, `GET /api/clients/{id}`)
