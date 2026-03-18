@@ -27,10 +27,7 @@ import java.util.concurrent.ConcurrentMap;
 @RequiredArgsConstructor
 public class RateLimitingFilter extends OncePerRequestFilter {
 
-    private static final String LOGIN_PATH = "/api/auth/login";
-    private static final String CLIENTS_PATH_PREFIX = "/api/clients";
     private static final String RATE_LIMIT_MESSAGE_KEY = "api.error.tooManyRequests";
-    private static final String RATE_LIMITED_CLIENT_ID = "spring-app";
 
     private final SecurityService securityService;
     private final MessageService messageService;
@@ -51,7 +48,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         }
 
         if (isClientsRequest(path)
-                && RATE_LIMITED_CLIENT_ID.equals(securityService.clientId())
+                && rateLimitProperties.getRateLimitedClientId().equals(securityService.clientId())
                 && isRateLimited(clientBuckets, clientsKey(), rateLimitProperties.getClients())) {
             writeRateLimitedResponse(response);
             return;
@@ -61,11 +58,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private boolean isLoginRequest(HttpServletRequest request, String path) {
-        return LOGIN_PATH.equals(path) && "POST".equalsIgnoreCase(request.getMethod());
+        return rateLimitProperties.getLoginPath().equals(path) && "POST".equalsIgnoreCase(request.getMethod());
     }
 
     private boolean isClientsRequest(String path) {
-        return path != null && path.startsWith(CLIENTS_PATH_PREFIX);
+        return path != null && path.startsWith(rateLimitProperties.getClientsPathPrefix());
     }
 
     public void clearBuckets() {
