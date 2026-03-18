@@ -141,6 +141,17 @@ keycloak.introspection-url=${keycloak.auth-server-url}/realms/${keycloak.realm}/
 spring.security.oauth2.resourceserver.opaque-token.introspection-uri=${keycloak.introspection-url}
 spring.security.oauth2.resourceserver.opaque-token.client-id=${keycloak.resource-client-id}
 spring.security.oauth2.resourceserver.opaque-token.client-secret=${keycloak.resource-client-secret}
+
+# Rate limiting
+app.rate-limit.login-path=/api/auth/login
+app.rate-limit.clients-path-prefix=/api/clients
+app.rate-limit.rate-limited-client-id=spring-app
+
+app.rate-limit.login.capacity=5
+app.rate-limit.login.window-seconds=60
+
+app.rate-limit.clients.capacity=20
+app.rate-limit.clients.window-seconds=60
 ```
 
 The backend **does not store** client credentials for login/refresh/logout.  
@@ -423,6 +434,10 @@ They are configured in `application.properties` via `app.rate-limit.*` propertie
 Example:
 
 ```properties
+app.rate-limit.login-path=/api/auth/login
+app.rate-limit.clients-path-prefix=/api/clients
+app.rate-limit.rate-limited-client-id=spring-app
+
 app.rate-limit.login.capacity=5
 app.rate-limit.login.window-seconds=60
 
