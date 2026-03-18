@@ -4,17 +4,21 @@ import lt.satsyuk.auth.JsonAccessDeniedHandler;
 import lt.satsyuk.auth.JsonAuthEntryPoint;
 import lt.satsyuk.security.KeycloakOpaqueRoleConverter;
 import lt.satsyuk.security.KeycloakOpaqueTokenIntrospector;
+import lt.satsyuk.security.RateLimitingFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableMethodSecurity
+@EnableConfigurationProperties(RateLimitProperties.class)
 public class SecurityConfig {
 
     @Bean
@@ -22,7 +26,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    OpaqueTokenIntrospector opaqueTokenIntrospector,
                                                    JsonAuthEntryPoint jsonAuthEntryPoint,
-                                                   JsonAccessDeniedHandler jsonAccessDeniedHandler) throws Exception {
+                                                   JsonAccessDeniedHandler jsonAccessDeniedHandler,
+                                                   RateLimitingFilter rateLimitingFilter) {
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -45,6 +50,8 @@ public class SecurityConfig {
                         .authenticationEntryPoint(jsonAuthEntryPoint)
                         .accessDeniedHandler(jsonAccessDeniedHandler)
                 );
+
+        http.addFilterAfter(rateLimitingFilter, BearerTokenAuthenticationFilter.class);
 
         return http.build();
     }

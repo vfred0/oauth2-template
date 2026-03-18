@@ -31,7 +31,7 @@ Supported features:
 - Spring Security (Resource Server)
 - Spring Web (REST)
 - Keycloak 26+
-- Bucket4j Spring Boot Starter
+- Bucket4j core + custom servlet filter
 - JUnit 5 + RestTemplate-based integration tests
 - Testcontainers (Keycloak)
 - WireMock (Negative testing)
@@ -416,14 +416,18 @@ Requires: `CLIENT_GET`
 
 # 🚦 Rate Limiting (Bucket4j)
 
-Rate limits are defined entirely in `application.properties`.
+Rate limits are implemented with **Bucket4j core** and a custom servlet filter compatible with Spring Boot 4.
+
+They are configured in `application.properties` via `app.rate-limit.*` properties.
 
 Example:
 
 ```properties
-bucket4j.filters[0].url=/api/auth/login
-bucket4j.filters[0].rate-limits[0].bandwidths[0].capacity=5
-bucket4j.filters[0].rate-limits[0].bandwidths[0].refill-period=1m
+app.rate-limit.login.capacity=5
+app.rate-limit.login.window-seconds=60
+
+app.rate-limit.clients.capacity=20
+app.rate-limit.clients.window-seconds=60
 ```
 
 ---

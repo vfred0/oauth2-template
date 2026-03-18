@@ -15,6 +15,7 @@ public record ApiResponse<T>(int code, T data, String message) {
         INVALID_GRANT(40102, "Invalid grant"),
         INVALID_TOKEN(40103, "Invalid token"),
         FORBIDDEN(40301, "Forbidden"),
+        TOO_MANY_REQUESTS(42901, "Too many requests"),
         NOT_FOUND(40401, "Not found"),
         CONFLICT(40901, "Conflict"),
         INTERNAL_SERVER_ERROR(50000, "Internal server error");

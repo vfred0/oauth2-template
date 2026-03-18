@@ -14,7 +14,7 @@
 - Security failures return JSON from `JsonAuthEntryPoint` and `JsonAccessDeniedHandler`; do not introduce HTML/error-page defaults.
 - `KeycloakAuthService` also emits Micrometer counters `auth.login`, `auth.refresh`, `auth.logout` tagged with `result=success|failure`; preserve these counters when changing auth flows.
 - Outbound Keycloak calls should reuse the observation-enabled `RestTemplate` bean from `RestTemplateConfig` rather than constructing new clients ad hoc.
-- Bucket4j rules for `/api/clients.*` depend on `@securityService.clientId() == 'spring-app'`; if you change token claims, client IDs, or auth principal shape, re-check rate limiting behavior (`src/main/java/lt/satsyuk/service/SecurityService.java`, `src/main/resources/application.properties`).
+- Bucket4j rules for `/api/clients.*` depend on `securityService.clientId()` resolving to `spring-app`; if you change token claims, client IDs, or auth principal shape, re-check rate limiting behavior in the custom rate limiting filter and `application.properties` (`src/main/java/lt/satsyuk/service/SecurityService.java`, `src/main/java/lt/satsyuk/security/RateLimitingFilter.java`, `src/main/resources/application.properties`).
 
 ## Testing and developer workflows
 - `mvn test` runs Surefire unit tests matching `*Test.java` and writes coverage to `target/site/jacoco/index.html`.

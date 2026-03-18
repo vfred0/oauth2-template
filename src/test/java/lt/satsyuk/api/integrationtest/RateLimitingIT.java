@@ -4,7 +4,6 @@ import lt.satsyuk.MainApplication;
 import lt.satsyuk.dto.ApiResponse;
 import lt.satsyuk.api.util.WireMockIntegrationTest;
 import lt.satsyuk.dto.KeycloakTokenResponse;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
@@ -21,7 +20,6 @@ import static org.awaitility.Awaitility.await;
         classes = MainApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-@Disabled("Temporarily disabled in Spring Boot 4 PoC: bucket4j-spring-boot-starter 0.13.0 is incompatible")
 class RateLimitingIT extends WireMockIntegrationTest {
 
     // ------------------------------------------------------------
@@ -40,6 +38,8 @@ class RateLimitingIT extends WireMockIntegrationTest {
         ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().code()).isEqualTo(ApiResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());
     }
 
     @Test
@@ -53,6 +53,8 @@ class RateLimitingIT extends WireMockIntegrationTest {
         // Verify rate limit is active
         ResponseEntity<ApiResponse<KeycloakTokenResponse>> blockedResponse = loginRequest(USERNAME, USER_PASSWORD);
         assertThat(blockedResponse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(blockedResponse.getBody()).isNotNull();
+        assertThat(blockedResponse.getBody().code()).isEqualTo(ApiResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());
 
         // Wait for rate limit to reset (20 seconds + buffer)
         await()
@@ -153,6 +155,8 @@ class RateLimitingIT extends WireMockIntegrationTest {
         // Verify login is rate limited
         ResponseEntity<ApiResponse<KeycloakTokenResponse>> loginResponse = loginRequest(USERNAME, USER_PASSWORD);
         assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(loginResponse.getBody()).isNotNull();
+        assertThat(loginResponse.getBody().code()).isEqualTo(ApiResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());
 
         // Clients endpoint should still work (independent rate limit)
         ResponseEntity<ApiResponse<Object>> response = requestGet(clientUrl + "/invalid-id", token);
