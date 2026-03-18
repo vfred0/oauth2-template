@@ -21,7 +21,7 @@ Thank you for your interest in contributing! This document provides guidelines a
 
 | Tool               | Version   |
 |--------------------|-----------|
-| Java (JDK)         | 21+       |
+| Java (JDK)         | 25+       |
 | Maven              | 3.9+      |
 | Docker Desktop     | 4.28.x    |
 | Git                | 2.40+     |
@@ -90,7 +90,7 @@ src/test/java/lt/satsyuk/
 
 ### General
 
-- **Java version**: 21 (use records, sealed classes, text blocks where appropriate)
+- **Java version**: 25 (use records, sealed classes, text blocks where appropriate)
 - **Formatting**: Follow standard Java conventions; use IDE auto-format
 - **No warnings**: Code should compile without warnings
 
@@ -159,6 +159,7 @@ docs: update API documentation
    ```bash
    mvn clean verify
    ```
+   Baseline is verified on JDK 25.
 4. Push your branch and create a Pull Request to `master`
 5. Fill in the PR template with a description of changes
 6. Request review from at least one team member

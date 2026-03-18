@@ -26,18 +26,20 @@ Supported features:
 
 ## 📦 Tech Stack
 
-- Java 21
+- Java 25
 - Spring Boot 4.0.3
 - Spring Security (Resource Server)
 - Spring Web (REST)
 - Keycloak 26+
 - Bucket4j Spring Boot Starter
-- JUnit 5 + TestRestTemplate
+- JUnit 5 + RestTemplate-based integration tests
 - Testcontainers (Keycloak)
 - WireMock (Negative testing)
 - OpenTelemetry + Logstash encoder
 - Micrometer + Prometheus
 - Docker Compose  
+
+> Baseline verified on JDK 25 with `Lombok 1.18.44` and `JaCoCo 0.8.14`.
 
 ---
 
