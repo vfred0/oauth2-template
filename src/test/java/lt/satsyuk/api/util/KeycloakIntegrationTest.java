@@ -19,7 +19,7 @@ public abstract class KeycloakIntegrationTest extends AbstractIntegrationTest {
     static void checkDockerAvailable() {
         try {
             assumeTrue(keycloak != null && keycloak.isRunning(), "Keycloak container should be running");
-        } catch (Exception e) {
+        } catch (Exception _) {
             assumeTrue(false, "Docker is not available. Please install Docker Desktop for Windows and ensure it's running.");
         }
     }

@@ -160,7 +160,7 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
                 if ("user".equals(username) && "password".equals(password)) {
                     return token(JwtTestUtil.generateToken("user", "USER", issuer));
                 }
-            } catch (Exception e) {
+            } catch (Exception _) {
                 return error(500, "token_generation_failed");
             }
 
