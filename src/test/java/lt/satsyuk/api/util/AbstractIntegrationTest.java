@@ -9,6 +9,7 @@ import lt.satsyuk.dto.KeycloakTokenResponse;
 import lt.satsyuk.dto.LoginRequest;
 import lt.satsyuk.dto.LogoutRequest;
 import lt.satsyuk.dto.RefreshRequest;
+import lt.satsyuk.security.RateLimitingFilter;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -89,6 +90,9 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected CacheManager cacheManager;
 
+    @Autowired
+    protected RateLimitingFilter rateLimitingFilter;
+
     // Use a local ObjectMapper in Boot 4 PoC so integration tests do not depend on a Spring-managed bean.
     protected final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
@@ -121,6 +125,10 @@ public abstract class AbstractIntegrationTest {
 
         clientUrl = mainUrl + "/clients";
         restTemplate = createTestRestTemplate();
+
+        if (rateLimitingFilter != null) {
+            rateLimitingFilter.clearBuckets();
+        }
 
         if (cacheManager != null) {
             for (String cacheName : cacheManager.getCacheNames()) {

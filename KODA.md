@@ -28,7 +28,7 @@ The backend does not store client credentials for login/refresh/logout — the c
 | Authentication | Keycloak 26+ |
 | Database | PostgreSQL 16 |
 | Migrations | Flyway |
-| Rate Limiting | Bucket4j Spring Boot Starter |
+| Rate Limiting | Bucket4j core + custom servlet filter |
 | Cache | Caffeine |
 | Mapping | MapStruct |
 | Testing | JUnit 5, Testcontainers, WireMock |

@@ -55,7 +55,7 @@ If you discover a security vulnerability in this project, please report it respo
 
 ### Rate Limiting
 
-- Rate limiting is enabled via **Bucket4j** to prevent brute-force attacks
+- Rate limiting is enabled via **Bucket4j** with a custom servlet filter to prevent brute-force attacks
 - `/api/auth/login`: 5 requests per minute
 - `/api/clients`: 20 requests per minute
 
@@ -63,7 +63,7 @@ If you discover a security vulnerability in this project, please report it respo
 
 - Application container runs as a non-root user (`app`)
 - Multi-stage Docker build to minimize image size and attack surface
-- Base image: `eclipse-temurin:17-jre-alpine`
+- Base image: `eclipse-temurin:25-jre-alpine`
 
 ### Dependencies
 
