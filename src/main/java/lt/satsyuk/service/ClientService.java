@@ -34,7 +34,7 @@ public class ClientService {
             Client saved = repo.saveAndFlush(client);
 
             return mapper.toResponse(saved);
-        } catch (DataIntegrityViolationException ex) {
+        } catch (DataIntegrityViolationException _) {
             throw new PhoneAlreadyExistsException(req.phone());
         }
     }

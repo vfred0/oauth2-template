@@ -100,14 +100,16 @@ class RequestServiceTest {
         @SuppressWarnings("unchecked")
         Map<String, Object> nestedResponse = (Map<String, Object>) response.response();
 
-        assertThat(nestedResponse.get("code")).isEqualTo(0);
-        assertThat(nestedResponse.get("message")).isEqualTo("OK");
+        assertThat(nestedResponse)
+                .containsEntry("code", 0)
+                .containsEntry("message", "OK");
 
         @SuppressWarnings("unchecked")
         Map<String, Object> data = (Map<String, Object>) nestedResponse.get("data");
 
-        assertThat(data.get("id")).isEqualTo(1);
-        assertThat(data.get("phone")).isEqualTo("+37061234567");
+        assertThat(data)
+                .containsEntry("id", 1)
+                .containsEntry("phone", "+37061234567");
     }
 
     @Test
