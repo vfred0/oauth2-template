@@ -57,9 +57,7 @@ public class QuartzConfig {
 
         @Override
         protected Object createJobInstance(TriggerFiredBundle bundle) throws Exception {
-            Object job = super.createJobInstance(bundle);
-            beanFactory.autowireBean(job);
-            return job;
+            return beanFactory.createBean(bundle.getJobDetail().getJobClass());
         }
     }
 }

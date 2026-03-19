@@ -4,7 +4,6 @@ import lt.satsyuk.service.RequestProcessingService;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
 import java.util.UUID;
@@ -13,8 +12,11 @@ public class RequestProcessingJob extends QuartzJobBean {
 
     public static final String REQUEST_ID_KEY = "requestId";
 
-    @Autowired
-    private RequestProcessingService requestProcessingService;
+    private final RequestProcessingService requestProcessingService;
+
+    public RequestProcessingJob(RequestProcessingService requestProcessingService) {
+        this.requestProcessingService = requestProcessingService;
+    }
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
