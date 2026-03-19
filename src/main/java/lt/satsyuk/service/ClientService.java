@@ -7,6 +7,7 @@ import lt.satsyuk.exception.PhoneAlreadyExistsException;
 import lt.satsyuk.mapper.ClientMapper;
 import lt.satsyuk.model.Client;
 import lt.satsyuk.repository.ClientRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,10 +29,14 @@ public class ClientService {
             throw new PhoneAlreadyExistsException(req.phone());
         }
 
-        Client client = mapper.toEntity(req);
-        Client saved = repo.save(client);
+        try {
+            Client client = mapper.toEntity(req);
+            Client saved = repo.saveAndFlush(client);
 
-        return mapper.toResponse(saved);
+            return mapper.toResponse(saved);
+        } catch (DataIntegrityViolationException _) {
+            throw new PhoneAlreadyExistsException(req.phone());
+        }
     }
 
     public ClientResponse get(Long id) {

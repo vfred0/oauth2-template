@@ -10,7 +10,10 @@ import jakarta.validation.Valid;
 import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.dto.ClientResponse;
 import lt.satsyuk.dto.CreateClientRequest;
+import lt.satsyuk.dto.RequestAcceptedResponse;
 import lt.satsyuk.service.ClientService;
+import lt.satsyuk.service.RequestService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,24 +23,28 @@ import org.springframework.web.bind.annotation.*;
 @SecurityRequirement(name = "bearerAuth")
 public class ClientController {
 
-    private final ClientService service;
+    private final ClientService clientService;
+    private final RequestService requestService;
 
-    public ClientController(ClientService service) {
-        this.service = service;
+    public ClientController(ClientService clientService, RequestService requestService) {
+        this.clientService = clientService;
+        this.requestService = requestService;
     }
 
     @PostMapping
     @PreAuthorize("hasRole('CLIENT_CREATE')")
-    @Operation(summary = "Create client", description = "Creates a new client.")
-    @ApiResponse(responseCode = "200", description = "Client created",
+    @Operation(summary = "Create client", description = "Creates an asynchronous client creation request.")
+    @ApiResponse(responseCode = "202", description = "Client creation request accepted",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AppResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Validation error",
+            content = @Content(mediaType = "application/json"))
     @ApiResponse(responseCode = "401", description = "Unauthorized",
             content = @Content(mediaType = "application/json"))
     @ApiResponse(responseCode = "403", description = "Forbidden",
             content = @Content(mediaType = "application/json"))
-    public AppResponse<ClientResponse> create(@Valid @RequestBody CreateClientRequest req) {
-        return AppResponse.ok(service.create(req));
+    public ResponseEntity<AppResponse<RequestAcceptedResponse>> create(@Valid @RequestBody CreateClientRequest req) {
+        return ResponseEntity.accepted().body(AppResponse.ok(requestService.submitClientCreateRequest(req)));
     }
 
     @GetMapping("/{id}")
@@ -53,6 +60,6 @@ public class ClientController {
     @ApiResponse(responseCode = "404", description = "Not found",
             content = @Content(mediaType = "application/json"))
     public AppResponse<ClientResponse> get(@PathVariable("id") Long id) {
-        return AppResponse.ok(service.get(id));
+        return AppResponse.ok(clientService.get(id));
     }
 }

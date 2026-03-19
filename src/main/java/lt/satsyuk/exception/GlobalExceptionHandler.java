@@ -53,6 +53,15 @@ public class GlobalExceptionHandler {
                 .body(AppResponse.<Void>error(AppResponse.ErrorCode.NOT_FOUND.getCode(), message));
     }
 
+    @ExceptionHandler(RequestNotFoundException.class)
+    public ResponseEntity<AppResponse<Void>> handleRequestNotFound(RequestNotFoundException ex) {
+        String message = messageService.getMessage(ex.getMessageCode(), new Object[]{String.valueOf(ex.getRequestId())});
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(AppResponse.<Void>error(AppResponse.ErrorCode.NOT_FOUND.getCode(), message));
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<AppResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         String message = messageService.getMessage("error.typeMismatch", new Object[]{String.valueOf(ex.getValue())});

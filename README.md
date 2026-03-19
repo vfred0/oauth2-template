@@ -15,6 +15,7 @@ Supported features:
 - 🛡 Opaque token validation via Spring Security introspection  
 - 🎭 Role-based authorization (ADMIN and client roles like CLIENT_CREATE, CLIENT_GET)  
 - 🚦 Configurable rate limiting (Bucket4j)  
+- ⏱ Persistent Quartz scheduler for asynchronous client creation requests
 - 🧪 Full integration test suite
 - 📦 Automatic Keycloak realm import (users, roles, mappers)
 - 🧪 WireMock for negative testing (network failures, timeouts, error responses)
@@ -32,6 +33,7 @@ Supported features:
 - Spring Web (REST)
 - Keycloak 26+
 - Bucket4j core + custom servlet filter
+- Quartz Scheduler (JDBC job store)
 - JUnit 5 + RestTemplate-based integration tests
 - Testcontainers (Keycloak)
 - WireMock (Negative testing)
@@ -142,6 +144,15 @@ spring.security.oauth2.resourceserver.opaque-token.introspection-uri=${keycloak.
 spring.security.oauth2.resourceserver.opaque-token.client-id=${keycloak.resource-client-id}
 spring.security.oauth2.resourceserver.opaque-token.client-secret=${keycloak.resource-client-secret}
 
+# Persistent Quartz jobs in PostgreSQL
+spring.quartz.job-store-type=jdbc
+spring.quartz.jdbc.initialize-schema=never
+spring.quartz.properties.org.quartz.scheduler.instanceName=jwt-demo-scheduler
+spring.quartz.properties.org.quartz.jobStore.class=org.springframework.scheduling.quartz.LocalDataSourceJobStore
+spring.quartz.properties.org.quartz.jobStore.driverDelegateClass=org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+spring.quartz.properties.org.quartz.jobStore.tablePrefix=QRTZ_
+spring.quartz.properties.org.quartz.jobStore.isClustered=true
+
 # Rate limiting
 app.rate-limit.login-path=/api/auth/login
 app.rate-limit.clients-path-prefix=/api/clients
@@ -156,6 +167,23 @@ app.rate-limit.clients.window-seconds=60
 
 The backend **does not store** client credentials for login/refresh/logout.  
 The resource server uses **service credentials** (env vars) for introspection.
+
+---
+
+## Asynchronous client creation flow
+
+`POST /api/clients` accepts a request for background processing instead of creating the `client` row synchronously.
+
+1. The API validates the request body.
+2. A new `Request` row is persisted with `type=CLIENT_CREATE` and `status=CREATED`.
+3. The original payload is stored in PostgreSQL `jsonb` (`request_data`).
+4. A persistent Quartz job is created in PostgreSQL (`QRTZ_*` tables).
+5. A Quartz worker changes the request status to `IN_PROGRESS` and executes the existing client creation business logic.
+6. On success, the request becomes `PROCESSED` and `response_data` stores the final JSON response.
+7. On failure, the request becomes `PROCESSING_ERROR` and `response_data` stores the error JSON response.
+8. The caller polls `GET /api/requests/{requestId}` until processing finishes.
+
+This makes processing durable across application restarts while keeping the public API responsive.
 
 ---
 
