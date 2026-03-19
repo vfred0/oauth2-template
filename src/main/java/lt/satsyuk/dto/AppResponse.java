@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record ApiResponse<T>(int code, T data, String message) {
+public record AppResponse<T>(int code, T data, String message) {
 
     @AllArgsConstructor
     @Getter
@@ -24,11 +24,11 @@ public record ApiResponse<T>(int code, T data, String message) {
         private final String description;
     }
 
-    public static <T> ApiResponse<T> ok(T data) {
-        return new ApiResponse<>(0, data, "OK");
+    public static <T> AppResponse<T> ok(T data) {
+        return new AppResponse<>(0, data, "OK");
     }
 
-    public static <T> ApiResponse<T> error(int code, String message) {
-        return new ApiResponse<>(code, null, message);
+    public static <T> AppResponse<T> error(int code, String message) {
+        return new AppResponse<>(code, null, message);
     }
 }

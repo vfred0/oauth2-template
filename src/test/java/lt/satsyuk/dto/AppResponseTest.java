@@ -4,14 +4,14 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ApiResponseTest {
+class AppResponseTest {
 
     @Test
     void toStringIncludesFields() {
-        ApiResponse<String> response = ApiResponse.ok("payload");
+        AppResponse<String> response = AppResponse.ok("payload");
 
         assertThat(response.toString())
-                .contains("ApiResponse")
+                .contains("AppResponse")
                 .contains("code=0")
                 .contains("data=payload")
                 .contains("message=OK");
@@ -19,13 +19,14 @@ class ApiResponseTest {
 
     @Test
     void toStringIncludesNullDataOnError() {
-        ApiResponse<Void> response = ApiResponse.error(ApiResponse.ErrorCode.BAD_REQUEST.getCode(), "Bad request");
+        AppResponse<Void> response = AppResponse.error(AppResponse.ErrorCode.BAD_REQUEST.getCode(), "Bad request");
 
         assertThat(response.toString())
-                .contains("ApiResponse")
+                .contains("AppResponse")
                 .contains("code=40001")
                 .contains("data=null")
                 .contains("message=Bad request");
     }
 }
+
 

@@ -1,6 +1,6 @@
 package lt.satsyuk.api.integrationtest;
 
-import lt.satsyuk.dto.ApiResponse;
+import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.api.util.KeycloakIntegrationTest;
 import lt.satsyuk.dto.ClientResponse;
 import lt.satsyuk.dto.CreateClientRequest;
@@ -67,10 +67,10 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
         CreateClientRequest req = new CreateClientRequest(JOHN, DOE, PHONE);
 
-        ResponseEntity<ApiResponse<Object>> resp = requestPost(clientUrl, token, req);
+        ResponseEntity<AppResponse<Object>> resp = requestPost(clientUrl, token, req);
 
         assertErrorStatusAndBody(resp, HttpStatus.CONFLICT,
-                ApiResponse.ErrorCode.CONFLICT.getCode(),
+                AppResponse.ErrorCode.CONFLICT.getCode(),
                 "Client with phone=" + req.phone() + " already exists");
     }
 
@@ -90,10 +90,10 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
     void get_client_not_found_returns_404() {
         String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
 
-        ResponseEntity<ApiResponse<Object>> resp = requestGet(clientUrl + "/999999", token);
+        ResponseEntity<AppResponse<Object>> resp = requestGet(clientUrl + "/999999", token);
 
         assertErrorStatusAndBody(resp, HttpStatus.NOT_FOUND,
-                ApiResponse.ErrorCode.NOT_FOUND.getCode(),
+                AppResponse.ErrorCode.NOT_FOUND.getCode(),
                 "Client with id=999999 not found");
     }
 
@@ -102,11 +102,11 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
     void get_client_unauthorized() {
         Client saved = repo.save(Client.builder().firstName("Bob").lastName("Brown").phone("+37063333333").build());
 
-        ResponseEntity<ApiResponse<Object>> resp = requestGet(clientUrl + "/" + saved.getId());
+        ResponseEntity<AppResponse<Object>> resp = requestGet(clientUrl + "/" + saved.getId());
 
         assertErrorStatusAndBody(resp, HttpStatus.UNAUTHORIZED,
-                ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
-                ApiResponse.ErrorCode.UNAUTHORIZED.getDescription());
+                AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
+                AppResponse.ErrorCode.UNAUTHORIZED.getDescription());
     }
 
     @Test
@@ -115,16 +115,16 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         KeycloakTokenResponse tokens = loginAndGetData(USERNAME, USER_PASSWORD);
         String accessToken = tokens.getAccessToken();
 
-        ResponseEntity<ApiResponse<Object>> resp = requestGet(clientUrl + "/" + saved.getId(), accessToken);
+        ResponseEntity<AppResponse<Object>> resp = requestGet(clientUrl + "/" + saved.getId(), accessToken);
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        ResponseEntity<ApiResponse<Void>> logoutResponse = logoutRequest(tokens.getRefreshToken());
+        ResponseEntity<AppResponse<Void>> logoutResponse = logoutRequest(tokens.getRefreshToken());
         assertThat(logoutResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        ResponseEntity<ApiResponse<Object>> errorResponse = requestGet(clientUrl + "/" + saved.getId(), accessToken);
+        ResponseEntity<AppResponse<Object>> errorResponse = requestGet(clientUrl + "/" + saved.getId(), accessToken);
         assertErrorStatusAndBody(errorResponse, HttpStatus.UNAUTHORIZED,
-                ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
-                ApiResponse.ErrorCode.UNAUTHORIZED.getDescription());
+                AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
+                AppResponse.ErrorCode.UNAUTHORIZED.getDescription());
     }
 
     @Test
@@ -133,21 +133,21 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
 
         String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
 
-        ResponseEntity<ApiResponse<Object>> resp = requestGet(clientUrl + "/" + saved.getId(), token);
+        ResponseEntity<AppResponse<Object>> resp = requestGet(clientUrl + "/" + saved.getId(), token);
 
         assertErrorStatusAndBody(resp, HttpStatus.FORBIDDEN,
-                ApiResponse.ErrorCode.FORBIDDEN.getCode(),
-                ApiResponse.ErrorCode.FORBIDDEN.getDescription());
+                AppResponse.ErrorCode.FORBIDDEN.getCode(),
+                AppResponse.ErrorCode.FORBIDDEN.getDescription());
     }
 
     @Test
     void get_client_invalid_id_returns_bad_request() {
         String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
 
-        ResponseEntity<ApiResponse<Object>> resp = requestGet(clientUrl + "/invalid-id", token);
+        ResponseEntity<AppResponse<Object>> resp = requestGet(clientUrl + "/invalid-id", token);
 
         assertErrorStatusAndBody(resp, HttpStatus.BAD_REQUEST,
-                ApiResponse.ErrorCode.BAD_REQUEST.getCode(),
+                AppResponse.ErrorCode.BAD_REQUEST.getCode(),
                 "Invalid value: invalid-id");
     }
 
@@ -156,11 +156,11 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
     void create_client_unauthorized() {
         CreateClientRequest req = new CreateClientRequest("No", "Token", "+37061111111");
 
-        ResponseEntity<ApiResponse<Object>> resp = requestPost(clientUrl, req);
+        ResponseEntity<AppResponse<Object>> resp = requestPost(clientUrl, req);
 
         assertErrorStatusAndBody(resp, HttpStatus.UNAUTHORIZED,
-                ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
-                ApiResponse.ErrorCode.UNAUTHORIZED.getDescription());
+                AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
+                AppResponse.ErrorCode.UNAUTHORIZED.getDescription());
     }
 
     @Test
@@ -168,11 +168,11 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
         CreateClientRequest req = new CreateClientRequest("No", "Role", "+37062222222");
 
-        ResponseEntity<ApiResponse<Object>> resp = requestPost(clientUrl, token, req);
+        ResponseEntity<AppResponse<Object>> resp = requestPost(clientUrl, token, req);
 
         assertErrorStatusAndBody(resp, HttpStatus.FORBIDDEN,
-                ApiResponse.ErrorCode.FORBIDDEN.getCode(),
-                ApiResponse.ErrorCode.FORBIDDEN.getDescription());
+                AppResponse.ErrorCode.FORBIDDEN.getCode(),
+                AppResponse.ErrorCode.FORBIDDEN.getDescription());
     }
 
     @Test
@@ -181,7 +181,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         // invalid phone and missing firstName
         CreateClientRequest req = new CreateClientRequest("", DOE, "abc");
 
-        ResponseEntity<ApiResponse<Object>> response = requestPost(clientUrl, token, req);
+        ResponseEntity<AppResponse<Object>> response = requestPost(clientUrl, token, req);
 
         Set<String> expected = Set.of(
                 "phone: phone must be valid",
@@ -189,7 +189,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         );
 
         assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
-                ApiResponse.ErrorCode.BAD_REQUEST.getCode(),
+                AppResponse.ErrorCode.BAD_REQUEST.getCode(),
                 expected);
     }
 
@@ -205,7 +205,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         headers.set("Accept-Language", "ru");
         HttpEntity<Object> entity = new HttpEntity<>(req, headers);
 
-        ResponseEntity<ApiResponse<Object>> response = restTemplate.exchange(
+        ResponseEntity<AppResponse<Object>> response = restTemplate.exchange(
                 clientUrl,
                 HttpMethod.POST,
                 entity,
@@ -218,7 +218,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         );
 
         assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
-                ApiResponse.ErrorCode.BAD_REQUEST.getCode(),
+                AppResponse.ErrorCode.BAD_REQUEST.getCode(),
                 expected);
     }
 }

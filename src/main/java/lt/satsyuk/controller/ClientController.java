@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lt.satsyuk.dto.ApiResponse;
+import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.dto.ClientResponse;
 import lt.satsyuk.dto.CreateClientRequest;
 import lt.satsyuk.service.ClientService;
@@ -30,13 +30,13 @@ public class ClientController {
     @Operation(summary = "Create client", description = "Creates a new client.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Client created",
             content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = lt.satsyuk.dto.ApiResponse.class)))
+                    schema = @Schema(implementation = lt.satsyuk.dto.AppResponse.class)))
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
             content = @Content(mediaType = "application/json"))
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
             content = @Content(mediaType = "application/json"))
-    public ApiResponse<ClientResponse> create(@Valid @RequestBody CreateClientRequest req) {
-        return ApiResponse.ok(service.create(req));
+    public AppResponse<ClientResponse> create(@Valid @RequestBody CreateClientRequest req) {
+        return AppResponse.ok(service.create(req));
     }
 
     @GetMapping("/{id}")
@@ -44,14 +44,14 @@ public class ClientController {
     @Operation(summary = "Get client", description = "Returns client by id.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Client found",
             content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = lt.satsyuk.dto.ApiResponse.class)))
+                    schema = @Schema(implementation = lt.satsyuk.dto.AppResponse.class)))
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
             content = @Content(mediaType = "application/json"))
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
             content = @Content(mediaType = "application/json"))
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found",
             content = @Content(mediaType = "application/json"))
-    public ApiResponse<ClientResponse> get(@PathVariable("id") Long id) {
-        return ApiResponse.ok(service.get(id));
+    public AppResponse<ClientResponse> get(@PathVariable("id") Long id) {
+        return AppResponse.ok(service.get(id));
     }
 }

@@ -3,7 +3,7 @@ package lt.satsyuk.api.util;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lt.satsyuk.dto.ApiResponse;
+import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.config.KeycloakProperties;
 import lt.satsyuk.dto.KeycloakTokenResponse;
 import lt.satsyuk.dto.LoginRequest;
@@ -175,8 +175,8 @@ public abstract class AbstractIntegrationTest {
         return template;
     }
 
-    protected <T> void assertErrorBody(ResponseEntity<ApiResponse<T>> response, int expectedCode, Object expectedMessage) {
-        ApiResponse<T> body = response.getBody();
+    protected <T> void assertErrorBody(ResponseEntity<AppResponse<T>> response, int expectedCode, Object expectedMessage) {
+        AppResponse<T> body = response.getBody();
         assertThat(body).as(RESPONSE_BODY_SHOULD_NOT_BE_NULL).isNotNull();
         assertThat(body.code()).as(RESPONSE_CODE_SHOULD_MATCH_EXPECTED).isEqualTo(expectedCode);
         if (expectedMessage instanceof String) {
@@ -193,7 +193,7 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
-    protected <T> void assertErrorStatusAndBody(ResponseEntity<ApiResponse<T>> response,
+    protected <T> void assertErrorStatusAndBody(ResponseEntity<AppResponse<T>> response,
                                             HttpStatus expectedStatus,
                                             int expectedCode,
                                             Object expectedMessage) {
@@ -202,11 +202,11 @@ public abstract class AbstractIntegrationTest {
     }
 
     // Make this method fully generic and return T to avoid unchecked casts in tests
-    protected <T> T assertStatusAndBodyAndReturnBody(ResponseEntity<ApiResponse<T>> response, Class<T> clazz) {
+    protected <T> T assertStatusAndBodyAndReturnBody(ResponseEntity<AppResponse<T>> response, Class<T> clazz) {
         assertThat(response.getStatusCode()).as(RESPONSE_HTTP_STATUS_SHOULD_BE_OK).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_SHOULD_NOT_BE_NULL).isNotNull();
 
-        ApiResponse<T> api = response.getBody();
+        AppResponse<T> api = response.getBody();
         assertThat(api).as(RESPONSE_BODY_SHOULD_NOT_BE_NULL).isNotNull();
         assertThat(api.code()).as(RESPONSE_CODE_SHOULD_BE_ZERO).isZero();
 
@@ -230,35 +230,35 @@ public abstract class AbstractIntegrationTest {
         return headers;
     }
 
-    protected <T> ResponseEntity<ApiResponse<T>> requestPost(String url, String token, Object body, ParameterizedTypeReference<ApiResponse<T>> responseType) {
+    protected <T> ResponseEntity<AppResponse<T>> requestPost(String url, String token, Object body, ParameterizedTypeReference<AppResponse<T>> responseType) {
         HttpHeaders headers = createHeaders(token);
 
-        return exchangeForApiResponse(url, HttpMethod.POST, new HttpEntity<>(body, headers), responseType);
+        return exchangeForAppResponse(url, HttpMethod.POST, new HttpEntity<>(body, headers), responseType);
     }
 
-    protected ResponseEntity<ApiResponse<Object>> requestPost(String url, String token, Record body) {
+    protected ResponseEntity<AppResponse<Object>> requestPost(String url, String token, Record body) {
         return requestPost(url, token, body, new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<ApiResponse<Object>> requestPost(String url, Record body) {
+    protected ResponseEntity<AppResponse<Object>> requestPost(String url, Record body) {
         return requestPost(url, null, body);
     }
 
-    protected <T> ResponseEntity<ApiResponse<T>> requestGet(String url, String token, ParameterizedTypeReference<ApiResponse<T>> responseType) {
+    protected <T> ResponseEntity<AppResponse<T>> requestGet(String url, String token, ParameterizedTypeReference<AppResponse<T>> responseType) {
         HttpHeaders headers = createHeaders(token);
 
-        return exchangeForApiResponse(url, HttpMethod.GET, new HttpEntity<>(headers), responseType);
+        return exchangeForAppResponse(url, HttpMethod.GET, new HttpEntity<>(headers), responseType);
     }
 
-    protected ResponseEntity<ApiResponse<Object>> requestGet(String url, String token) {
+    protected ResponseEntity<AppResponse<Object>> requestGet(String url, String token) {
         return requestGet(url, token, new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<ApiResponse<Object>> requestGet(String url) {
+    protected ResponseEntity<AppResponse<Object>> requestGet(String url) {
         return requestGet(url, null);
     }
 
-    protected ResponseEntity<ApiResponse<KeycloakTokenResponse>> loginRequest(String username,
+    protected ResponseEntity<AppResponse<KeycloakTokenResponse>> loginRequest(String username,
                                                                String password,
                                                                String clientId,
                                                                String clientSecret) {
@@ -272,14 +272,14 @@ public abstract class AbstractIntegrationTest {
         return requestPost(loginUrl, null, request, new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<ApiResponse<KeycloakTokenResponse>> loginRequest(String username,
+    protected ResponseEntity<AppResponse<KeycloakTokenResponse>> loginRequest(String username,
                                                                String password) {
 
         return loginRequest(username, password, props.getClientId(), props.getClientSecret());
     }
 
     protected KeycloakTokenResponse loginAndGetData(String username, String password) {
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(username, password);
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(username, password);
 
         return assertStatusAndBodyAndReturnBody(response, KeycloakTokenResponse.class);
     }
@@ -292,46 +292,46 @@ public abstract class AbstractIntegrationTest {
         return loginAndGetData(username, password).getRefreshToken();
     }
 
-    protected ResponseEntity<ApiResponse<Void>> logoutRequest(String refreshToken,
+    protected ResponseEntity<AppResponse<Void>> logoutRequest(String refreshToken,
                                                                 String clientId,
                                                                 String clientSecret) {
         LogoutRequest logoutRequest = new LogoutRequest(refreshToken, clientId, clientSecret);
-        return requestPost(logoutUrl, null, logoutRequest, new ParameterizedTypeReference<ApiResponse<Void>>() {});
+        return requestPost(logoutUrl, null, logoutRequest, new ParameterizedTypeReference<AppResponse<Void>>() {});
     }
 
-    protected ResponseEntity<ApiResponse<Void>> logoutRequest(String refreshToken) {
+    protected ResponseEntity<AppResponse<Void>> logoutRequest(String refreshToken) {
         return logoutRequest(refreshToken, props.getClientId(), props.getClientSecret());
     }
 
-    protected ResponseEntity<ApiResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken,
+    protected ResponseEntity<AppResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken,
                                                                 String clientId,
                                                                 String clientSecret) {
         RefreshRequest request = new RefreshRequest(refreshToken, clientId, clientSecret);
         return requestPost(refreshUrl, null, request, new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<ApiResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken) {
+    protected ResponseEntity<AppResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken) {
         return refreshRequest(refreshToken, props.getClientId(), props.getClientSecret());
     }
 
     // Helper: do POST and return typed data (convert via ObjectMapper)
     protected <T> T postAndReturnData(String url, String token, Object body, Class<T> clazz) {
-        ResponseEntity<ApiResponse<T>> resp = requestPost(url, token, body, new ParameterizedTypeReference<>() {});
+        ResponseEntity<AppResponse<T>> resp = requestPost(url, token, body, new ParameterizedTypeReference<>() {});
         return assertStatusAndBodyAndReturnBody(resp, clazz);
     }
 
     // Helper: do GET and return typed data (convert via ObjectMapper)
     protected <T> T getAndReturnData(String url, String token, Class<T> clazz) {
-        ResponseEntity<ApiResponse<T>> resp = requestGet(url, token, new ParameterizedTypeReference<>() {});
+        ResponseEntity<AppResponse<T>> resp = requestGet(url, token, new ParameterizedTypeReference<>() {});
         return assertStatusAndBodyAndReturnBody(resp, clazz);
     }
 
-    private <T> ResponseEntity<ApiResponse<T>> exchangeForApiResponse(String url,
+    private <T> ResponseEntity<AppResponse<T>> exchangeForAppResponse(String url,
                                                                       HttpMethod method,
                                                                       HttpEntity<?> entity,
-                                                                      ParameterizedTypeReference<ApiResponse<T>> responseType) {
+                                                                       ParameterizedTypeReference<AppResponse<T>> responseType) {
         ResponseEntity<String> response = restTemplate.exchange(url, method, entity, String.class);
-        ApiResponse<T> body = deserializeApiResponse(response.getBody(), responseType);
+        AppResponse<T> body = deserializeAppResponse(response.getBody(), responseType);
 
         if (body == null) {
             body = fallbackErrorBody(response.getStatusCode());
@@ -340,8 +340,8 @@ public abstract class AbstractIntegrationTest {
         return new ResponseEntity<>(body, response.getHeaders(), response.getStatusCode());
     }
 
-    private <T> ApiResponse<T> deserializeApiResponse(String rawBody,
-                                                      ParameterizedTypeReference<ApiResponse<T>> responseType) {
+    private <T> AppResponse<T> deserializeAppResponse(String rawBody,
+                                                      ParameterizedTypeReference<AppResponse<T>> responseType) {
         if (rawBody == null || rawBody.isBlank()) {
             return null;
         }
@@ -354,25 +354,25 @@ public abstract class AbstractIntegrationTest {
                 );
             }
 
-            return objectMapper.readValue(rawBody, new TypeReference<ApiResponse<T>>() {});
+            return objectMapper.readValue(rawBody, new TypeReference<AppResponse<T>>() {});
         } catch (Exception ex) {
             throw new IllegalStateException("Failed to deserialize API response: " + rawBody, ex);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private <T> ApiResponse<T> fallbackErrorBody(HttpStatusCode statusCode) {
+    private <T> AppResponse<T> fallbackErrorBody(HttpStatusCode statusCode) {
         if (statusCode != null && statusCode.value() == HttpStatus.UNAUTHORIZED.value()) {
-            return (ApiResponse<T>) ApiResponse.error(
-                    ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
-                    ApiResponse.ErrorCode.UNAUTHORIZED.getDescription()
+            return (AppResponse<T>) AppResponse.error(
+                    AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
+                    AppResponse.ErrorCode.UNAUTHORIZED.getDescription()
             );
         }
 
         if (statusCode != null && statusCode.value() == HttpStatus.FORBIDDEN.value()) {
-            return (ApiResponse<T>) ApiResponse.error(
-                    ApiResponse.ErrorCode.FORBIDDEN.getCode(),
-                    ApiResponse.ErrorCode.FORBIDDEN.getDescription()
+            return (AppResponse<T>) AppResponse.error(
+                    AppResponse.ErrorCode.FORBIDDEN.getCode(),
+                    AppResponse.ErrorCode.FORBIDDEN.getDescription()
             );
         }
 

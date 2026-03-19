@@ -1,7 +1,7 @@
 package lt.satsyuk.api.integrationtest;
 
 import lt.satsyuk.MainApplication;
-import lt.satsyuk.dto.ApiResponse;
+import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.api.util.AbstractIntegrationTest;
 import lt.satsyuk.dto.KeycloakTokenResponse;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,7 @@ class AuthValidationIT extends AbstractIntegrationTest {
 
     @Test
     void login_emptyFields_badRequest() {
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
                 "",
                 "",
                 "",
@@ -32,14 +32,14 @@ class AuthValidationIT extends AbstractIntegrationTest {
         assertErrorStatusAndBody(
                 response,
                 HttpStatus.BAD_REQUEST,
-                ApiResponse.ErrorCode.BAD_REQUEST.getCode(),
+                AppResponse.ErrorCode.BAD_REQUEST.getCode(),
                 expected
         );
     }
 
     @Test
     void refresh_emptyBody_badRequest() {
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = refreshRequest(
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = refreshRequest(
                 "",
                 "",
                 ""
@@ -54,7 +54,7 @@ class AuthValidationIT extends AbstractIntegrationTest {
         assertErrorStatusAndBody(
                 response,
                 HttpStatus.BAD_REQUEST,
-                ApiResponse.ErrorCode.BAD_REQUEST.getCode(),
+                AppResponse.ErrorCode.BAD_REQUEST.getCode(),
                 expected
         );
     }
