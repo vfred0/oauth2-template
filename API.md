@@ -150,7 +150,7 @@ Authorization: Bearer <access_token>
 
 ### POST /api/clients
 
-Create a new client.
+Accept a new asynchronous client creation request.
 
 **Required Role:** `CLIENT_CREATE`
 
@@ -171,26 +171,86 @@ Create a new client.
 | lastName   | Required, 1–50 characters                           |
 | phone      | Required, must match pattern `+[0-9]{7,15}`         |
 
-**Success Response (200):**
+**Success Response (202):**
 ```json
 {
   "code": 0,
-  "message": "Success",
+  "message": "OK",
   "data": {
-    "id": 1,
-    "firstName": "John",
-    "lastName": "Doe",
-    "phone": "+37061234567"
+    "requestId": "2e6a42a8-8bb7-4f7d-b4d6-71eb31ec8a13",
+    "status": "CREATED"
   }
 }
 ```
+
+After that, poll `GET /api/requests/{requestId}` until the request reaches `PROCESSED` or `PROCESSING_ERROR`.
 
 **Error Responses:**
 - `400` — Validation error
 - `401` — Missing or invalid token
 - `403` — Insufficient role
-- `409` — Phone number already exists
 - `429` — Rate limit exceeded (20 requests/minute)
+
+---
+
+### GET /api/requests/{id}
+
+Get asynchronous request status and final response payload when processing is complete.
+
+**Required Role:** `CLIENT_CREATE`
+
+**Path Parameters:**
+
+| Parameter | Type | Description        |
+|-----------|------|--------------------|
+| id        | UUID | Request identifier |
+
+**Success Response (200), still processing:**
+```json
+{
+  "code": 0,
+  "message": "OK",
+  "data": {
+    "requestId": "2e6a42a8-8bb7-4f7d-b4d6-71eb31ec8a13",
+    "type": "CLIENT_CREATE",
+    "status": "IN_PROGRESS",
+    "createdAt": "2026-03-19T12:00:00Z",
+    "statusChangedAt": "2026-03-19T12:00:01Z",
+    "response": null
+  }
+}
+```
+
+**Success Response (200), processed:**
+```json
+{
+  "code": 0,
+  "message": "OK",
+  "data": {
+    "requestId": "2e6a42a8-8bb7-4f7d-b4d6-71eb31ec8a13",
+    "type": "CLIENT_CREATE",
+    "status": "PROCESSED",
+    "createdAt": "2026-03-19T12:00:00Z",
+    "statusChangedAt": "2026-03-19T12:00:02Z",
+    "response": {
+      "code": 0,
+      "message": "OK",
+      "data": {
+        "id": 1,
+        "firstName": "John",
+        "lastName": "Doe",
+        "phone": "+37061234567"
+      }
+    }
+  }
+}
+```
+
+**Error Responses:**
+- `400` — Invalid UUID format
+- `401` — Missing or invalid token
+- `403` — Insufficient role
+- `404` — Request not found
 
 ---
 

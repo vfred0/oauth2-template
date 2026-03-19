@@ -113,6 +113,7 @@ public abstract class AbstractIntegrationTest {
     protected String logoutUrl;
 
     protected String clientUrl;
+    protected String requestUrl;
 
     @BeforeEach
     void initializeUrls() {
@@ -124,6 +125,7 @@ public abstract class AbstractIntegrationTest {
         logoutUrl = mainUrl + "/auth/logout";
 
         clientUrl = mainUrl + "/clients";
+        requestUrl = mainUrl + "/requests";
         restTemplate = createTestRestTemplate();
 
         if (rateLimitingFilter != null) {
@@ -202,8 +204,10 @@ public abstract class AbstractIntegrationTest {
     }
 
     // Make this method fully generic and return T to avoid unchecked casts in tests
-    protected <T> T assertStatusAndBodyAndReturnBody(ResponseEntity<AppResponse<T>> response, Class<T> clazz) {
-        assertThat(response.getStatusCode()).as(RESPONSE_HTTP_STATUS_SHOULD_BE_OK).isEqualTo(HttpStatus.OK);
+    protected <T> T assertStatusAndBodyAndReturnBody(ResponseEntity<AppResponse<T>> response,
+                                                    HttpStatus expectedStatus,
+                                                    Class<T> clazz) {
+        assertThat(response.getStatusCode()).as(RESPONSE_HTTP_STATUS_SHOULD_BE_OK).isEqualTo(expectedStatus);
         assertThat(response.getBody()).as(RESPONSE_BODY_SHOULD_NOT_BE_NULL).isNotNull();
 
         AppResponse<T> api = response.getBody();
@@ -217,6 +221,10 @@ public abstract class AbstractIntegrationTest {
         assertThat(data).as(RESPONSE_DATA_SHOULD_NOT_BE_NULL).isNotNull();
 
         return data;
+    }
+
+    protected <T> T assertStatusAndBodyAndReturnBody(ResponseEntity<AppResponse<T>> response, Class<T> clazz) {
+        return assertStatusAndBodyAndReturnBody(response, HttpStatus.OK, clazz);
     }
 
     private HttpHeaders createHeaders(String token) {
@@ -318,6 +326,11 @@ public abstract class AbstractIntegrationTest {
     protected <T> T postAndReturnData(String url, String token, Object body, Class<T> clazz) {
         ResponseEntity<AppResponse<T>> resp = requestPost(url, token, body, new ParameterizedTypeReference<>() {});
         return assertStatusAndBodyAndReturnBody(resp, clazz);
+    }
+
+    protected <T> T postAndReturnData(String url, String token, Object body, HttpStatus expectedStatus, Class<T> clazz) {
+        ResponseEntity<AppResponse<T>> resp = requestPost(url, token, body, new ParameterizedTypeReference<>() {});
+        return assertStatusAndBodyAndReturnBody(resp, expectedStatus, clazz);
     }
 
     // Helper: do GET and return typed data (convert via ObjectMapper)
