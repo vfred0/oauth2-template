@@ -177,7 +177,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
     void create_client_unauthorized() {
         CreateClientRequest req = new CreateClientRequest("No", "Token", "+37061111111");
 
-        ResponseEntity<AppResponse<Object>> resp = requestPost(clientUrl, req);
+        ResponseEntity<AppResponse<Object>> resp = requestPost(clientUrl, null, req);
 
         assertErrorStatusAndBody(resp, HttpStatus.UNAUTHORIZED,
                 AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
@@ -189,7 +189,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
         CreateClientRequest req = new CreateClientRequest("No", "Role", "+37062222222");
 
-        ResponseEntity<AppResponse<Object>> resp = requestPost(clientUrl, token, req);
+        ResponseEntity<AppResponse<Object>> resp = requestPost(clientUrl, token, null, req);
 
         assertErrorStatusAndBody(resp, HttpStatus.FORBIDDEN,
                 AppResponse.ErrorCode.FORBIDDEN.getCode(),
@@ -202,7 +202,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         // invalid phone and missing firstName
         CreateClientRequest req = new CreateClientRequest("", DOE, "abc");
 
-        ResponseEntity<AppResponse<Object>> response = requestPost(clientUrl, token, req);
+        ResponseEntity<AppResponse<Object>> response = requestPost(clientUrl, token, null, req);
 
         Set<String> expected = Set.of(
                 "phone: phone must be valid",
@@ -220,18 +220,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         // invalid phone and missing firstName
         CreateClientRequest req = new CreateClientRequest("", DOE, "abc");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(token);
-        headers.set("Accept-Language", "ru");
-        HttpEntity<Object> entity = new HttpEntity<>(req, headers);
-
-        ResponseEntity<AppResponse<Object>> response = restTemplate.exchange(
-                clientUrl,
-                HttpMethod.POST,
-                entity,
-                new ParameterizedTypeReference<>() {}
-        );
+        ResponseEntity<AppResponse<Object>> response = requestPost(clientUrl, token, "ru", req);
 
         Set<String> expected = Set.of(
                 "phone: Неверный формат телефона",

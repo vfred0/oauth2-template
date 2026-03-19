@@ -227,33 +227,36 @@ public abstract class AbstractIntegrationTest {
         return assertStatusAndBodyAndReturnBody(response, HttpStatus.OK, clazz);
     }
 
-    private HttpHeaders createHeaders(String token) {
+    private HttpHeaders createHeaders(String token, String acceptLanguage) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON, MediaType.ALL));
         if (token != null && !token.isEmpty()) {
             headers.setBearerAuth(token);
         }
+        if (acceptLanguage != null && !acceptLanguage.isEmpty()) {
+            headers.set("Accept-Language", acceptLanguage);
+        }
 
         return headers;
     }
 
-    protected <T> ResponseEntity<AppResponse<T>> requestPost(String url, String token, Object body, ParameterizedTypeReference<AppResponse<T>> responseType) {
-        HttpHeaders headers = createHeaders(token);
+    protected <T> ResponseEntity<AppResponse<T>> requestPost(String url, String token, String acceptLanguage, Object body, ParameterizedTypeReference<AppResponse<T>> responseType) {
+        HttpHeaders headers = createHeaders(token, acceptLanguage);
 
         return exchangeForAppResponse(url, HttpMethod.POST, new HttpEntity<>(body, headers), responseType);
     }
 
-    protected ResponseEntity<AppResponse<Object>> requestPost(String url, String token, Record body) {
-        return requestPost(url, token, body, new ParameterizedTypeReference<>() {});
+    protected ResponseEntity<AppResponse<Object>> requestPost(String url, String token, String acceptLanguage, Record body) {
+        return requestPost(url, token, acceptLanguage, body, new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<AppResponse<Object>> requestPost(String url, Record body) {
-        return requestPost(url, null, body);
+    protected ResponseEntity<AppResponse<Object>> requestPost(String url, String acceptLanguage, Record body) {
+        return requestPost(url, null, acceptLanguage, body);
     }
 
     protected <T> ResponseEntity<AppResponse<T>> requestGet(String url, String token, ParameterizedTypeReference<AppResponse<T>> responseType) {
-        HttpHeaders headers = createHeaders(token);
+        HttpHeaders headers = createHeaders(token, null);
 
         return exchangeForAppResponse(url, HttpMethod.GET, new HttpEntity<>(headers), responseType);
     }
@@ -277,7 +280,7 @@ public abstract class AbstractIntegrationTest {
                 clientId,
                 clientSecret
         );
-        return requestPost(loginUrl, null, request, new ParameterizedTypeReference<>() {});
+        return requestPost(loginUrl, null, null, request, new ParameterizedTypeReference<>() {});
     }
 
     protected ResponseEntity<AppResponse<KeycloakTokenResponse>> loginRequest(String username,
@@ -304,7 +307,7 @@ public abstract class AbstractIntegrationTest {
                                                                 String clientId,
                                                                 String clientSecret) {
         LogoutRequest logoutRequest = new LogoutRequest(refreshToken, clientId, clientSecret);
-        return requestPost(logoutUrl, null, logoutRequest, new ParameterizedTypeReference<AppResponse<Void>>() {});
+        return requestPost(logoutUrl, null, null, logoutRequest, new ParameterizedTypeReference<AppResponse<Void>>() {});
     }
 
     protected ResponseEntity<AppResponse<Void>> logoutRequest(String refreshToken) {
@@ -315,7 +318,7 @@ public abstract class AbstractIntegrationTest {
                                                                 String clientId,
                                                                 String clientSecret) {
         RefreshRequest request = new RefreshRequest(refreshToken, clientId, clientSecret);
-        return requestPost(refreshUrl, null, request, new ParameterizedTypeReference<>() {});
+        return requestPost(refreshUrl, null, null, request, new ParameterizedTypeReference<>() {});
     }
 
     protected ResponseEntity<AppResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken) {
@@ -324,12 +327,12 @@ public abstract class AbstractIntegrationTest {
 
     // Helper: do POST and return typed data (convert via ObjectMapper)
     protected <T> T postAndReturnData(String url, String token, Object body, Class<T> clazz) {
-        ResponseEntity<AppResponse<T>> resp = requestPost(url, token, body, new ParameterizedTypeReference<>() {});
+        ResponseEntity<AppResponse<T>> resp = requestPost(url, token, null, body, new ParameterizedTypeReference<>() {});
         return assertStatusAndBodyAndReturnBody(resp, clazz);
     }
 
     protected <T> T postAndReturnData(String url, String token, Object body, HttpStatus expectedStatus, Class<T> clazz) {
-        ResponseEntity<AppResponse<T>> resp = requestPost(url, token, body, new ParameterizedTypeReference<>() {});
+        ResponseEntity<AppResponse<T>> resp = requestPost(url, token, null, body, new ParameterizedTypeReference<>() {});
         return assertStatusAndBodyAndReturnBody(resp, expectedStatus, clazz);
     }
 
