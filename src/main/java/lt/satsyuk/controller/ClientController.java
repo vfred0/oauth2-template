@@ -31,7 +31,7 @@ public class ClientController {
     @Operation(summary = "Create client", description = "Creates a new client.")
     @ApiResponse(responseCode = "200", description = "Client created",
             content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = lt.satsyuk.dto.AppResponse.class)))
+                    schema = @Schema(implementation = AppResponse.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized",
             content = @Content(mediaType = "application/json"))
     @ApiResponse(responseCode = "403", description = "Forbidden",
@@ -45,7 +45,7 @@ public class ClientController {
     @Operation(summary = "Get client", description = "Returns client by id.")
     @ApiResponse(responseCode = "200", description = "Client found",
             content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = lt.satsyuk.dto.AppResponse.class)))
+                    schema = @Schema(implementation = AppResponse.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized",
             content = @Content(mediaType = "application/json"))
     @ApiResponse(responseCode = "403", description = "Forbidden",

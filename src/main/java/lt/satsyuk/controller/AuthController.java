@@ -30,7 +30,7 @@ public class AuthController {
     @Operation(summary = "Login and obtain tokens", description = "Authenticates user and returns access/refresh tokens.")
     @ApiResponse(responseCode = "200", description = "Tokens issued",
             content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = lt.satsyuk.dto.AppResponse.class)))
+                    schema = @Schema(implementation = AppResponse.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized",
             content = @Content(mediaType = "application/json"))
     public ResponseEntity<AppResponse<KeycloakTokenResponse>> login(@Valid @RequestBody LoginRequest req) {
@@ -49,7 +49,7 @@ public class AuthController {
     @Operation(summary = "Refresh tokens", description = "Exchanges refresh token for a new access token.")
     @ApiResponse(responseCode = "200", description = "Tokens refreshed",
             content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = lt.satsyuk.dto.AppResponse.class)))
+                    schema = @Schema(implementation = AppResponse.class)))
     @ApiResponse(responseCode = "400", description = "Invalid grant",
             content = @Content(mediaType = "application/json"))
     public ResponseEntity<AppResponse<KeycloakTokenResponse>> refresh(@Valid @RequestBody RefreshRequest req) {
