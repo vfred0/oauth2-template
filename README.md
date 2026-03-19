@@ -258,7 +258,7 @@ Keycloak
   v
 Spring Boot
   |
-  | 5. Wrap into ApiResponse
+  | 5. Wrap into AppResponse
   v
 Client
 
@@ -288,7 +288,7 @@ Keycloak
   v
 Spring Boot
   |
-  | 5. Wrap into ApiResponse
+  | 5. Wrap into AppResponse
   v
 Client
 
@@ -316,7 +316,7 @@ Keycloak
   v
 Spring Boot
   |
-  | 5. Return ApiResponse(success=true)
+  | 5. Return AppResponse(success=true)
   v
 Client
 ```
@@ -503,13 +503,13 @@ Note: The integration-test helpers in `src/test/java/lt/satsyuk/api/util/Abstrac
 ### New test helpers
 
 - `postAndGetData(String url, String token, Object body, Class<T> clazz)`
-  - Sends POST to `url` with optional Bearer `token`, asserts HTTP 200, and converts response `ApiResponse.data` into `clazz` using the autowired `ObjectMapper`.
+  - Sends POST to `url` with optional Bearer `token`, asserts HTTP 200, and converts response `AppResponse.data` into `clazz` using the autowired `ObjectMapper`.
 
 - `getAndGetData(String url, String token, Class<T> clazz)`
   - Same as above for GET requests.
 
-- `assertErrorStatusAndBody(ResponseEntity<ApiResponse<T>> resp, HttpStatus expectedStatus, int expectedCode, Object expectedMessage)`
-  - Helper for negative tests: checks HTTP status, ApiResponse.code, and message (supports String or Set<String> for validation errors).
+- `assertErrorStatusAndBody(ResponseEntity<AppResponse<T>> resp, HttpStatus expectedStatus, int expectedCode, Object expectedMessage)`
+  - Helper for negative tests: checks HTTP status, AppResponse.code, and message (supports String or Set<String> for validation errors).
 
 Why use them
 - They avoid unsafe unchecked casts (LinkedHashMap → POJO) by converting raw `data` into the requested DTO using Jackson.
@@ -527,7 +527,7 @@ assertThat(fetched.phone()).isEqualTo(created.phone());
 ```
 
 Additional notes
-- If you need to work with `ResponseEntity<ApiResponse<T>>` directly, helper `apiResponseType()` creates a convenient ParameterizedTypeReference for `ApiResponse<T>`.
+- If you need to work with `ResponseEntity<AppResponse<T>>` directly, use an explicit `ParameterizedTypeReference<AppResponse<T>>`.
 - For negative tests use `assertErrorStatusAndBody(...)` to validate HTTP status, API error code and error message(s).
 
 ### Run tests locally
@@ -552,7 +552,7 @@ mvn -DskipTests=false "-Dit.test=ClientIntegrationIT" verify -DtrimStackTrace=fa
 
 Notes:
 - Ensure Docker is running for Testcontainers-based ITs (Keycloak/Postgres). Tests use assumptions and will skip if required containers are not available.
-- If you encounter ClassCastException (e.g. LinkedHashMap cannot be cast to MyDto), prefer using the helpers above or ensure the request uses an explicit ParameterizedTypeReference<ApiResponse<T>>.
+- If you encounter ClassCastException (e.g. LinkedHashMap cannot be cast to MyDto), prefer using the helpers above or ensure the request uses an explicit ParameterizedTypeReference<AppResponse<T>>.
 
 ### Quick branch + PR commands
 

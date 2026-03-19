@@ -3,7 +3,7 @@ package lt.satsyuk.auth;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lt.satsyuk.dto.ApiResponse;
+import lt.satsyuk.dto.AppResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
@@ -20,8 +20,8 @@ public class JsonAccessDeniedHandler implements AccessDeniedHandler {
                        HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException {
 
-        ApiResponse<Void> error = ApiResponse.error(ApiResponse.ErrorCode.FORBIDDEN.getCode(),
-                ApiResponse.ErrorCode.FORBIDDEN.getDescription());
+        AppResponse<Void> error = AppResponse.error(AppResponse.ErrorCode.FORBIDDEN.getCode(),
+                AppResponse.ErrorCode.FORBIDDEN.getDescription());
 
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType(MediaType.APPLICATION_JSON.toString());

@@ -1,7 +1,7 @@
 package lt.satsyuk.api.integrationtest;
 
 import lt.satsyuk.MainApplication;
-import lt.satsyuk.dto.ApiResponse;
+import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.api.util.WireMockIntegrationTest;
 import lt.satsyuk.dto.KeycloakTokenResponse;
 import org.junit.jupiter.api.Test;
@@ -35,11 +35,11 @@ class RateLimitingIT extends WireMockIntegrationTest {
         }
 
         // 6th request should be rate limited (429 Too Many Requests)
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().code()).isEqualTo(ApiResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());
+        assertThat(response.getBody().code()).isEqualTo(AppResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());
     }
 
     @Test
@@ -51,17 +51,17 @@ class RateLimitingIT extends WireMockIntegrationTest {
         }
 
         // Verify rate limit is active
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> blockedResponse = loginRequest(USERNAME, USER_PASSWORD);
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> blockedResponse = loginRequest(USERNAME, USER_PASSWORD);
         assertThat(blockedResponse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(blockedResponse.getBody()).isNotNull();
-        assertThat(blockedResponse.getBody().code()).isEqualTo(ApiResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());
+        assertThat(blockedResponse.getBody().code()).isEqualTo(AppResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());
 
         // Wait for rate limit to reset (20 seconds + buffer)
         await()
                 .atMost(25, TimeUnit.SECONDS)
                 .pollInterval(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
+                    ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
                     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
                 });
     }
@@ -114,7 +114,7 @@ class RateLimitingIT extends WireMockIntegrationTest {
                 .atMost(25, TimeUnit.SECONDS)
                 .pollInterval(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ResponseEntity<ApiResponse<Object>> response = requestGet(clientUrl + "/invalid-id", token);
+                    ResponseEntity<AppResponse<Object>> response = requestGet(clientUrl + "/invalid-id", token);
                     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
                 });
     }
@@ -153,13 +153,13 @@ class RateLimitingIT extends WireMockIntegrationTest {
         }
 
         // Verify login is rate limited
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> loginResponse = loginRequest(USERNAME, USER_PASSWORD);
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> loginResponse = loginRequest(USERNAME, USER_PASSWORD);
         assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(loginResponse.getBody()).isNotNull();
-        assertThat(loginResponse.getBody().code()).isEqualTo(ApiResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());
+        assertThat(loginResponse.getBody().code()).isEqualTo(AppResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());
 
         // Clients endpoint should still work (independent rate limit)
-        ResponseEntity<ApiResponse<Object>> response = requestGet(clientUrl + "/invalid-id", token);
+        ResponseEntity<AppResponse<Object>> response = requestGet(clientUrl + "/invalid-id", token);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
@@ -168,7 +168,7 @@ class RateLimitingIT extends WireMockIntegrationTest {
 
         for (int i = 0; i < count; i++) {
             futures.add(CompletableFuture.supplyAsync(() -> {
-                ResponseEntity<ApiResponse<Object>> resp = requestGet(clientUrl + "/invalid-id", token);
+                ResponseEntity<AppResponse<Object>> resp = requestGet(clientUrl + "/invalid-id", token);
                 return resp.getStatusCode();
             }));
         }

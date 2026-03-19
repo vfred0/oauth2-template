@@ -6,7 +6,7 @@
 - Business data is local PostgreSQL only for the `client` table; auth state stays in Keycloak. Persistence changes usually touch Flyway migration + JPA entity + repository + mapper + service + integration test together (`src/main/resources/db/migration/V1__create_client_table.sql`, `src/main/java/lt/satsyuk/model/Client.java`).
 
 ## Code patterns to follow
-- Controllers expose standardized `ApiResponse<T>` envelopes. Regular CRUD endpoints return `ApiResponse.ok(...)`; auth endpoints use `ResponseEntity<ApiResponse<...>>` so they can translate `KeycloakAuthException` status codes inline (`src/main/java/lt/satsyuk/controller/AuthController.java`, `src/main/java/lt/satsyuk/dto/ApiResponse.java`).
+- Controllers expose standardized `AppResponse<T>` envelopes. Regular CRUD endpoints return `AppResponse.ok(...)`; auth endpoints use `ResponseEntity<AppResponse<...>>` so they can translate `KeycloakAuthException` status codes inline (`src/main/java/lt/satsyuk/controller/AuthController.java`, `src/main/java/lt/satsyuk/dto/AppResponse.java`).
 - Protected endpoints must declare method security with `@PreAuthorize("hasRole('...')")`; roles are derived by prefixing Keycloak realm/client roles with `ROLE_` in `KeycloakOpaqueRoleConverter`, so checks use `hasRole('CLIENT_CREATE')`, not raw claim names.
 - Keep Swagger annotations in sync with security: protected controllers use `@SecurityRequirement(name = "bearerAuth")`, and OpenAPI bearer scheme is declared centrally in `src/main/java/lt/satsyuk/config/OpenApiConfig.java`.
 - DTOs are Java records with Bean Validation message keys, e.g. `CreateClientRequest`. If you add validation or new user-facing messages, update **all** bundles: `messages.properties`, `messages_en.properties`, `messages_ru.properties`.
@@ -24,7 +24,7 @@
 - On Windows, docs explicitly recommend Docker Desktop **4.28.x**; newer versions may break Testcontainers (`CONTRIBUTING.md`).
 
 ## Test infrastructure map
-- `AbstractIntegrationTest` provides shared Postgres Testcontainer, HTTP helpers, typed `ApiResponse` assertions, and cache cleanup between tests (it preserves `filterConfigCache` but clears other caches).
+- `AbstractIntegrationTest` provides shared Postgres Testcontainer, HTTP helpers, typed `AppResponse` assertions, and cache cleanup between tests (it preserves `filterConfigCache` but clears other caches).
 - `KeycloakIntegrationTest` adds a real Keycloak Testcontainer loaded from `keycloak/realm-export.json`; use it for happy-path auth/authorization scenarios.
 - `WireMockIntegrationTest` stubs Keycloak token/introspection/logout endpoints and is the correct base for negative external-failure cases and rate-limit tests.
 - Test rate limits are intentionally shortened to **20 seconds** in `src/test/resources/application-test.properties`; do not “fix” waits in `RateLimitingIT` without checking that profile.

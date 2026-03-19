@@ -3,7 +3,7 @@ package lt.satsyuk.auth;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lt.satsyuk.dto.ApiResponse;
+import lt.satsyuk.dto.AppResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
@@ -20,8 +20,8 @@ public class JsonAuthEntryPoint implements AuthenticationEntryPoint {
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
 
-        ApiResponse<Void> error = ApiResponse.error(ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
-                ApiResponse.ErrorCode.UNAUTHORIZED.getDescription());
+        AppResponse<Void> error = AppResponse.error(AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
+                AppResponse.ErrorCode.UNAUTHORIZED.getDescription());
 
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON.toString());

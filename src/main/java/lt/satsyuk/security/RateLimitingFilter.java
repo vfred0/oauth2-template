@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lt.satsyuk.config.RateLimitProperties;
-import lt.satsyuk.dto.ApiResponse;
+import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.service.MessageService;
 import lt.satsyuk.service.SecurityService;
 import org.springframework.http.HttpStatus;
@@ -93,8 +93,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private void writeRateLimitedResponse(HttpServletResponse response) throws IOException {
-        ApiResponse<Void> error = ApiResponse.error(
-                ApiResponse.ErrorCode.TOO_MANY_REQUESTS.getCode(),
+        AppResponse<Void> error = AppResponse.error(
+                AppResponse.ErrorCode.TOO_MANY_REQUESTS.getCode(),
                 messageService.getMessage(RATE_LIMIT_MESSAGE_KEY)
         );
 

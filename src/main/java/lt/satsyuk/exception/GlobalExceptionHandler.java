@@ -1,6 +1,6 @@
 package lt.satsyuk.exception;
 
-import lt.satsyuk.dto.ApiResponse;
+import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
     private final MessageService messageService;
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<AppResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
         String errorMessage = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .reduce((a, b) -> a + "; " + b)
@@ -32,53 +32,53 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.BAD_REQUEST.getCode(), errorMessage));
+                .body(AppResponse.<Void>error(AppResponse.ErrorCode.BAD_REQUEST.getCode(), errorMessage));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
+    public ResponseEntity<AppResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.FORBIDDEN.getCode(),
+                .body(AppResponse.<Void>error(AppResponse.ErrorCode.FORBIDDEN.getCode(),
                         messageService.getMessage("api.error.forbidden")));
     }
 
     @ExceptionHandler(ClientNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNotFound(ClientNotFoundException ex) {
+    public ResponseEntity<AppResponse<Void>> handleNotFound(ClientNotFoundException ex) {
         String message = messageService.getMessage(ex.getMessageCode(), new Object[]{String.valueOf(ex.getClientId())});
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.NOT_FOUND.getCode(), message));
+                .body(AppResponse.<Void>error(AppResponse.ErrorCode.NOT_FOUND.getCode(), message));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+    public ResponseEntity<AppResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         String message = messageService.getMessage("error.typeMismatch", new Object[]{String.valueOf(ex.getValue())});
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.BAD_REQUEST.getCode(), message));
+                .body(AppResponse.<Void>error(AppResponse.ErrorCode.BAD_REQUEST.getCode(), message));
     }
 
     @ExceptionHandler(PhoneAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse<Void>> handlePhoneExists(PhoneAlreadyExistsException ex) {
+    public ResponseEntity<AppResponse<Void>> handlePhoneExists(PhoneAlreadyExistsException ex) {
         String message = messageService.getMessage(ex.getMessageCode(), new Object[]{String.valueOf(ex.getPhone())});
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.CONFLICT.getCode(), message));
+                .body(AppResponse.<Void>error(AppResponse.ErrorCode.CONFLICT.getCode(), message));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
+    public ResponseEntity<AppResponse<Void>> handleGeneric(Exception ex) {
         log.error("Unhandled exception caught by GlobalExceptionHandler", ex);
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(ApiResponse.<Void>error(ApiResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
+                .body(AppResponse.<Void>error(AppResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
                         messageService.getMessage("api.error.internalServerError")));
     }
 }

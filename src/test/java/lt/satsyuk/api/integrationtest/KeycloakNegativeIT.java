@@ -1,7 +1,7 @@
 package lt.satsyuk.api.integrationtest;
 
 import lt.satsyuk.MainApplication;
-import lt.satsyuk.dto.ApiResponse;
+import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.api.util.WireMockIntegrationTest;
 import lt.satsyuk.dto.KeycloakTokenResponse;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"internal_server_error\"}")));
 
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "test-client",
@@ -38,7 +38,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
         );
 
         assertErrorStatusAndBody(response, HttpStatus.INTERNAL_SERVER_ERROR,
-                ApiResponse.ErrorCode.UNAUTHORIZED.getCode(), INVALID_GRANT);
+                AppResponse.ErrorCode.UNAUTHORIZED.getCode(), INVALID_GRANT);
     }
 
     @Test
@@ -49,7 +49,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withFixedDelay(3000) // 3 seconds delay
                         .withBody("{}")));
 
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "test-client",
@@ -57,8 +57,8 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
         );
 
         assertErrorStatusAndBody(response, HttpStatus.INTERNAL_SERVER_ERROR,
-                ApiResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
-                ApiResponse.ErrorCode.INTERNAL_SERVER_ERROR.getDescription());
+                AppResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
+                AppResponse.ErrorCode.INTERNAL_SERVER_ERROR.getDescription());
     }
 
     @Test
@@ -69,7 +69,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("invalid-json")));
 
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "test-client",
@@ -77,8 +77,8 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
         );
 
         assertErrorStatusAndBody(response, HttpStatus.INTERNAL_SERVER_ERROR,
-                ApiResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
-                ApiResponse.ErrorCode.INTERNAL_SERVER_ERROR.getDescription());
+                AppResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
+                AppResponse.ErrorCode.INTERNAL_SERVER_ERROR.getDescription());
     }
 
     // ------------------------------------------------------------
@@ -93,7 +93,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"invalid_grant\",\"error_description\":\"Invalid user credentials\"}")));
 
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
                 "user",
                 "wrongpassword",
                 "test-client",
@@ -101,7 +101,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
         );
 
         assertErrorStatusAndBody(response, HttpStatus.UNAUTHORIZED,
-                ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
+                AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
                 INVALID_GRANT);
      }
 
@@ -113,7 +113,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"invalid_grant\",\"error_description\":\"Account disabled\"}")));
 
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
                 "disabled-user",
                 "password",
                 "test-client",
@@ -121,7 +121,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
         );
 
         assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
-                ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
+                AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
                 INVALID_GRANT);
     }
 
@@ -133,7 +133,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"invalid_client\",\"error_description\":\"Invalid client credentials\"}")));
 
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "wrong-client",
@@ -141,7 +141,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
         );
 
         assertErrorStatusAndBody(response, HttpStatus.UNAUTHORIZED,
-                ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
+                AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
                 INVALID_CLIENT);
     }
 
@@ -157,14 +157,14 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"invalid_grant\",\"error_description\":\"Invalid refresh token\"}")));
 
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = refreshRequest(
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = refreshRequest(
                 "invalid-refresh-token",
                 "test-client",
                 "test-secret"
         );
 
         assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
-                ApiResponse.ErrorCode.INVALID_GRANT.getCode(),
+                AppResponse.ErrorCode.INVALID_GRANT.getCode(),
                 INVALID_GRANT);
     }
 
@@ -176,14 +176,14 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"invalid_grant\",\"error_description\":\"Token expired\"}")));
 
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = refreshRequest(
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = refreshRequest(
                 "expired-refresh-token",
                 "test-client",
                 "test-secret"
         );
 
         assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
-                ApiResponse.ErrorCode.INVALID_GRANT.getCode(),
+                AppResponse.ErrorCode.INVALID_GRANT.getCode(),
                 INVALID_GRANT);
     }
 
@@ -199,14 +199,14 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"invalid_grant\"}")));
 
-        ResponseEntity<ApiResponse<Void>> response = logoutRequest(
+        ResponseEntity<AppResponse<Void>> response = logoutRequest(
                 "invalid-token",
                 "test-client",
                 "test-secret"
         );
 
         assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
-                ApiResponse.ErrorCode.INVALID_TOKEN.getCode(),
+                AppResponse.ErrorCode.INVALID_TOKEN.getCode(),
                 INVALID_GRANT);
     }
 
@@ -218,14 +218,14 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"service_unavailable\"}")));
 
-        ResponseEntity<ApiResponse<Void>> response = logoutRequest(
+        ResponseEntity<AppResponse<Void>> response = logoutRequest(
                 "some-token",
                 "test-client",
                 "test-secret"
         );
 
         assertErrorStatusAndBody(response, HttpStatus.SERVICE_UNAVAILABLE,
-                ApiResponse.ErrorCode.INVALID_TOKEN.getCode(),
+                AppResponse.ErrorCode.INVALID_TOKEN.getCode(),
                 INVALID_GRANT);
     }
 
@@ -239,7 +239,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                 .willReturn(aResponse()
                         .withFault(com.github.tomakehurst.wiremock.http.Fault.CONNECTION_RESET_BY_PEER)));
 
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "test-client",
@@ -247,8 +247,8 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
         );
 
         assertErrorStatusAndBody(response, HttpStatus.INTERNAL_SERVER_ERROR,
-                ApiResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
-                ApiResponse.ErrorCode.INTERNAL_SERVER_ERROR.getDescription());
+                AppResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
+                AppResponse.ErrorCode.INTERNAL_SERVER_ERROR.getDescription());
     }
 
     @Test
@@ -257,7 +257,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.NO_CONTENT.value()))); // truly empty response
 
-        ResponseEntity<ApiResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "test-client",
@@ -265,7 +265,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
         );
 
         assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
-                ApiResponse.ErrorCode.UNAUTHORIZED.getCode(),
+                AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
                 INVALID_GRANT);
     }
 }
