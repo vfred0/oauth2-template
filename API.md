@@ -178,12 +178,12 @@ Accept a new asynchronous client creation request.
   "message": "OK",
   "data": {
     "requestId": "2e6a42a8-8bb7-4f7d-b4d6-71eb31ec8a13",
-    "status": "CREATED"
+    "status": "PENDING"
   }
 }
 ```
 
-After that, poll `GET /api/requests/{requestId}` until the request reaches `PROCESSED` or `PROCESSING_ERROR`.
+After that, poll `GET /api/requests/{requestId}` until the request reaches `COMPLETED` or `FAILED`.
 
 **Error Responses:**
 - `400` — Validation error
@@ -213,7 +213,7 @@ Get asynchronous request status and final response payload when processing is co
   "data": {
     "requestId": "2e6a42a8-8bb7-4f7d-b4d6-71eb31ec8a13",
     "type": "CLIENT_CREATE",
-    "status": "IN_PROGRESS",
+    "status": "PROCESSING",
     "createdAt": "2026-03-19T12:00:00Z",
     "statusChangedAt": "2026-03-19T12:00:01Z",
     "response": null
@@ -229,7 +229,7 @@ Get asynchronous request status and final response payload when processing is co
   "data": {
     "requestId": "2e6a42a8-8bb7-4f7d-b4d6-71eb31ec8a13",
     "type": "CLIENT_CREATE",
-    "status": "PROCESSED",
+    "status": "COMPLETED",
     "createdAt": "2026-03-19T12:00:00Z",
     "statusChangedAt": "2026-03-19T12:00:02Z",
     "response": {

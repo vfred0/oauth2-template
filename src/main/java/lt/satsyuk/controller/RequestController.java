@@ -31,7 +31,7 @@ public class RequestController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('CLIENT_CREATE')")
-    @Operation(summary = "Get request status", description = "Returns request status and response payload when processing is finished.")
+    @Operation(summary = "Get request status", description = "Returns request status and response payload when the request reaches a terminal state.")
     @ApiResponse(responseCode = "200", description = "Request found",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AppResponse.class)))

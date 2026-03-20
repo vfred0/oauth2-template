@@ -25,7 +25,7 @@ public class RequestProcessingService {
 
     public void processClientCreateRequest(UUID requestId) {
         Request request = requestStateService.getRequired(requestId);
-        requestStateService.markInProgress(requestId);
+        requestStateService.markProcessing(requestId);
 
         try {
             if (request.getType() != RequestType.CLIENT_CREATE) {
@@ -34,16 +34,16 @@ public class RequestProcessingService {
 
             CreateClientRequest createClientRequest = objectMapper.readValue(request.getRequestData(), CreateClientRequest.class);
             ClientResponse clientResponse = clientService.create(createClientRequest);
-            requestStateService.markProcessed(requestId, writeJson(AppResponse.ok(clientResponse)));
+            requestStateService.markCompleted(requestId, writeJson(AppResponse.ok(clientResponse)));
         } catch (PhoneAlreadyExistsException ex) {
             log.warn("Request {} failed due to duplicate phone", requestId, ex);
-            requestStateService.markProcessingError(requestId, writeJson(
+            requestStateService.markFailed(requestId, writeJson(
                     AppResponse.error(AppResponse.ErrorCode.CONFLICT.getCode(),
                             messageService.getMessage(ex.getMessageCode(), new Object[]{ex.getPhone()}))
             ));
         } catch (Exception ex) {
             log.error("Request {} processing failed", requestId, ex);
-            requestStateService.markProcessingError(requestId, writeJson(
+            requestStateService.markFailed(requestId, writeJson(
                     AppResponse.error(AppResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
                             messageService.getMessage("api.error.internalServerError"))
             ));
