@@ -56,9 +56,9 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         RequestAcceptedResponse accepted = postAndReturnData(clientUrl, token, req, HttpStatus.ACCEPTED, RequestAcceptedResponse.class);
 
         assertThat(accepted.requestId()).isNotNull();
-        assertThat(accepted.status()).isEqualTo(RequestStatus.CREATED);
+        assertThat(accepted.status()).isEqualTo(RequestStatus.PENDING);
 
-        RequestStatusResponse statusResponse = awaitRequestStatus(token, accepted.requestId(), RequestStatus.PROCESSED);
+        RequestStatusResponse statusResponse = awaitRequestStatus(token, accepted.requestId(), RequestStatus.COMPLETED);
         AppResponse<ClientResponse> finalResponse = readNestedResponse(statusResponse);
         ClientResponse data = objectMapper.convertValue(finalResponse.data(), ClientResponse.class);
 
@@ -87,7 +87,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         CreateClientRequest req = new CreateClientRequest(JOHN, DOE, PHONE);
 
         RequestAcceptedResponse accepted = postAndReturnData(clientUrl, token, req, HttpStatus.ACCEPTED, RequestAcceptedResponse.class);
-        RequestStatusResponse statusResponse = awaitRequestStatus(token, accepted.requestId(), RequestStatus.PROCESSING_ERROR);
+        RequestStatusResponse statusResponse = awaitRequestStatus(token, accepted.requestId(), RequestStatus.FAILED);
         AppResponse<Object> finalResponse = readNestedResponse(statusResponse);
 
         assertThat(finalResponse.code()).isEqualTo(AppResponse.ErrorCode.CONFLICT.getCode());
@@ -282,7 +282,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
                 .untilAsserted(() -> {
                     RequestStatusResponse statusResponse = getAndReturnData(requestUrl + "/" + requestId, token, RequestStatusResponse.class);
                     assertThat(statusResponse.status()).isEqualTo(expectedStatus);
-                    if (expectedStatus == RequestStatus.PROCESSED || expectedStatus == RequestStatus.PROCESSING_ERROR) {
+                    if (expectedStatus == RequestStatus.COMPLETED || expectedStatus == RequestStatus.FAILED) {
                         assertThat(statusResponse.response()).isNotNull();
                     }
                     holder[0] = statusResponse;

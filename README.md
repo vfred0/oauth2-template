@@ -175,12 +175,12 @@ The resource server uses **service credentials** (env vars) for introspection.
 `POST /api/clients` accepts a request for background processing instead of creating the `client` row synchronously.
 
 1. The API validates the request body.
-2. A new `Request` row is persisted with `type=CLIENT_CREATE` and `status=CREATED`.
+2. A new `Request` row is persisted with `type=CLIENT_CREATE` and `status=PENDING`.
 3. The original payload is stored in PostgreSQL `jsonb` (`request_data`).
 4. A persistent Quartz job is created in PostgreSQL (`QRTZ_*` tables).
-5. A Quartz worker changes the request status to `IN_PROGRESS` and executes the existing client creation business logic.
-6. On success, the request becomes `PROCESSED` and `response_data` stores the final JSON response.
-7. On failure, the request becomes `PROCESSING_ERROR` and `response_data` stores the error JSON response.
+5. A Quartz worker changes the request status to `PROCESSING` and executes the existing client creation business logic.
+6. On success, the request becomes `COMPLETED` and `response_data` stores the final JSON response.
+7. On failure, the request becomes `FAILED` and `response_data` stores the error JSON response.
 8. The caller polls `GET /api/requests/{requestId}` until processing finishes.
 
 This makes processing durable across application restarts while keeping the public API responsive.

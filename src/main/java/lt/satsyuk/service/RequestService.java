@@ -35,7 +35,7 @@ public class RequestService {
         Request request = Request.builder()
                 .id(UUID.randomUUID())
                 .type(RequestType.CLIENT_CREATE)
-                .status(RequestStatus.CREATED)
+                .status(RequestStatus.PENDING)
                 .createdAt(now)
                 .statusChangedAt(now)
                 .requestData(writeJson(createClientRequest))
@@ -46,7 +46,7 @@ public class RequestService {
         try {
             requestSchedulerService.scheduleClientCreateRequest(saved.getId());
         } catch (SchedulerException ex) {
-            requestStateService.markProcessingError(saved.getId(), writeJson(AppResponse.error(
+            requestStateService.markFailed(saved.getId(), writeJson(AppResponse.error(
                     AppResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
                     messageService.getMessage("error.request.schedulingFailed")
             )));

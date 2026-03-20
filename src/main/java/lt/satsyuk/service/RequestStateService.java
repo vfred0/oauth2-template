@@ -25,24 +25,24 @@ public class RequestStateService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void markInProgress(UUID requestId) {
+    public void markProcessing(UUID requestId) {
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RequestNotFoundException(requestId));
-        request.markInProgress(now());
+        request.markProcessing(now());
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void markProcessed(UUID requestId, String responseData) {
+    public void markCompleted(UUID requestId, String responseData) {
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RequestNotFoundException(requestId));
-        request.markProcessed(responseData, now());
+        request.markCompleted(responseData, now());
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void markProcessingError(UUID requestId, String responseData) {
+    public void markFailed(UUID requestId, String responseData) {
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RequestNotFoundException(requestId));
-        request.markProcessingError(responseData, now());
+        request.markFailed(responseData, now());
     }
 
     private OffsetDateTime now() {

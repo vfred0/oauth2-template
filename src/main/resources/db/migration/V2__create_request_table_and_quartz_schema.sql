@@ -7,7 +7,7 @@ CREATE TABLE request (
     request_data JSONB NOT NULL,
     response_data JSONB NULL,
     CONSTRAINT chk_request_type CHECK (type IN ('CLIENT_CREATE', 'OTHER')),
-    CONSTRAINT chk_request_status CHECK (status IN ('CREATED', 'IN_PROGRESS', 'PROCESSED', 'PROCESSING_ERROR'))
+    CONSTRAINT chk_request_status CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'))
 );
 
 CREATE INDEX idx_request_type ON request (type);

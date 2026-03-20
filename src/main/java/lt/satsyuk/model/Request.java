@@ -48,19 +48,19 @@ public class Request {
     @ColumnTransformer(read = "response_data::text", write = "?::jsonb")
     private String responseData;
 
-    public void markInProgress(OffsetDateTime changedAt) {
-        this.status = RequestStatus.IN_PROGRESS;
+    public void markProcessing(OffsetDateTime changedAt) {
+        this.status = RequestStatus.PROCESSING;
         this.statusChangedAt = changedAt;
     }
 
-    public void markProcessed(String responseData, OffsetDateTime changedAt) {
-        this.status = RequestStatus.PROCESSED;
+    public void markCompleted(String responseData, OffsetDateTime changedAt) {
+        this.status = RequestStatus.COMPLETED;
         this.responseData = responseData;
         this.statusChangedAt = changedAt;
     }
 
-    public void markProcessingError(String responseData, OffsetDateTime changedAt) {
-        this.status = RequestStatus.PROCESSING_ERROR;
+    public void markFailed(String responseData, OffsetDateTime changedAt) {
+        this.status = RequestStatus.FAILED;
         this.responseData = responseData;
         this.statusChangedAt = changedAt;
     }

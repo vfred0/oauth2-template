@@ -71,9 +71,9 @@ class RequestServiceTest {
         Request savedRequest = requestCaptor.getValue();
 
         assertThat(response.requestId()).isEqualTo(savedRequest.getId());
-        assertThat(response.status()).isEqualTo(RequestStatus.CREATED);
+        assertThat(response.status()).isEqualTo(RequestStatus.PENDING);
         assertThat(savedRequest.getType()).isEqualTo(RequestType.CLIENT_CREATE);
-        assertThat(savedRequest.getStatus()).isEqualTo(RequestStatus.CREATED);
+        assertThat(savedRequest.getStatus()).isEqualTo(RequestStatus.PENDING);
         assertThat(savedRequest.getRequestData()).isEqualTo(objectMapper.writeValueAsString(createClientRequest));
         verify(requestSchedulerService).scheduleClientCreateRequest(savedRequest.getId());
     }
@@ -85,7 +85,7 @@ class RequestServiceTest {
         Request request = Request.builder()
                 .id(requestId)
                 .type(RequestType.CLIENT_CREATE)
-                .status(RequestStatus.PROCESSED)
+                .status(RequestStatus.COMPLETED)
                 .createdAt(now)
                 .statusChangedAt(now)
                 .requestData("{\"firstName\":\"John\"}")
@@ -128,7 +128,7 @@ class RequestServiceTest {
         ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
         verify(requestRepository).save(requestCaptor.capture());
         Request savedRequest = requestCaptor.getValue();
-        verify(requestStateService).markProcessingError(
+        verify(requestStateService).markFailed(
                 savedRequest.getId(),
                 objectMapper.writeValueAsString(AppResponse.error(
                         AppResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
