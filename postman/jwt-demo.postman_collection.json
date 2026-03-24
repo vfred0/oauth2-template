@@ -176,16 +176,74 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Create client succeeded\", function () {",
+									"pm.test(\"Create client request accepted\", function () {",
+									"    pm.response.to.have.status(202);",
+									"});",
+									"const json = pm.response.json();",
+									"pm.test(\"Response contains async request id\", function () {",
+									"    pm.expect(json.code).to.eql(0);",
+									"    pm.expect(json.message).to.eql('OK');",
+									"    pm.expect(json.data.requestId).to.be.a('string');",
+									"    pm.expect(['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED']).to.include(json.data.status);",
+									"});",
+									"pm.environment.set(\"request_id\", json.data.requestId);",
+									"pm.environment.set(\"request_status\", json.data.status);",
+									"pm.environment.unset(\"id_client\");",
+									"console.log(\"Client creation accepted, request_id set in environment\");"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Request Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{access_token}}" }
+						],
+						"url": "{{base_url}}/api/requests/{{request_id}}"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Get request status succeeded\", function () {",
 									"    pm.response.to.have.status(200);",
 									"});",
 									"const json = pm.response.json();",
-									"pm.test(\"Response contains client id and phone\", function () {",
-									"    pm.expect(json.data.id).to.be.a('number');",
-									"    pm.expect(json.data.phone).to.eql(pm.environment.get(\"phone\"));",
+									"pm.test(\"Response contains request status payload\", function () {",
+									"    pm.expect(json.code).to.eql(0);",
+									"    pm.expect(json.message).to.eql('OK');",
+									"    pm.expect(json.data.requestId).to.eql(pm.environment.get(\"request_id\"));",
+									"    pm.expect(json.data.type).to.eql('CLIENT_CREATE');",
+									"    pm.expect(['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED']).to.include(json.data.status);",
 									"});",
-									"pm.environment.set(\"id_client\", json.data.id);",
-									"console.log(\"Client created, id set in environment\");"
+									"pm.environment.set(\"request_status\", json.data.status);",
+									"if (json.data.status === 'COMPLETED') {",
+									"    pm.test(\"Completed request contains created client\", function () {",
+									"        pm.expect(json.data.response).to.be.an('object');",
+									"        pm.expect(json.data.response.code).to.eql(0);",
+									"        pm.expect(json.data.response.data.id).to.be.a('number');",
+									"        pm.expect(json.data.response.data.phone).to.eql(pm.environment.get(\"phone\"));",
+									"    });",
+									"    pm.environment.set(\"id_client\", json.data.response.data.id);",
+									"    console.log(\"Request completed, id_client set in environment\");",
+									"} else if (json.data.status === 'FAILED') {",
+									"    pm.test(\"Failed request contains nested error response\", function () {",
+									"        pm.expect(json.data.response).to.be.an('object');",
+									"        pm.expect(json.data.response.code).to.be.a('number');",
+									"        pm.expect(json.data.response.message).to.be.a('string');",
+									"    });",
+									"    pm.environment.unset(\"id_client\");",
+									"    console.warn(\"Request failed:\", json.data.response.message);",
+									"} else {",
+									"    pm.test(\"In-progress request has no terminal response yet\", function () {",
+									"        pm.expect(json.data.response).to.eql(null);",
+									"    });",
+									"    console.log(\"Request still in progress:\", json.data.status);",
+									"}"
 								]
 							}
 						}
