@@ -51,6 +51,9 @@ public class RateLimitProperties {
 
         private String keyHeader;
 
+        @NotBlank
+        private String cacheName = "rateLimitBuckets";
+
         @Min(1)
         private long capacity;
 

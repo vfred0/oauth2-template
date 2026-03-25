@@ -13,6 +13,8 @@ import lt.satsyuk.config.RateLimitProperties;
 import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.service.MessageService;
 import lt.satsyuk.service.SecurityService;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -26,21 +28,20 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @Component
 @RequiredArgsConstructor
 public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static final String RATE_LIMIT_MESSAGE_KEY = "api.error.tooManyRequests";
+    public static final String DEFAULT_RATE_LIMIT_BUCKETS_CACHE = "rateLimitBuckets";
 
     private final SecurityService securityService;
     private final MessageService messageService;
     private final RateLimitProperties rateLimitProperties;
+    private final CacheManager cacheManager;
     private final ObjectMapper objectMapper;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-    private final ConcurrentMap<String, ConcurrentMap<String, Bucket>> bucketsByRule = new ConcurrentHashMap<>();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -108,13 +109,26 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private Bucket resolveBucket(RateLimitProperties.Rule rule, String key) {
-        ConcurrentMap<String, Bucket> buckets = bucketsByRule.computeIfAbsent(rule.getId(), ignored -> new ConcurrentHashMap<>());
-        return buckets.computeIfAbsent(key, ignored -> Bucket.builder()
+        String cacheName = resolveCacheName(rule);
+        Cache cache = cacheManager.getCache(cacheName);
+        if (cache == null) {
+            throw new IllegalStateException("Cache '" + cacheName + "' is not configured");
+        }
+
+        String cacheKey = rule.getId() + ":" + key;
+        return cache.get(cacheKey, () -> Bucket.builder()
                 .addLimit(Bandwidth.classic(
                         rule.getCapacity(),
                         Refill.intervally(rule.getCapacity(), Duration.ofSeconds(rule.getWindowSeconds()))
                 ))
-                .build());
+                .build()
+        );
+    }
+
+    private String resolveCacheName(RateLimitProperties.Rule rule) {
+        return StringUtils.hasText(rule.getCacheName())
+                ? rule.getCacheName()
+                : DEFAULT_RATE_LIMIT_BUCKETS_CACHE;
     }
 
     private String resolveKey(RateLimitProperties.Rule rule, HttpServletRequest request) {
@@ -132,7 +146,15 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     public void clearBuckets() {
-        bucketsByRule.clear();
+        rateLimitProperties.getRules().stream()
+                .map(this::resolveCacheName)
+                .distinct()
+                .forEach(cacheName -> {
+                    Cache cache = cacheManager.getCache(cacheName);
+                    if (cache != null) {
+                        cache.clear();
+                    }
+                });
     }
 
     private void writeRateLimitedResponse(HttpServletResponse response) throws IOException {
