@@ -16,10 +16,16 @@ import lt.satsyuk.service.SecurityService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -32,9 +38,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final SecurityService securityService;
     private final MessageService messageService;
     private final RateLimitProperties rateLimitProperties;
-    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
-    private final ConcurrentMap<String, Bucket> loginBuckets = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, Bucket> clientBuckets = new ConcurrentHashMap<>();
+    private final ObjectMapper objectMapper;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private final ConcurrentMap<String, ConcurrentMap<String, Bucket>> bucketsByRule = new ConcurrentHashMap<>();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -42,39 +48,67 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String path = request.getServletPath();
 
-        if (isLoginRequest(request, path) && isRateLimited(loginBuckets, loginKey(request), rateLimitProperties.getLogin())) {
-            writeRateLimitedResponse(response);
-            return;
-        }
-
-        if (isClientsRequest(path)
-                && rateLimitProperties.getRateLimitedClientId().equals(securityService.clientId())
-                && isRateLimited(clientBuckets, clientsKey(), rateLimitProperties.getClients())) {
-            writeRateLimitedResponse(response);
-            return;
+        for (RateLimitProperties.Rule rule : sortedRules()) {
+            if (!matchesRequest(rule, request, path)) {
+                continue;
+            }
+            if (!matchesClient(rule)) {
+                continue;
+            }
+            if (isRateLimited(rule, resolveKey(rule, request))) {
+                writeRateLimitedResponse(response);
+                return;
+            }
         }
 
         filterChain.doFilter(request, response);
     }
 
-    private boolean isLoginRequest(HttpServletRequest request, String path) {
-        return rateLimitProperties.getLoginPath().equals(path) && "POST".equalsIgnoreCase(request.getMethod());
+    private List<RateLimitProperties.Rule> sortedRules() {
+        return rateLimitProperties.getRules().stream()
+                .filter(RateLimitProperties.Rule::isEnabled)
+                .sorted(Comparator.comparingInt(RateLimitProperties.Rule::getOrder)
+                        .thenComparing(RateLimitProperties.Rule::getId))
+                .toList();
     }
 
-    private boolean isClientsRequest(String path) {
-        return path != null && path.startsWith(rateLimitProperties.getClientsPathPrefix());
+    private boolean matchesRequest(RateLimitProperties.Rule rule, HttpServletRequest request, String path) {
+        return matchesPath(rule, path) && matchesMethod(rule, request.getMethod());
     }
 
-    public void clearBuckets() {
-        loginBuckets.clear();
-        clientBuckets.clear();
+    private boolean matchesPath(RateLimitProperties.Rule rule, String path) {
+        return path != null && pathMatcher.match(rule.getPathPattern(), path);
     }
 
-    private boolean isRateLimited(ConcurrentMap<String, Bucket> buckets, String key, RateLimitProperties.Rule rule) {
-        return !resolveBucket(buckets, key, rule).tryConsume(1);
+    private boolean matchesMethod(RateLimitProperties.Rule rule, String method) {
+        Set<String> methods = rule.getMethods();
+        if (methods == null || methods.isEmpty()) {
+            return true;
+        }
+        if (!StringUtils.hasText(method)) {
+            return false;
+        }
+
+        String normalizedMethod = method.trim().toUpperCase(Locale.ROOT);
+        return methods.stream()
+                .map(candidate -> candidate == null ? "" : candidate.trim().toUpperCase(Locale.ROOT))
+                .anyMatch(candidate -> "*".equals(candidate) || candidate.equals(normalizedMethod));
     }
 
-    private Bucket resolveBucket(ConcurrentMap<String, Bucket> buckets, String key, RateLimitProperties.Rule rule) {
+    private boolean matchesClient(RateLimitProperties.Rule rule) {
+        Set<String> clientIds = rule.getClientIds();
+        if (clientIds == null || clientIds.isEmpty()) {
+            return true;
+        }
+        return clientIds.contains(safeValue(securityService.clientId()));
+    }
+
+    private boolean isRateLimited(RateLimitProperties.Rule rule, String key) {
+        return !resolveBucket(rule, key).tryConsume(1);
+    }
+
+    private Bucket resolveBucket(RateLimitProperties.Rule rule, String key) {
+        ConcurrentMap<String, Bucket> buckets = bucketsByRule.computeIfAbsent(rule.getId(), ignored -> new ConcurrentHashMap<>());
         return buckets.computeIfAbsent(key, ignored -> Bucket.builder()
                 .addLimit(Bandwidth.classic(
                         rule.getCapacity(),
@@ -83,13 +117,22 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 .build());
     }
 
-    private String loginKey(HttpServletRequest request) {
-        String remoteAddr = request.getRemoteAddr();
-        return "login:" + (remoteAddr == null || remoteAddr.isBlank() ? "unknown" : remoteAddr);
+    private String resolveKey(RateLimitProperties.Rule rule, HttpServletRequest request) {
+        return switch (rule.getKeyStrategy()) {
+            case IP -> "ip:" + safeValue(request.getRemoteAddr());
+            case CLIENT_ID -> "client:" + safeValue(securityService.clientId());
+            case USERNAME -> "user:" + safeValue(securityService.username());
+            case HEADER -> "header:" + safeValue(request.getHeader(rule.getKeyHeader()));
+            case CLIENT_ID_AND_IP -> "client-ip:" + safeValue(securityService.clientId()) + "|" + safeValue(request.getRemoteAddr());
+        };
     }
 
-    private String clientsKey() {
-        return "clients:" + securityService.clientId();
+    private String safeValue(String value) {
+        return StringUtils.hasText(value) ? value : "unknown";
+    }
+
+    public void clearBuckets() {
+        bucketsByRule.clear();
     }
 
     private void writeRateLimitedResponse(HttpServletResponse response) throws IOException {
