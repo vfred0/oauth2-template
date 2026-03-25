@@ -114,12 +114,12 @@ class RateLimitingFilterTest {
     @Test
     void throwsWhenConfiguredCacheDoesNotExist() {
         properties.setRules(List.of(rule("missing-cache", "/api/auth/login", "unknown-cache", RateLimitProperties.KeyStrategy.IP, Set.of("POST"), 1)));
+        MockHttpServletRequest request = request("POST", "/api/auth/login", "10.0.0.1");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
 
-        assertThatThrownBy(() -> filter.doFilter(
-                request("POST", "/api/auth/login", "10.0.0.1"),
-                new MockHttpServletResponse(),
-                new MockFilterChain()
-        )).isInstanceOf(IllegalStateException.class)
+        assertThatThrownBy(() -> filter.doFilter(request, response, chain))
+                .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("unknown-cache");
     }
 
