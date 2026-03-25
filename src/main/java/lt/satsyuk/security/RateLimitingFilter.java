@@ -50,13 +50,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
 
         for (RateLimitProperties.Rule rule : sortedRules()) {
-            if (!matchesRequest(rule, request, path)) {
-                continue;
-            }
-            if (!matchesClient(rule)) {
-                continue;
-            }
-            if (isRateLimited(rule, resolveKey(rule, request))) {
+            boolean shouldLimit = matchesRequest(rule, request, path)
+                    && matchesClient(rule)
+                    && isRateLimited(rule, resolveKey(rule, request));
+
+            if (shouldLimit) {
                 writeRateLimitedResponse(response);
                 return;
             }
