@@ -113,6 +113,7 @@ public abstract class AbstractIntegrationTest {
     protected String logoutUrl;
 
     protected String clientUrl;
+    protected String accountUrl;
     protected String requestUrl;
 
     @BeforeEach
@@ -125,6 +126,7 @@ public abstract class AbstractIntegrationTest {
         logoutUrl = mainUrl + "/auth/logout";
 
         clientUrl = mainUrl + "/clients";
+        accountUrl = mainUrl + "/accounts";
         requestUrl = mainUrl + "/requests";
         restTemplate = createTestRestTemplate();
 

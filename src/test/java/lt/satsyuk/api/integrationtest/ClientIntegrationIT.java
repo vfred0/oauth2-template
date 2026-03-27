@@ -8,8 +8,10 @@ import lt.satsyuk.dto.CreateClientRequest;
 import lt.satsyuk.dto.KeycloakTokenResponse;
 import lt.satsyuk.dto.RequestAcceptedResponse;
 import lt.satsyuk.dto.RequestStatusResponse;
+import lt.satsyuk.model.Account;
 import lt.satsyuk.model.Client;
 import lt.satsyuk.model.RequestStatus;
+import lt.satsyuk.repository.AccountRepository;
 import lt.satsyuk.repository.ClientRepository;
 import lt.satsyuk.repository.RequestRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,10 +41,13 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
     @Autowired
     ClientRepository repo;
     @Autowired
+    AccountRepository accountRepository;
+    @Autowired
     RequestRepository requestRepository;
 
     @BeforeEach
     void setUp() {
+        accountRepository.deleteAll();
         repo.deleteAll();
         requestRepository.deleteAll();
     }
@@ -69,6 +74,9 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
         // Verify persisted
         assertThat(repo.existsByPhone(req.phone())).isTrue();
         assertThat(requestRepository.findById(accepted.requestId())).isPresent();
+        Account createdAccount = accountRepository.findByClientId(data.id()).orElse(null);
+        assertThat(createdAccount).isNotNull();
+        assertThat(createdAccount.getBalance()).isEqualByComparingTo("0");
 
         // Verify GET by id returns same data
         ClientResponse fetched = getAndReturnData(clientUrl + "/" + data.id(), token, ClientResponse.class);

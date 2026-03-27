@@ -25,6 +25,7 @@
       { "name": "ADMIN", "description": "Administrator role" },
       { "name": "CLIENT_CREATE", "description": "Create client role" },
       { "name": "CLIENT_GET", "description": "Get client role" },
+      { "name": "UPDATE_BALACE", "description": "Update account balance role" },
       { "name": "offline_access", "description": "Offline access role" }
     ]
   },
@@ -38,7 +39,7 @@
       "credentials": [
         { "type": "password", "value": "password", "temporary": false }
       ],
-      "realmRoles": ["CLIENT_CREATE", "CLIENT_GET", "offline_access"]
+      "realmRoles": ["CLIENT_CREATE", "CLIENT_GET", "UPDATE_BALACE", "offline_access"]
     },
     {
       "username": "admin",
