@@ -4,9 +4,11 @@ import lt.satsyuk.dto.AccountResponse;
 import lt.satsyuk.model.Account;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring")
 public interface AccountMapper {
+    AccountMapper INSTANCE = Mappers.getMapper(AccountMapper.class);
 
     @Mapping(target = "accountId", source = "id")
     @Mapping(target = "clientId", source = "client.id")

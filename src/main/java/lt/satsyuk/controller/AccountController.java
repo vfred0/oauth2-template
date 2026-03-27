@@ -32,7 +32,7 @@ public class AccountController {
     }
 
     @PostMapping("/balance/pessimistic")
-    @PreAuthorize("hasRole('UPDATE_BALACE')")
+    @PreAuthorize("hasRole('UPDATE_BALANCE')")
     @Operation(summary = "Update balance with pessimistic lock", description = "Updates account balance using pessimistic write lock.")
     @ApiResponse(responseCode = "200", description = "Balance updated",
             content = @Content(mediaType = "application/json",
@@ -50,7 +50,7 @@ public class AccountController {
     }
 
     @PostMapping("/balance/optimistic")
-    @PreAuthorize("hasRole('UPDATE_BALACE')")
+    @PreAuthorize("hasRole('UPDATE_BALANCE')")
     @Operation(summary = "Update balance with optimistic lock", description = "Updates account balance using optimistic locking with automatic retries.")
     @ApiResponse(responseCode = "200", description = "Balance updated",
             content = @Content(mediaType = "application/json",

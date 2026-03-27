@@ -35,18 +35,20 @@ public class ClientService {
             throw new PhoneAlreadyExistsException(req.phone());
         }
 
+        Client saved;
         try {
             Client client = mapper.toEntity(req);
-            Client saved = repo.saveAndFlush(client);
-            accountRepository.saveAndFlush(Account.builder()
-                    .client(saved)
-                    .balance(BigDecimal.ZERO)
-                    .build());
-
-            return mapper.toResponse(saved);
+            saved = repo.saveAndFlush(client);
         } catch (DataIntegrityViolationException _) {
             throw new PhoneAlreadyExistsException(req.phone());
         }
+
+        accountRepository.saveAndFlush(Account.builder()
+                .client(saved)
+                .balance(BigDecimal.ZERO)
+                .build());
+
+        return mapper.toResponse(saved);
     }
 
     public ClientResponse get(Long id) {
