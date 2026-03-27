@@ -22,6 +22,8 @@ import org.springframework.transaction.support.SimpleTransactionStatus;
 import java.math.BigDecimal;
 import java.util.Optional;
 
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -80,8 +82,10 @@ class AccountServiceTest {
     @Test
     void updateBalancePessimisticThrowsWhenAccountNotFound() {
         when(accountRepository.findByClientIdForPessimisticUpdate(11L)).thenReturn(Optional.empty());
+        UpdateBalanceRequest request = new UpdateBalanceRequest(11L, BigDecimal.ONE);
+        ThrowingCallable action = () -> accountService.updateBalancePessimistic(request);
 
-        assertThatThrownBy(() -> accountService.updateBalancePessimistic(new UpdateBalanceRequest(11L, BigDecimal.ONE)))
+        assertThatThrownBy(action)
                 .isInstanceOf(AccountNotFoundException.class)
                 .hasMessageContaining("client id=11");
     }
@@ -161,8 +165,10 @@ class AccountServiceTest {
     @Test
     void updateBalanceOptimisticTxThrowsWhenAccountMissing() {
         when(accountRepository.findByClientId(11L)).thenReturn(Optional.empty());
+        BigDecimal amount = new BigDecimal("1.00");
+        ThrowingCallable action = () -> accountService.updateBalanceOptimisticTx(11L, amount);
 
-        assertThatThrownBy(() -> accountService.updateBalanceOptimisticTx(11L, new BigDecimal("1.00")))
+        assertThatThrownBy(action)
                 .isInstanceOf(AccountNotFoundException.class);
         verify(accountRepository, never()).saveAndFlush(any(Account.class));
     }
