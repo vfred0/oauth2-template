@@ -1,282 +1,435 @@
 {
-	"info": {
-		"name": "JWT Demo API (Full Tests)",
-		"_postman_id": "f7b2e3c1-9a4d-4f1e-bc1a-123456789abc",
-		"description": "Full Postman collection for Spring Boot + Keycloak OAuth2 Proxy with tests",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "Auth",
-			"item": [
-				{
-					"name": "Login",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"clientId\": \"{{client_id}}\",\n  \"clientSecret\": \"{{client_secret}}\"\n}"
-						},
-						"url": "{{base_url}}/api/auth/login"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Login request succeeded\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"const json = pm.response.json();",
-									"",
-									"pm.test(\"Response contains tokens\", function () {",
-									"    pm.expect(json.data.access_token).to.be.a('string');",
-									"    pm.expect(json.data.refresh_token).to.be.a('string');",
-									"});",
-									"",
-									"pm.environment.set(\"access_token\", json.data.access_token);",
-									"pm.environment.set(\"refresh_token\", json.data.refresh_token);",
-									"",
-									"console.log(\"Tokens updated in environment\");"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "Admin Login",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"{{admin}}\",\n  \"password\": \"{{admin_password}}\",\n  \"clientId\": \"{{client_id}}\",\n  \"clientSecret\": \"{{client_secret}}\"\n}"
-						},
-						"url": "{{base_url}}/api/auth/login"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Login request succeeded\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"const json = pm.response.json();",
-									"",
-									"pm.test(\"Response contains tokens\", function () {",
-									"    pm.expect(json.data.access_token).to.be.a('string');",
-									"    pm.expect(json.data.refresh_token).to.be.a('string');",
-									"});",
-									"",
-									"pm.environment.set(\"access_token\", json.data.access_token);",
-									"pm.environment.set(\"refresh_token\", json.data.refresh_token);",
-									"",
-									"console.log(\"Tokens updated in environment\");"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "Refresh Token",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"refreshToken\": \"{{refresh_token}}\",\n  \"clientId\": \"{{client_id}}\",\n  \"clientSecret\": \"{{client_secret}}\"\n}"
-						},
-						"url": "{{base_url}}/api/auth/refresh"
-					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Refresh succeeded\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"const json = pm.response.json();",
-									"",
-									"pm.test(\"New tokens returned\", function () {",
-									"    pm.expect(json.data.access_token).to.be.a('string');",
-									"});",
-									"",
-									"pm.environment.set(\"access_token\", json.data.access_token);",
-									"pm.environment.set(\"refresh_token\", json.data.refresh_token);",
-									"",
-									"console.log(\"Tokens refreshed\");"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "Logout",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"refreshToken\": \"{{refresh_token}}\",\n  \"clientId\": \"{{client_id}}\",\n  \"clientSecret\": \"{{client_secret}}\"\n}"
-						},
-						"url": "{{base_url}}/api/auth/logout"
-					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Logout succeeded\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"console.log(\"Logout succeeded\");"
-								]
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "Clients",
-			"item": [
-				{
-					"name": "Create Client",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Authorization", "value": "Bearer {{access_token}}" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"{{firstName}}\",\n  \"lastName\": \"{{lastName}}\",\n  \"phone\": \"{{phone}}\"\n}"
-						},
-						"url": "{{base_url}}/api/clients"
-					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Create client request accepted\", function () {",
-									"    pm.response.to.have.status(202);",
-									"});",
-									"const json = pm.response.json();",
-									"pm.test(\"Response contains async request id\", function () {",
-									"    pm.expect(json.code).to.eql(0);",
-									"    pm.expect(json.message).to.eql('OK');",
-									"    pm.expect(json.data.requestId).to.be.a('string');",
-									"    pm.expect(['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED']).to.include(json.data.status);",
-									"});",
-									"pm.environment.set(\"request_id\", json.data.requestId);",
-									"pm.environment.set(\"request_status\", json.data.status);",
-									"pm.environment.unset(\"id_client\");",
-									"console.log(\"Client creation accepted, request_id set in environment\");"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "Get Request Status",
-					"request": {
-						"method": "GET",
-						"header": [
-							{ "key": "Authorization", "value": "Bearer {{access_token}}" }
-						],
-						"url": "{{base_url}}/api/requests/{{request_id}}"
-					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Get request status succeeded\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"const json = pm.response.json();",
-									"pm.test(\"Response contains request status payload\", function () {",
-									"    pm.expect(json.code).to.eql(0);",
-									"    pm.expect(json.message).to.eql('OK');",
-									"    pm.expect(json.data.requestId).to.eql(pm.environment.get(\"request_id\"));",
-									"    pm.expect(json.data.type).to.eql('CLIENT_CREATE');",
-									"    pm.expect(['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED']).to.include(json.data.status);",
-									"});",
-									"pm.environment.set(\"request_status\", json.data.status);",
-									"if (json.data.status === 'COMPLETED') {",
-									"    pm.test(\"Completed request contains created client\", function () {",
-									"        pm.expect(json.data.response).to.be.an('object');",
-									"        pm.expect(json.data.response.code).to.eql(0);",
-									"        pm.expect(json.data.response.data.id).to.be.a('number');",
-									"        pm.expect(json.data.response.data.phone).to.eql(pm.environment.get(\"phone\"));",
-									"    });",
-									"    pm.environment.set(\"id_client\", json.data.response.data.id);",
-									"    console.log(\"Request completed, id_client set in environment\");",
-									"} else if (json.data.status === 'FAILED') {",
-									"    pm.test(\"Failed request contains nested error response\", function () {",
-									"        pm.expect(json.data.response).to.be.an('object');",
-									"        pm.expect(json.data.response.code).to.be.a('number');",
-									"        pm.expect(json.data.response.message).to.be.a('string');",
-									"    });",
-									"    pm.environment.unset(\"id_client\");",
-									"    console.warn(\"Request failed:\", json.data.response.message);",
-									"} else {",
-									"    pm.test(\"In-progress request has no terminal response yet\", function () {",
-									"        pm.expect(json.data.response).to.eql(null);",
-									"    });",
-									"    console.log(\"Request still in progress:\", json.data.status);",
-									"}"
-								]
-							}
-						}
-					]
-				},
-				{
-					"name": "Get Client",
-					"request": {
-						"method": "GET",
-						"header": [
-							{ "key": "Authorization", "value": "Bearer {{access_token}}" }
-						],
-						"url": "{{base_url}}/api/clients/{{id_client}}"
-					},
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Get client succeeded\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"const json = pm.response.json();",
-									"pm.test(\"Response contains expected id\", function () {",
-									"    pm.expect(json.data.id).to.eql(Number(pm.environment.get(\"id_client\")));",
-									"});",
-									"console.log(\"Fetched client\");"
-								]
-							}
-						}
-					]
-				}
-			]
-		}
-	]
+  "info": {
+    "name": "JWT Demo API (Full Tests)",
+    "_postman_id": "f7b2e3c1-9a4d-4f1e-bc1a-123456789abc",
+    "description": "Full Postman collection for Spring Boot + Keycloak OAuth2 Proxy with tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"clientId\": \"{{client_id}}\",\n  \"clientSecret\": \"{{client_secret}}\"\n}"
+            },
+            "url": "{{base_url}}/api/auth/login"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login request succeeded\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Response contains tokens\", function () {",
+                  "    pm.expect(json.data.access_token).to.be.a('string');",
+                  "    pm.expect(json.data.refresh_token).to.be.a('string');",
+                  "});",
+                  "",
+                  "pm.environment.set(\"access_token\", json.data.access_token);",
+                  "pm.environment.set(\"refresh_token\", json.data.refresh_token);",
+                  "",
+                  "console.log(\"Tokens updated in environment\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{admin}}\",\n  \"password\": \"{{admin_password}}\",\n  \"clientId\": \"{{client_id}}\",\n  \"clientSecret\": \"{{client_secret}}\"\n}"
+            },
+            "url": "{{base_url}}/api/auth/login"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login request succeeded\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Response contains tokens\", function () {",
+                  "    pm.expect(json.data.access_token).to.be.a('string');",
+                  "    pm.expect(json.data.refresh_token).to.be.a('string');",
+                  "});",
+                  "",
+                  "pm.environment.set(\"access_token\", json.data.access_token);",
+                  "pm.environment.set(\"refresh_token\", json.data.refresh_token);",
+                  "",
+                  "console.log(\"Tokens updated in environment\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\",\n  \"clientId\": \"{{client_id}}\",\n  \"clientSecret\": \"{{client_secret}}\"\n}"
+            },
+            "url": "{{base_url}}/api/auth/refresh"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Refresh succeeded\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"New tokens returned\", function () {",
+                  "    pm.expect(json.data.access_token).to.be.a('string');",
+                  "});",
+                  "",
+                  "pm.environment.set(\"access_token\", json.data.access_token);",
+                  "pm.environment.set(\"refresh_token\", json.data.refresh_token);",
+                  "",
+                  "console.log(\"Tokens refreshed\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\",\n  \"clientId\": \"{{client_id}}\",\n  \"clientSecret\": \"{{client_secret}}\"\n}"
+            },
+            "url": "{{base_url}}/api/auth/logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Logout succeeded\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log(\"Logout succeeded\");"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Clients",
+      "item": [
+        {
+          "name": "Create Client",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"{{firstName}}\",\n  \"lastName\": \"{{lastName}}\",\n  \"phone\": \"{{phone}}\"\n}"
+            },
+            "url": "{{base_url}}/api/clients"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Create client request accepted\", function () {",
+                  "    pm.response.to.have.status(202);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response contains async request id\", function () {",
+                  "    pm.expect(json.code).to.eql(0);",
+                  "    pm.expect(json.message).to.eql('OK');",
+                  "    pm.expect(json.data.requestId).to.be.a('string');",
+                  "    pm.expect(['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED']).to.include(json.data.status);",
+                  "});",
+                  "pm.environment.set(\"request_id\", json.data.requestId);",
+                  "pm.environment.set(\"request_status\", json.data.status);",
+                  "pm.environment.unset(\"id_client\");",
+                  "console.log(\"Client creation accepted, request_id set in environment\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Request Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/requests/{{request_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Get request status succeeded\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response contains request status payload\", function () {",
+                  "    pm.expect(json.code).to.eql(0);",
+                  "    pm.expect(json.message).to.eql('OK');",
+                  "    pm.expect(json.data.requestId).to.eql(pm.environment.get(\"request_id\"));",
+                  "    pm.expect(json.data.type).to.eql('CLIENT_CREATE');",
+                  "    pm.expect(['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED']).to.include(json.data.status);",
+                  "});",
+                  "pm.environment.set(\"request_status\", json.data.status);",
+                  "if (json.data.status === 'COMPLETED') {",
+                  "    pm.test(\"Completed request contains created client\", function () {",
+                  "        pm.expect(json.data.response).to.be.an('object');",
+                  "        pm.expect(json.data.response.code).to.eql(0);",
+                  "        pm.expect(json.data.response.data.id).to.be.a('number');",
+                  "        pm.expect(json.data.response.data.phone).to.eql(pm.environment.get(\"phone\"));",
+                  "    });",
+                  "    pm.environment.set(\"id_client\", json.data.response.data.id);",
+                  "    console.log(\"Request completed, id_client set in environment\");",
+                  "} else if (json.data.status === 'FAILED') {",
+                  "    pm.test(\"Failed request contains nested error response\", function () {",
+                  "        pm.expect(json.data.response).to.be.an('object');",
+                  "        pm.expect(json.data.response.code).to.be.a('number');",
+                  "        pm.expect(json.data.response.message).to.be.a('string');",
+                  "    });",
+                  "    pm.environment.unset(\"id_client\");",
+                  "    console.warn(\"Request failed:\", json.data.response.message);",
+                  "} else {",
+                  "    pm.test(\"In-progress request has no terminal response yet\", function () {",
+                  "        pm.expect(json.data.response).to.eql(null);",
+                  "    });",
+                  "    console.log(\"Request still in progress:\", json.data.status);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Client",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/clients/{{id_client}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Get client succeeded\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response contains expected id\", function () {",
+                  "    pm.expect(json.data.id).to.eql(Number(pm.environment.get(\"id_client\")));",
+                  "});",
+                  "console.log(\"Fetched client\");"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Update Balance (Pessimistic)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": {{id_client}},\n  \"amount\": 100.50\n}"
+            },
+            "url": "{{base_url}}/api/accounts/balance/pessimistic"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Update balance pessimistic succeeded\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response has account payload\", function () {",
+                  "    pm.expect(json.code).to.eql(0);",
+                  "    pm.expect(json.data.clientId).to.eql(Number(pm.environment.get(\"id_client\")));",
+                  "    pm.expect(json.data.accountId).to.be.a(\"number\");",
+                  "    pm.expect(json.data.balance).to.be.a(\"number\");",
+                  "});",
+                  "pm.environment.set(\"account_id\", json.data.accountId);",
+                  "pm.environment.set(\"account_balance\", json.data.balance);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Balance (Optimistic)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": {{id_client}},\n  \"amount\": 25.00\n}"
+            },
+            "url": "{{base_url}}/api/accounts/balance/optimistic"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Update balance optimistic succeeded\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response has account payload\", function () {",
+                  "    pm.expect(json.code).to.eql(0);",
+                  "    pm.expect(json.data.clientId).to.eql(Number(pm.environment.get(\"id_client\")));",
+                  "    pm.expect(json.data.accountId).to.be.a(\"number\");",
+                  "    pm.expect(json.data.balance).to.be.a(\"number\");",
+                  "});",
+                  "pm.environment.set(\"account_id\", json.data.accountId);",
+                  "pm.environment.set(\"account_balance\", json.data.balance);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Account By Client Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/accounts/client/{{id_client}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Get account succeeded\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Response has account payload\", function () {",
+                  "    pm.expect(json.code).to.eql(0);",
+                  "    pm.expect(json.data.clientId).to.eql(Number(pm.environment.get(\"id_client\")));",
+                  "    pm.expect(json.data.accountId).to.be.a(\"number\");",
+                  "    pm.expect(json.data.balance).to.be.a(\"number\");",
+                  "});",
+                  "pm.environment.set(\"account_id\", json.data.accountId);",
+                  "pm.environment.set(\"account_balance\", json.data.balance);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

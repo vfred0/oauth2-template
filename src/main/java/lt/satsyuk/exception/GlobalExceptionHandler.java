@@ -44,6 +44,24 @@ public class GlobalExceptionHandler {
                         messageService.getMessage("api.error.forbidden")));
     }
 
+    @ExceptionHandler(AccountNotFoundException.class)
+    public ResponseEntity<AppResponse<Void>> handleAccountNotFound(AccountNotFoundException ex) {
+        String message = messageService.getMessage(ex.getMessageCode(), new Object[]{String.valueOf(ex.getClientId())});
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(AppResponse.<Void>error(AppResponse.ErrorCode.NOT_FOUND.getCode(), message));
+    }
+
+    @ExceptionHandler(AccountOptimisticLockException.class)
+    public ResponseEntity<AppResponse<Void>> handleAccountOptimisticLock(AccountOptimisticLockException ex) {
+        String message = messageService.getMessage(ex.getMessageCode(), new Object[]{String.valueOf(ex.getClientId())});
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(AppResponse.<Void>error(AppResponse.ErrorCode.CONFLICT.getCode(), message));
+    }
+
     @ExceptionHandler(ClientNotFoundException.class)
     public ResponseEntity<AppResponse<Void>> handleNotFound(ClientNotFoundException ex) {
         String message = messageService.getMessage(ex.getMessageCode(), new Object[]{String.valueOf(ex.getClientId())});
