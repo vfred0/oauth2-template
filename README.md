@@ -14,7 +14,8 @@ Supported features:
 - 🚪 Logout (refresh token revocation)  
 - 🔐 DPoP support (proof forwarding to Keycloak + proof validation for protected endpoints)  
 - 🛡 Opaque token validation via Spring Security introspection  
-- 🎭 Role-based authorization (ADMIN, CLIENT_CREATE, CLIENT_GET, UPDATE_BALANCE)  
+- 🎭 Role-based authorization (ADMIN, CLIENT_CREATE, CLIENT_GET, CLIENT_SEARCH, UPDATE_BALANCE)  
+- 🔎 Client search endpoint with dedicated role `CLIENT_SEARCH`
 - 🚦 Configurable rate limiting (Bucket4j)  
 - ⏱ Persistent Quartz scheduler for asynchronous client creation requests
 - 💳 Account balance endpoints with pessimistic/optimistic locking
@@ -80,7 +81,7 @@ Keycloak automatically imports:
 
 - realm `my-realm`
 - users (`user`, `admin`)
-- roles (`ADMIN`, `CLIENT_CREATE`, `CLIENT_GET`, `UPDATE_BALANCE`, `offline_access`)
+- roles (`ADMIN`, `CLIENT_CREATE`, `CLIENT_GET`, `CLIENT_SEARCH`, `UPDATE_BALANCE`, `offline_access`)
 - client `spring-app`
 - protocol mappers (roles → access_token)
 
@@ -193,6 +194,18 @@ The resource server uses **service credentials** (env vars) for introspection.
 8. The caller polls `GET /api/requests/{requestId}` until processing finishes.
 
 This makes processing durable across application restarts while keeping the public API responsive.
+
+---
+
+## Seed data: 1000 fictitious clients
+
+Use the prepared SQL script to populate 1000 demo clients and matching zero-balance accounts:
+
+```sql
+\i src/main/resources/db/seed/clients_1000_fake.sql
+```
+
+The script is idempotent and can be re-run safely.
 
 ---
 

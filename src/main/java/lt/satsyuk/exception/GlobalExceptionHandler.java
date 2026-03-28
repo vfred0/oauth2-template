@@ -71,6 +71,15 @@ public class GlobalExceptionHandler {
                 .body(AppResponse.<Void>error(AppResponse.ErrorCode.NOT_FOUND.getCode(), message));
     }
 
+    @ExceptionHandler(ClientSearchQueryTooShortException.class)
+    public ResponseEntity<AppResponse<Void>> handleClientSearchQueryTooShort(ClientSearchQueryTooShortException ex) {
+        String message = messageService.getMessage(ex.getMessageCode(), new Object[]{String.valueOf(ex.getMinLength())});
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(AppResponse.<Void>error(AppResponse.ErrorCode.BAD_REQUEST.getCode(), message));
+    }
+
     @ExceptionHandler(RequestNotFoundException.class)
     public ResponseEntity<AppResponse<Void>> handleRequestNotFound(RequestNotFoundException ex) {
         String message = messageService.getMessage(ex.getMessageCode(), new Object[]{String.valueOf(ex.getRequestId())});

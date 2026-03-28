@@ -114,8 +114,8 @@ public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
                                   "username": "user",
                                   "client_id": "spring-app",
                                   "azp": "spring-app",
-                                  "realm_access": {"roles": ["CLIENT_CREATE", "CLIENT_GET"]},
-                                  "resource_access": {"spring-app": {"roles": ["CLIENT_CREATE", "CLIENT_GET"]}}
+                                  "realm_access": {"roles": ["CLIENT_CREATE", "CLIENT_GET", "CLIENT_SEARCH"]},
+                                  "resource_access": {"spring-app": {"roles": ["CLIENT_CREATE", "CLIENT_GET", "CLIENT_SEARCH"]}}
                                 }
                                 """)));
 

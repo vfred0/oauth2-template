@@ -2,6 +2,7 @@ package lt.satsyuk.service;
 
 import lt.satsyuk.dto.ClientResponse;
 import lt.satsyuk.dto.CreateClientRequest;
+import lt.satsyuk.exception.ClientSearchQueryTooShortException;
 import lt.satsyuk.exception.ClientNotFoundException;
 import lt.satsyuk.exception.PhoneAlreadyExistsException;
 import lt.satsyuk.mapper.ClientMapper;
@@ -9,11 +10,14 @@ import lt.satsyuk.model.Account;
 import lt.satsyuk.model.Client;
 import lt.satsyuk.repository.AccountRepository;
 import lt.satsyuk.repository.ClientRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 public class ClientService {
@@ -21,11 +25,16 @@ public class ClientService {
     private final ClientRepository repo;
     private final AccountRepository accountRepository;
     private final ClientMapper mapper;
+    private final int searchMaxResults;
 
-    public ClientService(ClientRepository repo, AccountRepository accountRepository, ClientMapper mapper) {
+    public ClientService(ClientRepository repo,
+                         AccountRepository accountRepository,
+                         ClientMapper mapper,
+                         @Value("${app.clients.search.max-results:20}") int searchMaxResults) {
         this.repo = repo;
         this.accountRepository = accountRepository;
         this.mapper = mapper;
+        this.searchMaxResults = Math.max(1, searchMaxResults);
     }
 
     @Transactional
@@ -56,5 +65,20 @@ public class ClientService {
                 .orElseThrow(() -> new ClientNotFoundException(id));
 
         return mapper.toResponse(client);
+    }
+
+    public List<ClientResponse> searchByNameOrSurname(String query) {
+        String normalizedQuery = query == null ? "" : query.trim();
+        if (normalizedQuery.length() < 3) {
+            throw new ClientSearchQueryTooShortException(3);
+        }
+
+        return repo.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrderByIdAsc(
+                        normalizedQuery,
+                        normalizedQuery,
+                        PageRequest.of(0, searchMaxResults)
+                ).stream()
+                .map(mapper::toResponse)
+                .toList();
     }
 }
