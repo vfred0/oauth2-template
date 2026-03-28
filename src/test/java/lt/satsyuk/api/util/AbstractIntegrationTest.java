@@ -230,11 +230,22 @@ public abstract class AbstractIntegrationTest {
     }
 
     private HttpHeaders createHeaders(String token, String acceptLanguage) {
+        return createHeaders(token, acceptLanguage, null, false);
+    }
+
+    private HttpHeaders createHeaders(String token, String acceptLanguage, String dpopProof, boolean dpopScheme) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON, MediaType.ALL));
         if (token != null && !token.isEmpty()) {
-            headers.setBearerAuth(token);
+            if (dpopScheme) {
+                headers.set(HttpHeaders.AUTHORIZATION, "DPoP " + token);
+            } else {
+                headers.setBearerAuth(token);
+            }
+        }
+        if (dpopProof != null && !dpopProof.isEmpty()) {
+            headers.set("DPoP", dpopProof);
         }
         if (acceptLanguage != null && !acceptLanguage.isEmpty()) {
             headers.set("Accept-Language", acceptLanguage);
@@ -244,7 +255,18 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected <T> ResponseEntity<AppResponse<T>> requestPost(String url, String token, String acceptLanguage, Object body, ParameterizedTypeReference<AppResponse<T>> responseType) {
-        HttpHeaders headers = createHeaders(token, acceptLanguage);
+        HttpHeaders headers = createHeaders(token, acceptLanguage, null, false);
+
+        return exchangeForAppResponse(url, HttpMethod.POST, new HttpEntity<>(body, headers), responseType);
+    }
+
+    protected <T> ResponseEntity<AppResponse<T>> requestPostDpop(String url,
+                                                                 String token,
+                                                                 String acceptLanguage,
+                                                                 String dpopProof,
+                                                                 Object body,
+                                                                 ParameterizedTypeReference<AppResponse<T>> responseType) {
+        HttpHeaders headers = createHeaders(token, acceptLanguage, dpopProof, true);
 
         return exchangeForAppResponse(url, HttpMethod.POST, new HttpEntity<>(body, headers), responseType);
     }
@@ -258,7 +280,13 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected <T> ResponseEntity<AppResponse<T>> requestGet(String url, String token, ParameterizedTypeReference<AppResponse<T>> responseType) {
-        HttpHeaders headers = createHeaders(token, null);
+        HttpHeaders headers = createHeaders(token, null, null, false);
+
+        return exchangeForAppResponse(url, HttpMethod.GET, new HttpEntity<>(headers), responseType);
+    }
+
+    protected <T> ResponseEntity<AppResponse<T>> requestGetDpop(String url, String token, String dpopProof, ParameterizedTypeReference<AppResponse<T>> responseType) {
+        HttpHeaders headers = createHeaders(token, null, dpopProof, true);
 
         return exchangeForAppResponse(url, HttpMethod.GET, new HttpEntity<>(headers), responseType);
     }
@@ -275,6 +303,14 @@ public abstract class AbstractIntegrationTest {
                                                                String password,
                                                                String clientId,
                                                                String clientSecret) {
+        return loginRequest(username, password, clientId, clientSecret, null);
+    }
+
+    protected ResponseEntity<AppResponse<KeycloakTokenResponse>> loginRequest(String username,
+                                                                               String password,
+                                                                               String clientId,
+                                                                               String clientSecret,
+                                                                               String dpopProof) {
 
         LoginRequest request = new LoginRequest(
                 username,
@@ -282,7 +318,7 @@ public abstract class AbstractIntegrationTest {
                 clientId,
                 clientSecret
         );
-        return requestPost(loginUrl, null, null, request, new ParameterizedTypeReference<>() {});
+        return requestPostDpop(loginUrl, null, null, dpopProof, request, new ParameterizedTypeReference<>() {});
     }
 
     protected ResponseEntity<AppResponse<KeycloakTokenResponse>> loginRequest(String username,
@@ -308,8 +344,15 @@ public abstract class AbstractIntegrationTest {
     protected ResponseEntity<AppResponse<Void>> logoutRequest(String refreshToken,
                                                                 String clientId,
                                                                 String clientSecret) {
+        return logoutRequest(refreshToken, clientId, clientSecret, null);
+    }
+
+    protected ResponseEntity<AppResponse<Void>> logoutRequest(String refreshToken,
+                                                              String clientId,
+                                                              String clientSecret,
+                                                              String dpopProof) {
         LogoutRequest logoutRequest = new LogoutRequest(refreshToken, clientId, clientSecret);
-        return requestPost(logoutUrl, null, null, logoutRequest, new ParameterizedTypeReference<AppResponse<Void>>() {});
+        return requestPostDpop(logoutUrl, null, null, dpopProof, logoutRequest, new ParameterizedTypeReference<>() {});
     }
 
     protected ResponseEntity<AppResponse<Void>> logoutRequest(String refreshToken) {
@@ -319,8 +362,15 @@ public abstract class AbstractIntegrationTest {
     protected ResponseEntity<AppResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken,
                                                                 String clientId,
                                                                 String clientSecret) {
+        return refreshRequest(refreshToken, clientId, clientSecret, null);
+    }
+
+    protected ResponseEntity<AppResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken,
+                                                                                String clientId,
+                                                                                String clientSecret,
+                                                                                String dpopProof) {
         RefreshRequest request = new RefreshRequest(refreshToken, clientId, clientSecret);
-        return requestPost(refreshUrl, null, null, request, new ParameterizedTypeReference<>() {});
+        return requestPostDpop(refreshUrl, null, null, dpopProof, request, new ParameterizedTypeReference<>() {});
     }
 
     protected ResponseEntity<AppResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken) {

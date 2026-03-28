@@ -46,9 +46,21 @@ Error response:
 
 ## Authentication Endpoints
 
+DPoP support:
+- Auth endpoints accept optional header `DPoP: <proof-jwt>` and forward it to Keycloak.
+- Protected endpoints support both:
+  - `Authorization: Bearer <access_token>`
+  - `Authorization: DPoP <access_token>` + `DPoP: <proof-jwt>`
+- If token introspection contains `cnf.jkt`, DPoP proof is mandatory.
+
 ### POST /api/auth/login
 
 Authenticate with username/password and client credentials.
+
+**Optional Header:**
+```http
+DPoP: <proof-jwt>
+```
 
 **Request Body:**
 ```json
@@ -85,6 +97,11 @@ Authenticate with username/password and client credentials.
 
 Refresh an expired access token.
 
+**Optional Header:**
+```http
+DPoP: <proof-jwt>
+```
+
 **Request Body:**
 ```json
 {
@@ -118,6 +135,11 @@ Refresh an expired access token.
 
 Revoke a refresh token.
 
+**Optional Header:**
+```http
+DPoP: <proof-jwt>
+```
+
 **Request Body:**
 ```json
 {
@@ -142,10 +164,17 @@ Revoke a refresh token.
 
 ## Client Endpoints (Protected)
 
-All client endpoints require a valid Bearer token in the `Authorization` header:
+All client endpoints require a valid access token in the `Authorization` header:
 
 ```
 Authorization: Bearer <access_token>
+```
+
+Or DPoP:
+
+```
+Authorization: DPoP <access_token>
+DPoP: <proof-jwt>
 ```
 
 ### POST /api/clients

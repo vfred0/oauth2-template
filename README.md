@@ -12,6 +12,7 @@ Supported features:
 - 🔑 Username/password login  
 - 🔄 Token refresh  
 - 🚪 Logout (refresh token revocation)  
+- 🔐 DPoP support (proof forwarding to Keycloak + proof validation for protected endpoints)  
 - 🛡 Opaque token validation via Spring Security introspection  
 - 🎭 Role-based authorization (ADMIN, CLIENT_CREATE, CLIENT_GET, UPDATE_BALANCE)  
 - 🚦 Configurable rate limiting (Bucket4j)  
@@ -146,6 +147,12 @@ spring.security.oauth2.resourceserver.opaque-token.introspection-uri=${keycloak.
 spring.security.oauth2.resourceserver.opaque-token.client-id=${keycloak.resource-client-id}
 spring.security.oauth2.resourceserver.opaque-token.client-secret=${keycloak.resource-client-secret}
 
+# DPoP validation
+security.dpop.enabled=true
+security.dpop.max-proof-age=5m
+security.dpop.clock-skew=30s
+security.dpop.replay-cache-size=100000
+
 # Persistent Quartz jobs in PostgreSQL
 spring.quartz.job-store-type=jdbc
 spring.quartz.jdbc.initialize-schema=never
@@ -235,6 +242,7 @@ The project uses a **clean, layered security architecture** combining:
 
 - Keycloak for authentication and role assignment
 - Spring Security for **opaque token introspection**
+- DPoP proof validation (`Authorization: DPoP <token>` + `DPoP` header)
 - Method-level authorization via `@PreAuthorize`
 - A custom role converter for mapping Keycloak roles to Spring authorities
 
@@ -257,6 +265,14 @@ This ensures a clear separation of responsibilities:
     - refresh_token
 4. Backend returns tokens to the client
 5. Client uses access_token for all protected endpoints
+
+### DPoP Flow (optional)
+
+- For `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout` you can pass `DPoP: <proof-jwt>`; backend forwards it to Keycloak.
+- Protected endpoints accept:
+  - `Authorization: Bearer <access_token>` (existing flow)
+  - `Authorization: DPoP <access_token>` + `DPoP: <proof-jwt>` (DPoP flow)
+- If introspection returns `cnf.jkt`, protected endpoints require valid DPoP proof (`htm`, `htu`, `iat`, `jti`, `ath`, signature, thumbprint binding).
 
 ---
 
@@ -410,6 +426,9 @@ No changes required in SecurityConfig.
 ## 1. Login
 `POST /api/auth/login`
 
+Optional header for DPoP token issuance:
+`DPoP: <proof-jwt>`
+
 ```json
 {
   "username": "user",
@@ -424,6 +443,9 @@ No changes required in SecurityConfig.
 ## 2. Refresh Token
 `POST /api/auth/refresh`
 
+Optional header:
+`DPoP: <proof-jwt>`
+
 ```json
 {
   "refreshToken": "...",
@@ -436,6 +458,9 @@ No changes required in SecurityConfig.
 
 ## 3. Logout
 `POST /api/auth/logout`
+
+Optional header:
+`DPoP: <proof-jwt>`
 
 ```json
 {
@@ -490,6 +515,10 @@ Requires bearer token role: `CLIENT_GET`
 ---
 
 # 🛡 Protected Endpoints
+
+Authorization options:
+- `Authorization: Bearer <access_token>`
+- `Authorization: DPoP <access_token>` and `DPoP: <proof-jwt>`
 
 | Endpoint | Method | Required role |
 |----------|--------|---------------|
@@ -684,6 +713,14 @@ Check token contains:
 ```
 
 If missing → check Keycloak mappers.
+
+---
+
+### ❌ 401 for DPoP token
+For DPoP-bound access tokens:
+- use `Authorization: DPoP <access_token>`
+- send `DPoP` proof for every protected request
+- ensure proof matches method+URL and is signed by key matching `cnf.jkt`
 
 ---
 

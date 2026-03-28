@@ -25,6 +25,7 @@ import org.springframework.util.StreamUtils;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.net.URI;
@@ -45,6 +46,7 @@ public class KeycloakAuthService {
     public static final String INVALID_TOKEN = "invalid_token";
     public static final String INVALID_GRANT = "invalid_grant";
     public static final String REFRESH_TOKEN = "refresh_token";
+    private static final String DPOP = "DPoP";
     private static final String GRANT_TYPE = "grant_type";
     private static final String SCOPE = "scope";
     private static final String OFFLINE_ACCESS = "offline_access";
@@ -106,6 +108,10 @@ public class KeycloakAuthService {
     // LOGIN
     // ------------------------------------------------------------
     public KeycloakTokenResponse login(LoginRequest req) {
+        return login(req, null);
+    }
+
+    public KeycloakTokenResponse login(LoginRequest req, String dpopProof) {
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add(CLIENT_ID, req.clientId());
@@ -118,7 +124,7 @@ public class KeycloakAuthService {
         form.add(USERNAME, req.username());
         form.add(PASSWORD, req.password());
 
-        HttpEntity<MultiValueMap<String, String>> entity = createFormEntity(form);
+        HttpEntity<MultiValueMap<String, String>> entity = createFormEntity(form, dpopProof);
 
         log.info("➡️  LOGIN request to Keycloak: user={}, clientId={}, realm={}",
                 req.username(), req.clientId(), props.getRealm());
@@ -171,6 +177,10 @@ public class KeycloakAuthService {
     // REFRESH
     // ------------------------------------------------------------
     public KeycloakTokenResponse refresh(RefreshRequest req) {
+        return refresh(req, null);
+    }
+
+    public KeycloakTokenResponse refresh(RefreshRequest req, String dpopProof) {
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add(CLIENT_ID, req.clientId());
@@ -181,7 +191,7 @@ public class KeycloakAuthService {
         // Required for offline refresh tokens in Keycloak 26
         form.add(SCOPE, OFFLINE_ACCESS);
 
-        HttpEntity<MultiValueMap<String, String>> entity = createFormEntity(form);
+        HttpEntity<MultiValueMap<String, String>> entity = createFormEntity(form, dpopProof);
 
         log.info("➡️  REFRESH request to Keycloak: clientId={}, realm={}",
                 req.clientId(), props.getRealm());
@@ -220,13 +230,17 @@ public class KeycloakAuthService {
     // LOGOUT
     // ------------------------------------------------------------
     public void logout(LogoutRequest req) {
+        logout(req, null);
+    }
+
+    public void logout(LogoutRequest req, String dpopProof) {
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add(CLIENT_ID, req.clientId());
         form.add(CLIENT_SECRET, req.clientSecret());
         form.add(REFRESH_TOKEN, req.refreshToken());
 
-        HttpEntity<MultiValueMap<String, String>> entity = createFormEntity(form);
+        HttpEntity<MultiValueMap<String, String>> entity = createFormEntity(form, dpopProof);
 
         log.info("➡️  LOGOUT request to Keycloak: clientId={}, realm={}",
                 req.clientId(), props.getRealm());
@@ -274,10 +288,14 @@ public class KeycloakAuthService {
         return INVALID_GRANT;
     }
 
-    private HttpEntity<MultiValueMap<String, String>> createFormEntity(MultiValueMap<String, String> form) {
+    private HttpEntity<MultiValueMap<String, String>> createFormEntity(MultiValueMap<String, String> form,
+                                                                        String dpopProof) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        if (StringUtils.hasText(dpopProof)) {
+            headers.set(DPOP, dpopProof);
+        }
         return new HttpEntity<>(form, headers);
     }
 
