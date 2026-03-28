@@ -40,9 +40,9 @@ public abstract class KeycloakIntegrationTest extends AbstractIntegrationTest {
             registry.add("spring.security.oauth2.resourceserver.opaque-token.client-id",
                     () -> "resource-server");
             registry.add("spring.security.oauth2.resourceserver.opaque-token.client-secret",
-                    () -> "resource-server-secret");
+                    () -> "A64B28FBDC31B2BC068CAFC793DB5FEA");
             registry.add("keycloak.resource-client-id", () -> "resource-server");
-            registry.add("keycloak.resource-client-secret", () -> "resource-server-secret");
+            registry.add("keycloak.resource-client-secret", () -> "A64B28FBDC31B2BC068CAFC793DB5FEA");
         }
     }
 }
