@@ -8,7 +8,7 @@ public class ClientSearchQueryTooShortException extends RuntimeException {
     private final int minLength;
 
     public ClientSearchQueryTooShortException(int minLength) {
-        super("Search query must contain at least " + minLength + " characters");
+        super();
         this.minLength = minLength;
     }
 

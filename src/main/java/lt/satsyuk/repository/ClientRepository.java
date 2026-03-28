@@ -10,7 +10,8 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
 
     boolean existsByPhone(String phone);
 
-    List<Client> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrderByIdAsc(String firstNamePart,
-                                                                                                 String lastNamePart,
-                                                                                                 Pageable pageable);
+    List<Client> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrderByIdAsc(
+            String firstNamePart,
+            String lastNamePart,
+            Pageable pageable);
 }

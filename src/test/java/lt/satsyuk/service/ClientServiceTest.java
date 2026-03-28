@@ -116,8 +116,8 @@ class ClientServiceTest {
     @Test
     void searchByNameOrSurnameThrowsWhenQueryTooShort() {
         assertThatThrownBy(() -> clientService.searchByNameOrSurname("ab"))
-                .isInstanceOf(ClientSearchQueryTooShortException.class)
-                .hasMessageContaining("at least 3");
+                .isInstanceOfSatisfying(ClientSearchQueryTooShortException.class,
+                        ex -> assertThat(ex.getMinLength()).isEqualTo(ClientService.MIN_SEARCH_QUERY_LENGTH));
     }
 
     @Test

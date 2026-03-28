@@ -22,6 +22,8 @@ import java.util.List;
 @Service
 public class ClientService {
 
+    public static final int MIN_SEARCH_QUERY_LENGTH = 3;
+
     private final ClientRepository repo;
     private final AccountRepository accountRepository;
     private final ClientMapper mapper;
@@ -69,8 +71,8 @@ public class ClientService {
 
     public List<ClientResponse> searchByNameOrSurname(String query) {
         String normalizedQuery = query == null ? "" : query.trim();
-        if (normalizedQuery.length() < 3) {
-            throw new ClientSearchQueryTooShortException(3);
+        if (normalizedQuery.length() < MIN_SEARCH_QUERY_LENGTH) {
+            throw new ClientSearchQueryTooShortException(MIN_SEARCH_QUERY_LENGTH);
         }
 
         return repo.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrderByIdAsc(

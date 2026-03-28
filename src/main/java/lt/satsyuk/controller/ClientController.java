@@ -67,7 +67,7 @@ public class ClientController {
 
     @GetMapping("/search")
     @PreAuthorize("hasRole('CLIENT_SEARCH')")
-    @Operation(summary = "Search clients", description = "Searches clients by first name or last name. Query must contain at least 3 characters, and response size is capped by app.clients.search.max-results.")
+    @Operation(summary = "Search clients", description = "Searches clients by first name or last name. Query minimum length is validated by server, and response size is capped by app.clients.search.max-results.")
     @ApiResponse(responseCode = "200", description = "Search completed",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AppResponse.class)))

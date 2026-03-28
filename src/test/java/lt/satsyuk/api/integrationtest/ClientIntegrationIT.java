@@ -14,6 +14,7 @@ import lt.satsyuk.model.RequestStatus;
 import lt.satsyuk.repository.AccountRepository;
 import lt.satsyuk.repository.ClientRepository;
 import lt.satsyuk.repository.RequestRepository;
+import lt.satsyuk.service.ClientService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -144,7 +145,7 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
 
         assertErrorStatusAndBody(resp, HttpStatus.BAD_REQUEST,
                 AppResponse.ErrorCode.BAD_REQUEST.getCode(),
-                "Search query must contain at least 3 characters");
+                "Search query must contain at least " + ClientService.MIN_SEARCH_QUERY_LENGTH + " characters");
     }
 
     @Test

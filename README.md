@@ -207,6 +207,9 @@ Use the prepared SQL script to populate 1000 demo clients and matching zero-bala
 
 The script is idempotent and can be re-run safely.
 
+For best `/api/clients/search` performance, install the PostgreSQL `pg_trgm` extension at the infrastructure level.
+The Flyway migration creates trigram indexes only when `pg_trgm` is already available.
+
 ---
 
 ## 🧪 Test Coverage
