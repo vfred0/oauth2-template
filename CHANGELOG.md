@@ -14,7 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Spring Boot + Keycloak OAuth2 proxy with dynamic client credentials
 - Opaque token introspection via Spring Security resource server
-- Role-based authorization (ADMIN, CLIENT_CREATE, CLIENT_GET, UPDATE_BALANCE)
+- Role-based authorization (ADMIN, CLIENT_CREATE, CLIENT_GET, CLIENT_SEARCH, UPDATE_BALANCE)
+- New protected endpoint `GET /api/clients/search?q=...` (requires role `CLIENT_SEARCH`) for client lookup by first/last name with minimum query length 3
+- Seed SQL script `src/main/resources/db/seed/clients_1000_fake.sql` to generate 1000 fictitious clients and zero-balance accounts
 - Client endpoints (`POST /api/clients` for async request submission, `GET /api/clients/{id}`)
 - Request status endpoint (`GET /api/requests/{id}`)
 - Account endpoints (`GET /api/accounts/client/{clientId}`, `POST /api/accounts/balance/pessimistic`, `POST /api/accounts/balance/optimistic`)

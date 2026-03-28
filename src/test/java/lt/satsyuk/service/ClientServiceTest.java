@@ -2,6 +2,7 @@ package lt.satsyuk.service;
 
 import lt.satsyuk.dto.ClientResponse;
 import lt.satsyuk.dto.CreateClientRequest;
+import lt.satsyuk.exception.ClientSearchQueryTooShortException;
 import lt.satsyuk.exception.PhoneAlreadyExistsException;
 import lt.satsyuk.mapper.ClientMapper;
 import lt.satsyuk.model.Account;
@@ -14,9 +15,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,6 +30,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ClientServiceTest {
+
+    private static final int SEARCH_MAX_RESULTS = 2;
 
     @Mock
     private ClientRepository clientRepository;
@@ -41,7 +46,7 @@ class ClientServiceTest {
 
     @BeforeEach
     void setUp() {
-        clientService = new ClientService(clientRepository, accountRepository, clientMapper);
+        clientService = new ClientService(clientRepository, accountRepository, clientMapper, SEARCH_MAX_RESULTS);
     }
 
     @Test
@@ -106,5 +111,33 @@ class ClientServiceTest {
         assertThatThrownBy(() -> clientService.create(request))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("account failure");
+    }
+
+    @Test
+    void searchByNameOrSurnameThrowsWhenQueryTooShort() {
+        assertThatThrownBy(() -> clientService.searchByNameOrSurname("ab"))
+                .isInstanceOfSatisfying(ClientSearchQueryTooShortException.class,
+                        ex -> assertThat(ex.getMinLength()).isEqualTo(ClientService.MIN_SEARCH_QUERY_LENGTH));
+    }
+
+    @Test
+    void searchByNameOrSurnameReturnsMappedResults() {
+        Client first = Client.builder().id(1L).firstName("Alice").lastName("Smith").phone("+37060000001").build();
+        Client second = Client.builder().id(2L).firstName("Alina").lastName("Johnson").phone("+37060000002").build();
+        ClientResponse firstResponse = new ClientResponse(1L, "Alice", "Smith", "+37060000001");
+        ClientResponse secondResponse = new ClientResponse(2L, "Alina", "Johnson", "+37060000002");
+
+        when(clientRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrderByIdAsc(
+                "Ali",
+                "Ali",
+                PageRequest.of(0, SEARCH_MAX_RESULTS)
+        ))
+                .thenReturn(List.of(first, second));
+        when(clientMapper.toResponse(first)).thenReturn(firstResponse);
+        when(clientMapper.toResponse(second)).thenReturn(secondResponse);
+
+        List<ClientResponse> actual = clientService.searchByNameOrSurname("  Ali  ");
+
+        assertThat(actual).containsExactly(firstResponse, secondResponse);
     }
 }

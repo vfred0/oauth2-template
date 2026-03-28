@@ -14,6 +14,7 @@ import lt.satsyuk.model.RequestStatus;
 import lt.satsyuk.repository.AccountRepository;
 import lt.satsyuk.repository.ClientRepository;
 import lt.satsyuk.repository.RequestRepository;
+import lt.satsyuk.service.ClientService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,6 +113,50 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
 
         assertThat(data.id()).isEqualTo(saved.getId());
         assertThat(data.phone()).isEqualTo(saved.getPhone());
+    }
+
+    @Test
+    void search_clients_success() {
+        repo.save(Client.builder().firstName("Alice").lastName("Brown").phone("+37070000001").build());
+        repo.save(Client.builder().firstName("Mike").lastName("Alister").phone("+37070000002").build());
+        repo.save(Client.builder().firstName("Alix").lastName("Stone").phone("+37070000004").build());
+        repo.save(Client.builder().firstName("John").lastName("Doe").phone("+37070000003").build());
+
+        String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
+
+        ResponseEntity<AppResponse<Object>> resp = requestGet(clientUrl + "/search?q=ali", token);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resp.getBody()).isNotNull();
+        assertThat(resp.getBody().code()).isZero();
+
+        var clients = objectMapper.convertValue(resp.getBody().data(), new TypeReference<java.util.List<ClientResponse>>() {});
+        assertThat(clients).hasSize(2);
+        assertThat(clients)
+                .extracting(ClientResponse::phone)
+                .containsExactly("+37070000001", "+37070000002");
+    }
+
+    @Test
+    void search_clients_query_too_short_returns_400() {
+        String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
+
+        ResponseEntity<AppResponse<Object>> resp = requestGet(clientUrl + "/search?q=ab", token);
+
+        assertErrorStatusAndBody(resp, HttpStatus.BAD_REQUEST,
+                AppResponse.ErrorCode.BAD_REQUEST.getCode(),
+                "Search query must contain at least " + ClientService.MIN_SEARCH_QUERY_LENGTH + " characters");
+    }
+
+    @Test
+    void search_clients_forbidden_when_user_has_no_role() {
+        String token = loginAndGetAccess(ADMIN, ADMIN_PASSWORD);
+
+        ResponseEntity<AppResponse<Object>> resp = requestGet(clientUrl + "/search?q=alice", token);
+
+        assertErrorStatusAndBody(resp, HttpStatus.FORBIDDEN,
+                AppResponse.ErrorCode.FORBIDDEN.getCode(),
+                AppResponse.ErrorCode.FORBIDDEN.getDescription());
     }
 
     @Test

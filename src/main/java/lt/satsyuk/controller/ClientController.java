@@ -17,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/clients")
 @Tag(name = "Clients", description = "Client management")
@@ -61,5 +63,21 @@ public class ClientController {
             content = @Content(mediaType = "application/json"))
     public AppResponse<ClientResponse> get(@PathVariable("id") Long id) {
         return AppResponse.ok(clientService.get(id));
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('CLIENT_SEARCH')")
+    @Operation(summary = "Search clients", description = "Searches clients by first name or last name. Query minimum length is validated by server, and response size is capped by app.clients.search.max-results.")
+    @ApiResponse(responseCode = "200", description = "Search completed",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = AppResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid query",
+            content = @Content(mediaType = "application/json"))
+    @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json"))
+    @ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @Content(mediaType = "application/json"))
+    public AppResponse<List<ClientResponse>> search(@RequestParam("q") String query) {
+        return AppResponse.ok(clientService.searchByNameOrSurname(query));
     }
 }

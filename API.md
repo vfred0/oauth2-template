@@ -317,6 +317,43 @@ Get a client by ID.
 
 ---
 
+### GET /api/clients/search?q={query}
+
+Search clients by first name or last name (case-insensitive).
+
+**Required Role:** `CLIENT_SEARCH`
+
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| q         | String | Search term, minimum 3 characters |
+
+Returned rows are limited by configuration property `app.clients.search.max-results`.
+
+**Success Response (200):**
+```json
+{
+  "code": 0,
+  "message": "OK",
+  "data": [
+    {
+      "id": 1,
+      "firstName": "Alice",
+      "lastName": "Brown",
+      "phone": "+37070000001"
+    }
+  ]
+}
+```
+
+**Error Responses:**
+- `400` — Query shorter than 3 characters
+- `401` — Missing or invalid token
+- `403` — Insufficient role
+
+---
+
 ## Account Endpoints (Protected)
 
 ### POST /api/accounts/balance/pessimistic

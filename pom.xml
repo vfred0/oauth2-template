@@ -262,6 +262,18 @@
     </dependencies>
 
     <build>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+            </testResource>
+            <testResource>
+                <directory>keycloak</directory>
+                <includes>
+                    <include>realm-export.json</include>
+                </includes>
+                <targetPath>keycloak</targetPath>
+            </testResource>
+        </testResources>
         <plugins>
 
             <!-- Compiler -->
