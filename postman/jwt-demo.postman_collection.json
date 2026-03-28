@@ -17,6 +17,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpop_proof}}"
               }
             ],
             "body": {
@@ -44,8 +48,11 @@
                   "",
                   "pm.environment.set(\"access_token\", json.data.access_token);",
                   "pm.environment.set(\"refresh_token\", json.data.refresh_token);",
+                  "const tokenType = (json.data.token_type || \"Bearer\");",
+                  "const authScheme = tokenType.toUpperCase() === \"DPOP\" ? \"DPoP\" : \"Bearer\";",
+                  "pm.environment.set(\"auth_scheme\", authScheme);",
                   "",
-                  "console.log(\"Tokens updated in environment\");"
+                  "console.log(\"Tokens updated in environment, auth_scheme=\" + authScheme);"
                 ]
               }
             }
@@ -59,6 +66,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpop_proof}}"
               }
             ],
             "body": {
@@ -86,8 +97,11 @@
                   "",
                   "pm.environment.set(\"access_token\", json.data.access_token);",
                   "pm.environment.set(\"refresh_token\", json.data.refresh_token);",
+                  "const tokenType = (json.data.token_type || \"Bearer\");",
+                  "const authScheme = tokenType.toUpperCase() === \"DPOP\" ? \"DPoP\" : \"Bearer\";",
+                  "pm.environment.set(\"auth_scheme\", authScheme);",
                   "",
-                  "console.log(\"Tokens updated in environment\");"
+                  "console.log(\"Tokens updated in environment, auth_scheme=\" + authScheme);"
                 ]
               }
             }
@@ -101,6 +115,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpop_proof}}"
               }
             ],
             "body": {
@@ -126,8 +144,11 @@
                   "",
                   "pm.environment.set(\"access_token\", json.data.access_token);",
                   "pm.environment.set(\"refresh_token\", json.data.refresh_token);",
+                  "const tokenType = (json.data.token_type || \"Bearer\");",
+                  "const authScheme = tokenType.toUpperCase() === \"DPOP\" ? \"DPoP\" : \"Bearer\";",
+                  "pm.environment.set(\"auth_scheme\", authScheme);",
                   "",
-                  "console.log(\"Tokens refreshed\");"
+                  "console.log(\"Tokens refreshed, auth_scheme=\" + authScheme);"
                 ]
               }
             }
@@ -141,6 +162,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpop_proof}}"
               }
             ],
             "body": {
@@ -180,7 +205,11 @@
               },
               {
                 "key": "Authorization",
-                "value": "Bearer {{access_token}}"
+                "value": "{{auth_scheme}} {{access_token}}"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpop_proof}}"
               }
             ],
             "body": {
@@ -220,7 +249,11 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{access_token}}"
+                "value": "{{auth_scheme}} {{access_token}}"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpop_proof}}"
               }
             ],
             "url": "{{base_url}}/api/requests/{{request_id}}"
@@ -277,7 +310,11 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{access_token}}"
+                "value": "{{auth_scheme}} {{access_token}}"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpop_proof}}"
               }
             ],
             "url": "{{base_url}}/api/clients/{{id_client}}"
@@ -316,7 +353,11 @@
               },
               {
                 "key": "Authorization",
-                "value": "Bearer {{access_token}}"
+                "value": "{{auth_scheme}} {{access_token}}"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpop_proof}}"
               }
             ],
             "body": {
@@ -360,7 +401,11 @@
               },
               {
                 "key": "Authorization",
-                "value": "Bearer {{access_token}}"
+                "value": "{{auth_scheme}} {{access_token}}"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpop_proof}}"
               }
             ],
             "body": {
@@ -400,7 +445,11 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{access_token}}"
+                "value": "{{auth_scheme}} {{access_token}}"
+              },
+              {
+                "key": "DPoP",
+                "value": "{{dpop_proof}}"
               }
             ],
             "url": "{{base_url}}/api/accounts/client/{{id_client}}"

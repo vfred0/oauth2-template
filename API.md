@@ -46,9 +46,21 @@ Error response:
 
 ## Authentication Endpoints
 
+DPoP support:
+- Auth endpoints accept optional header `DPoP: <proof-jwt>` and forward it to Keycloak.
+- Protected endpoints support both:
+  - `Authorization: Bearer <access_token>`
+  - `Authorization: DPoP <access_token>` + `DPoP: <proof-jwt>`
+- If token introspection contains `cnf.jkt`, DPoP proof is mandatory.
+
 ### POST /api/auth/login
 
 Authenticate with username/password and client credentials.
+
+**Optional Header:**
+```http
+DPoP: <proof-jwt>
+```
 
 **Request Body:**
 ```json
@@ -85,6 +97,11 @@ Authenticate with username/password and client credentials.
 
 Refresh an expired access token.
 
+**Optional Header:**
+```http
+DPoP: <proof-jwt>
+```
+
 **Request Body:**
 ```json
 {
@@ -118,6 +135,11 @@ Refresh an expired access token.
 
 Revoke a refresh token.
 
+**Optional Header:**
+```http
+DPoP: <proof-jwt>
+```
+
 **Request Body:**
 ```json
 {
@@ -142,10 +164,17 @@ Revoke a refresh token.
 
 ## Client Endpoints (Protected)
 
-All client endpoints require a valid Bearer token in the `Authorization` header:
+All client endpoints require a valid access token in the `Authorization` header:
 
 ```
 Authorization: Bearer <access_token>
+```
+
+Or DPoP:
+
+```
+Authorization: DPoP <access_token>
+DPoP: <proof-jwt>
 ```
 
 ### POST /api/clients
@@ -285,6 +314,112 @@ Get a client by ID.
 - `401` — Missing or invalid token
 - `403` — Insufficient role
 - `404` — Client not found
+
+---
+
+## Account Endpoints (Protected)
+
+### POST /api/accounts/balance/pessimistic
+
+Update account balance using pessimistic locking.
+
+**Required Role:** `UPDATE_BALANCE`
+
+**Request Body:**
+```json
+{
+  "clientId": 1,
+  "amount": 100.50
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "code": 0,
+  "message": "Success",
+  "data": {
+    "accountId": 1,
+    "clientId": 1,
+    "balance": 150.50
+  }
+}
+```
+
+**Error Responses:**
+- `400` — Validation error
+- `401` — Missing or invalid token
+- `403` — Insufficient role
+- `404` — Account not found
+
+---
+
+### POST /api/accounts/balance/optimistic
+
+Update account balance using optimistic locking with retries.
+
+**Required Role:** `UPDATE_BALANCE`
+
+**Request Body:**
+```json
+{
+  "clientId": 1,
+  "amount": -50.00
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "code": 0,
+  "message": "Success",
+  "data": {
+    "accountId": 1,
+    "clientId": 1,
+    "balance": 100.50
+  }
+}
+```
+
+**Error Responses:**
+- `400` — Validation error
+- `401` — Missing or invalid token
+- `403` — Insufficient role
+- `404` — Account not found
+- `409` — Optimistic lock conflict
+
+---
+
+### GET /api/accounts/client/{clientId}
+
+Get account by client id.
+
+**Required Role:** `CLIENT_GET`
+
+**Path Parameters:**
+
+| Parameter | Type | Description       |
+|-----------|------|-------------------|
+| clientId  | Long | Client identifier |
+
+**Success Response (200):**
+```json
+{
+  "code": 0,
+  "message": "Success",
+  "data": {
+    "accountId": 1,
+    "clientId": 1,
+    "balance": 100.50
+  }
+}
+```
+
+**Error Responses:**
+- `400` — Invalid ID format
+- `401` — Missing or invalid token
+- `403` — Insufficient role
+- `404` — Account not found
 
 ---
 

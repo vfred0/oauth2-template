@@ -12,10 +12,13 @@ Supported features:
 - 🔑 Username/password login  
 - 🔄 Token refresh  
 - 🚪 Logout (refresh token revocation)  
+- 🔐 DPoP support (proof forwarding to Keycloak + proof validation for protected endpoints)  
 - 🛡 Opaque token validation via Spring Security introspection  
-- 🎭 Role-based authorization (ADMIN and client roles like CLIENT_CREATE, CLIENT_GET)  
+- 🎭 Role-based authorization (ADMIN, CLIENT_CREATE, CLIENT_GET, UPDATE_BALANCE)  
 - 🚦 Configurable rate limiting (Bucket4j)  
 - ⏱ Persistent Quartz scheduler for asynchronous client creation requests
+- 💳 Account balance endpoints with pessimistic/optimistic locking
+- 📬 Request-status endpoint for asynchronous operations
 - 🧪 Full integration test suite
 - 📦 Automatic Keycloak realm import (users, roles, mappers)
 - 🧪 WireMock for negative testing (network failures, timeouts, error responses)
@@ -77,7 +80,7 @@ Keycloak automatically imports:
 
 - realm `my-realm`
 - users (`user`, `admin`)
-- roles (`ADMIN`, `CLIENT_CREATE`, `CLIENT_GET`, `offline_access`)
+- roles (`ADMIN`, `CLIENT_CREATE`, `CLIENT_GET`, `UPDATE_BALANCE`, `offline_access`)
 - client `spring-app`
 - protocol mappers (roles → access_token)
 
@@ -143,6 +146,12 @@ keycloak.introspection-url=${keycloak.auth-server-url}/realms/${keycloak.realm}/
 spring.security.oauth2.resourceserver.opaque-token.introspection-uri=${keycloak.introspection-url}
 spring.security.oauth2.resourceserver.opaque-token.client-id=${keycloak.resource-client-id}
 spring.security.oauth2.resourceserver.opaque-token.client-secret=${keycloak.resource-client-secret}
+
+# DPoP validation
+security.dpop.enabled=true
+security.dpop.max-proof-age=5m
+security.dpop.clock-skew=30s
+security.dpop.replay-cache-size=100000
 
 # Persistent Quartz jobs in PostgreSQL
 spring.quartz.job-store-type=jdbc
@@ -233,6 +242,7 @@ The project uses a **clean, layered security architecture** combining:
 
 - Keycloak for authentication and role assignment
 - Spring Security for **opaque token introspection**
+- DPoP proof validation (`Authorization: DPoP <token>` + `DPoP` header)
 - Method-level authorization via `@PreAuthorize`
 - A custom role converter for mapping Keycloak roles to Spring authorities
 
@@ -255,6 +265,14 @@ This ensures a clear separation of responsibilities:
     - refresh_token
 4. Backend returns tokens to the client
 5. Client uses access_token for all protected endpoints
+
+### DPoP Flow (optional)
+
+- For `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout` you can pass `DPoP: <proof-jwt>`; backend forwards it to Keycloak.
+- Protected endpoints accept:
+  - `Authorization: Bearer <access_token>` (existing flow)
+  - `Authorization: DPoP <access_token>` + `DPoP: <proof-jwt>` (DPoP flow)
+- If introspection returns `cnf.jkt`, protected endpoints require valid DPoP proof (`htm`, `htu`, `iat`, `jti`, `ath`, signature, thumbprint binding).
 
 ---
 
@@ -360,10 +378,11 @@ Client
 | `ADMIN` | Administrative user |
 | `CLIENT_CREATE` | Role used to allow creating clients |
 | `CLIENT_GET` | Role used to allow reading client data |
+| `UPDATE_BALANCE` | Role used to allow account balance updates |
 
 Assignments:
 
-- `user` → `CLIENT_CREATE`, `CLIENT_GET`
+- `user` → `CLIENT_CREATE`, `CLIENT_GET`, `UPDATE_BALANCE`
 - `admin` → `ADMIN`
 
 ## Role Mapping
@@ -374,14 +393,15 @@ Keycloak → Spring Security:
 ADMIN -> ROLE_ADMIN
 CLIENT_CREATE -> has role CLIENT_CREATE (checked via @PreAuthorize("hasRole('CLIENT_CREATE')"))
 CLIENT_GET -> has role CLIENT_GET (checked via @PreAuthorize("hasRole('CLIENT_GET')"))
+UPDATE_BALANCE -> has role UPDATE_BALANCE (checked via @PreAuthorize("hasRole('UPDATE_BALANCE')"))
 ```
 
 ## Access Matrix
 
-| User     | `POST /api/clients` (create) | `GET /api/clients/{id}` |
-|----------|-------------------------------|-------------------------|
-| user     | ✅ Allowed (CLIENT_CREATE)     | ✅ Allowed (CLIENT_GET) |
-| admin    | ❌ Forbidden                  | ❌ Forbidden            |
+| User     | `POST /api/clients` | `GET /api/requests/{id}` | `GET /api/clients/{id}` | `GET /api/accounts/client/{clientId}` | `POST /api/accounts/balance/pessimistic` | `POST /api/accounts/balance/optimistic` |
+|----------|---------------------|--------------------------|-------------------------|----------------------------------------|-------------------------------------------|------------------------------------------|
+| user     | ✅ CLIENT_CREATE     | ✅ CLIENT_CREATE          | ✅ CLIENT_GET            | ✅ CLIENT_GET                           | ✅ UPDATE_BALANCE                          | ✅ UPDATE_BALANCE                         |
+| admin    | ❌ Forbidden        | ❌ Forbidden             | ❌ Forbidden            | ❌ Forbidden                           | ❌ Forbidden                              | ❌ Forbidden                             |
 
 ---
 
@@ -406,6 +426,9 @@ No changes required in SecurityConfig.
 ## 1. Login
 `POST /api/auth/login`
 
+Optional header for DPoP token issuance:
+`DPoP: <proof-jwt>`
+
 ```json
 {
   "username": "user",
@@ -420,6 +443,9 @@ No changes required in SecurityConfig.
 ## 2. Refresh Token
 `POST /api/auth/refresh`
 
+Optional header:
+`DPoP: <proof-jwt>`
+
 ```json
 {
   "refreshToken": "...",
@@ -433,6 +459,9 @@ No changes required in SecurityConfig.
 ## 3. Logout
 `POST /api/auth/logout`
 
+Optional header:
+`DPoP: <proof-jwt>`
+
 ```json
 {
   "refreshToken": "...",
@@ -443,13 +472,62 @@ No changes required in SecurityConfig.
 
 ---
 
+## 4. Update Balance (Pessimistic)
+`POST /api/accounts/balance/pessimistic`
+
+Requires bearer token role: `UPDATE_BALANCE`
+
+```json
+{
+  "clientId": 1,
+  "amount": 100.50
+}
+```
+
+---
+
+## 5. Update Balance (Optimistic)
+`POST /api/accounts/balance/optimistic`
+
+Requires bearer token role: `UPDATE_BALANCE`
+
+```json
+{
+  "clientId": 1,
+  "amount": -50.00
+}
+```
+
+---
+
+## 6. Get Request Status
+`GET /api/requests/{requestId}`
+
+Requires bearer token role: `CLIENT_CREATE`
+
+---
+
+## 7. Get Account By Client Id
+`GET /api/accounts/client/{clientId}`
+
+Requires bearer token role: `CLIENT_GET`
+
+---
+
 # 🛡 Protected Endpoints
 
-### `/api/clients` (POST)
-Requires: `CLIENT_CREATE`
+Authorization options:
+- `Authorization: Bearer <access_token>`
+- `Authorization: DPoP <access_token>` and `DPoP: <proof-jwt>`
 
-### `/api/clients/{id}` (GET)
-Requires: `CLIENT_GET`
+| Endpoint | Method | Required role |
+|----------|--------|---------------|
+| `/api/clients` | `POST` | `CLIENT_CREATE` |
+| `/api/requests/{id}` | `GET` | `CLIENT_CREATE` |
+| `/api/clients/{id}` | `GET` | `CLIENT_GET` |
+| `/api/accounts/client/{clientId}` | `GET` | `CLIENT_GET` |
+| `/api/accounts/balance/pessimistic` | `POST` | `UPDATE_BALANCE` |
+| `/api/accounts/balance/optimistic` | `POST` | `UPDATE_BALANCE` |
 
 ---
 
@@ -627,14 +705,22 @@ Below is a short project structure: key files and folders with a brief purpose.
 
 # 🛠 Troubleshooting
 
-### ❌ 403 on `/api/user`
+### ❌ 403 on protected endpoints
 Check token contains:
 
 ```json
-"realm_access": { "roles": ["USER"] }
+"realm_access": { "roles": ["CLIENT_GET", "CLIENT_CREATE", "UPDATE_BALANCE"] }
 ```
 
 If missing → check Keycloak mappers.
+
+---
+
+### ❌ 401 for DPoP token
+For DPoP-bound access tokens:
+- use `Authorization: DPoP <access_token>`
+- send `DPoP` proof for every protected request
+- ensure proof matches method+URL and is signed by key matching `cnf.jkt`
 
 ---
 

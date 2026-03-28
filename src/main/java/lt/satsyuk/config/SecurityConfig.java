@@ -2,6 +2,7 @@ package lt.satsyuk.config;
 
 import lt.satsyuk.auth.JsonAccessDeniedHandler;
 import lt.satsyuk.auth.JsonAuthEntryPoint;
+import lt.satsyuk.security.DpopAuthenticationFilter;
 import lt.satsyuk.security.KeycloakOpaqueRoleConverter;
 import lt.satsyuk.security.KeycloakOpaqueTokenIntrospector;
 import lt.satsyuk.security.RateLimitingFilter;
@@ -13,12 +14,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector;
-import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
+import org.springframework.security.web.authentication.AuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableMethodSecurity
-@EnableConfigurationProperties(RateLimitProperties.class)
+@EnableConfigurationProperties({RateLimitProperties.class, DpopProperties.class})
 public class SecurityConfig {
 
     @Bean
@@ -27,6 +28,7 @@ public class SecurityConfig {
                                                    OpaqueTokenIntrospector opaqueTokenIntrospector,
                                                    JsonAuthEntryPoint jsonAuthEntryPoint,
                                                    JsonAccessDeniedHandler jsonAccessDeniedHandler,
+                                                   DpopAuthenticationFilter dpopAuthenticationFilter,
                                                    RateLimitingFilter rateLimitingFilter) {
 
         http
@@ -51,7 +53,8 @@ public class SecurityConfig {
                         .accessDeniedHandler(jsonAccessDeniedHandler)
                 );
 
-        http.addFilterAfter(rateLimitingFilter, BearerTokenAuthenticationFilter.class);
+        http.addFilterAfter(dpopAuthenticationFilter, AuthenticationFilter.class);
+        http.addFilterAfter(rateLimitingFilter, DpopAuthenticationFilter.class);
 
         return http.build();
     }
@@ -66,4 +69,5 @@ public class SecurityConfig {
                 roleConverter
         );
     }
+
 }

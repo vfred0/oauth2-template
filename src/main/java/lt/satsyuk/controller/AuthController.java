@@ -8,12 +8,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lt.satsyuk.dto.AppResponse;
-import lt.satsyuk.service.KeycloakAuthService;
 import lt.satsyuk.dto.KeycloakTokenResponse;
 import lt.satsyuk.dto.LoginRequest;
 import lt.satsyuk.dto.LogoutRequest;
 import lt.satsyuk.dto.RefreshRequest;
 import lt.satsyuk.exception.KeycloakAuthException;
+import lt.satsyuk.service.KeycloakAuthService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,9 +33,10 @@ public class AuthController {
                     schema = @Schema(implementation = AppResponse.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized",
             content = @Content(mediaType = "application/json"))
-    public ResponseEntity<AppResponse<KeycloakTokenResponse>> login(@Valid @RequestBody LoginRequest req) {
+    public ResponseEntity<AppResponse<KeycloakTokenResponse>> login(@Valid @RequestBody LoginRequest req,
+                                                                    @RequestHeader(value = "DPoP", required = false) String dpopProof) {
         try {
-            KeycloakTokenResponse tokens = authService.login(req);
+            KeycloakTokenResponse tokens = authService.login(req, dpopProof);
             return ResponseEntity.ok(AppResponse.ok(tokens));
         } catch (KeycloakAuthException ex) {
             return ResponseEntity
@@ -52,9 +53,10 @@ public class AuthController {
                     schema = @Schema(implementation = AppResponse.class)))
     @ApiResponse(responseCode = "400", description = "Invalid grant",
             content = @Content(mediaType = "application/json"))
-    public ResponseEntity<AppResponse<KeycloakTokenResponse>> refresh(@Valid @RequestBody RefreshRequest req) {
+    public ResponseEntity<AppResponse<KeycloakTokenResponse>> refresh(@Valid @RequestBody RefreshRequest req,
+                                                                      @RequestHeader(value = "DPoP", required = false) String dpopProof) {
         try {
-            KeycloakTokenResponse tokens = authService.refresh(req);
+            KeycloakTokenResponse tokens = authService.refresh(req, dpopProof);
             return ResponseEntity.ok(AppResponse.ok(tokens));
         } catch (KeycloakAuthException ex) {
             return ResponseEntity
@@ -71,9 +73,10 @@ public class AuthController {
             content = @Content(mediaType = "application/json"))
     @ApiResponse(responseCode = "400", description = "Invalid token",
             content = @Content(mediaType = "application/json"))
-    public ResponseEntity<AppResponse<Void>> logout(@Valid @RequestBody LogoutRequest req) {
+    public ResponseEntity<AppResponse<Void>> logout(@Valid @RequestBody LogoutRequest req,
+                                                    @RequestHeader(value = "DPoP", required = false) String dpopProof) {
         try {
-            authService.logout(req);
+            authService.logout(req, dpopProof);
             return ResponseEntity.ok(AppResponse.<Void>ok(null));
         } catch (KeycloakAuthException ex) {
             return ResponseEntity
