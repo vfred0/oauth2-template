@@ -288,6 +288,112 @@ Get a client by ID.
 
 ---
 
+## Account Endpoints (Protected)
+
+### POST /api/accounts/balance/pessimistic
+
+Update account balance using pessimistic locking.
+
+**Required Role:** `UPDATE_BALANCE`
+
+**Request Body:**
+```json
+{
+  "clientId": 1,
+  "amount": 100.50
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "code": 0,
+  "message": "Success",
+  "data": {
+    "accountId": 1,
+    "clientId": 1,
+    "balance": 150.50
+  }
+}
+```
+
+**Error Responses:**
+- `400` — Validation error
+- `401` — Missing or invalid token
+- `403` — Insufficient role
+- `404` — Account not found
+
+---
+
+### POST /api/accounts/balance/optimistic
+
+Update account balance using optimistic locking with retries.
+
+**Required Role:** `UPDATE_BALANCE`
+
+**Request Body:**
+```json
+{
+  "clientId": 1,
+  "amount": -50.00
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "code": 0,
+  "message": "Success",
+  "data": {
+    "accountId": 1,
+    "clientId": 1,
+    "balance": 100.50
+  }
+}
+```
+
+**Error Responses:**
+- `400` — Validation error
+- `401` — Missing or invalid token
+- `403` — Insufficient role
+- `404` — Account not found
+- `409` — Optimistic lock conflict
+
+---
+
+### GET /api/accounts/client/{clientId}
+
+Get account by client id.
+
+**Required Role:** `CLIENT_GET`
+
+**Path Parameters:**
+
+| Parameter | Type | Description       |
+|-----------|------|-------------------|
+| clientId  | Long | Client identifier |
+
+**Success Response (200):**
+```json
+{
+  "code": 0,
+  "message": "Success",
+  "data": {
+    "accountId": 1,
+    "clientId": 1,
+    "balance": 100.50
+  }
+}
+```
+
+**Error Responses:**
+- `400` — Invalid ID format
+- `401` — Missing or invalid token
+- `403` — Insufficient role
+- `404` — Account not found
+
+---
+
 ## Internationalization
 
 The API supports multiple languages via the `Accept-Language` header.

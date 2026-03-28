@@ -14,8 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Spring Boot + Keycloak OAuth2 proxy with dynamic client credentials
 - Opaque token introspection via Spring Security resource server
-- Role-based authorization (ADMIN, CLIENT_CREATE, CLIENT_GET)
-- Client CRUD endpoints (`POST /api/clients`, `GET /api/clients/{id}`)
+- Role-based authorization (ADMIN, CLIENT_CREATE, CLIENT_GET, UPDATE_BALANCE)
+- Client endpoints (`POST /api/clients` for async request submission, `GET /api/clients/{id}`)
+- Request status endpoint (`GET /api/requests/{id}`)
+- Account endpoints (`GET /api/accounts/client/{clientId}`, `POST /api/accounts/balance/pessimistic`, `POST /api/accounts/balance/optimistic`)
 - Authentication endpoints (login, refresh, logout)
 - Rate limiting with Bucket4j (login: 5 req/min, clients: 20 req/min)
 - Internationalization (i18n) — English and Russian

@@ -12,7 +12,7 @@ The backend does not store client credentials for login/refresh/logout — the c
 - 🔄 Token refresh
 - 🚪 Logout with refresh token revocation
 - 🛡 Opaque token validation via Spring Security introspection
-- 🎭 Role-based authorization (ADMIN, CLIENT_CREATE, CLIENT_GET)
+- 🎭 Role-based authorization (ADMIN, CLIENT_CREATE, CLIENT_GET, UPDATE_BALANCE)
 - 🚦 Rate limiting (Bucket4j)
 - 📊 OpenTelemetry tracing + JSON logging
 - 📈 Prometheus metrics
@@ -146,6 +146,7 @@ Required variables:
 | `ADMIN` | Administrative user |
 | `CLIENT_CREATE` | Create clients |
 | `CLIENT_GET` | Read client data |
+| `UPDATE_BALANCE` | Update account balance |
 
 ### Role Mapping
 ```
@@ -153,13 +154,14 @@ Keycloak → Spring Security:
 ADMIN → ROLE_ADMIN
 CLIENT_CREATE → checked via @PreAuthorize("hasRole('CLIENT_CREATE')")
 CLIENT_GET → checked via @PreAuthorize("hasRole('CLIENT_GET')")
+UPDATE_BALANCE → checked via @PreAuthorize("hasRole('UPDATE_BALANCE')")
 ```
 
 ### Access Matrix
-| User | `POST /api/clients` | `GET /api/clients/{id}` |
-|------|---------------------|-------------------------|
-| user | ✅ (CLIENT_CREATE) | ✅ (CLIENT_GET) |
-| admin | ❌ Forbidden | ❌ Forbidden |
+| User | `POST /api/clients` | `GET /api/requests/{id}` | `GET /api/clients/{id}` | `GET /api/accounts/client/{clientId}` | `POST /api/accounts/balance/pessimistic` | `POST /api/accounts/balance/optimistic` |
+|------|---------------------|--------------------------|-------------------------|----------------------------------------|-------------------------------------------|------------------------------------------|
+| user | ✅ (CLIENT_CREATE) | ✅ (CLIENT_CREATE) | ✅ (CLIENT_GET) | ✅ (CLIENT_GET) | ✅ (UPDATE_BALANCE) | ✅ (UPDATE_BALANCE) |
+| admin | ❌ Forbidden | ❌ Forbidden | ❌ Forbidden | ❌ Forbidden | ❌ Forbidden | ❌ Forbidden |
 
 ---
 
@@ -231,8 +233,12 @@ Response:
 ### Clients (protected)
 | Method | URL | Role | Description |
 |--------|-----|------|-------------|
-| POST | `/api/clients` | CLIENT_CREATE | Create client |
+| POST | `/api/clients` | CLIENT_CREATE | Submit async client creation request |
+| GET | `/api/requests/{id}` | CLIENT_CREATE | Get async request status |
 | GET | `/api/clients/{id}` | CLIENT_GET | Get client by ID |
+| GET | `/api/accounts/client/{clientId}` | CLIENT_GET | Get account by client ID |
+| POST | `/api/accounts/balance/pessimistic` | UPDATE_BALANCE | Update account balance with pessimistic lock |
+| POST | `/api/accounts/balance/optimistic` | UPDATE_BALANCE | Update account balance with optimistic lock and retries |
 
 ---
 
@@ -254,10 +260,10 @@ Response:
 
 ## Troubleshooting
 
-### ❌ 403 on `/api/user`
+### ❌ 403 on protected endpoints
 Check that the token contains:
 ```json
-"realm_access": { "roles": ["USER"] }
+"realm_access": { "roles": ["CLIENT_GET", "CLIENT_CREATE", "UPDATE_BALANCE"] }
 ```
 
 ### ❌ Logout always returns 200
