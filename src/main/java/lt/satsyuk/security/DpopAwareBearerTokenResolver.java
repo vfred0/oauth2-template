@@ -4,10 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-@Component
 public class DpopAwareBearerTokenResolver implements BearerTokenResolver {
 
     private static final String DPOP_PREFIX = "DPoP ";

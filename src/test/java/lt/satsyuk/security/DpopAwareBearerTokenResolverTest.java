@@ -38,4 +38,24 @@ class DpopAwareBearerTokenResolverTest {
 
         assertThat(token).isNull();
     }
+
+    @Test
+    void resolvesCaseInsensitiveDpopAuthorizationScheme() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(HttpHeaders.AUTHORIZATION, "dPoP token-value");
+
+        String token = resolver.resolve(request);
+
+        assertThat(token).isEqualTo("token-value");
+    }
+
+    @Test
+    void returnsNullWhenDpopAuthorizationTokenIsBlank() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(HttpHeaders.AUTHORIZATION, "DPoP   ");
+
+        String token = resolver.resolve(request);
+
+        assertThat(token).isNull();
+    }
 }

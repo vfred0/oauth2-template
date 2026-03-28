@@ -3,7 +3,6 @@ package lt.satsyuk.config;
 import lt.satsyuk.auth.JsonAccessDeniedHandler;
 import lt.satsyuk.auth.JsonAuthEntryPoint;
 import lt.satsyuk.security.DpopAuthenticationFilter;
-import lt.satsyuk.security.DpopAwareBearerTokenResolver;
 import lt.satsyuk.security.KeycloakOpaqueRoleConverter;
 import lt.satsyuk.security.KeycloakOpaqueTokenIntrospector;
 import lt.satsyuk.security.RateLimitingFilter;
@@ -15,7 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector;
-import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
+import org.springframework.security.web.authentication.AuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -27,7 +26,6 @@ public class SecurityConfig {
     @SuppressWarnings("java:S4502") // Stateless REST API uses Bearer JWT; no cookies, so CSRF is not applicable.
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    OpaqueTokenIntrospector opaqueTokenIntrospector,
-                                                   DpopAwareBearerTokenResolver dpopAwareBearerTokenResolver,
                                                    JsonAuthEntryPoint jsonAuthEntryPoint,
                                                    JsonAccessDeniedHandler jsonAccessDeniedHandler,
                                                    DpopAuthenticationFilter dpopAuthenticationFilter,
@@ -45,7 +43,6 @@ public class SecurityConfig {
                 )
 
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .bearerTokenResolver(dpopAwareBearerTokenResolver)
                         .opaqueToken(opaque -> opaque.introspector(opaqueTokenIntrospector))
                         .authenticationEntryPoint(jsonAuthEntryPoint)
                         .accessDeniedHandler(jsonAccessDeniedHandler)
@@ -56,7 +53,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(jsonAccessDeniedHandler)
                 );
 
-        http.addFilterAfter(dpopAuthenticationFilter, BearerTokenAuthenticationFilter.class);
+        http.addFilterAfter(dpopAuthenticationFilter, AuthenticationFilter.class);
         http.addFilterAfter(rateLimitingFilter, DpopAuthenticationFilter.class);
 
         return http.build();

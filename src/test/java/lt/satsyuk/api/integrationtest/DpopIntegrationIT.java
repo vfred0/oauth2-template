@@ -2,17 +2,29 @@ package lt.satsyuk.api.integrationtest;
 
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import lt.satsyuk.MainApplication;
 import lt.satsyuk.api.util.WireMockIntegrationTest;
 import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.dto.KeycloakTokenResponse;
+import lt.satsyuk.model.Client;
+import lt.satsyuk.repository.ClientRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.core.ParameterizedTypeReference;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
+import java.time.Instant;
+import java.util.Date;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -25,6 +37,9 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 class DpopIntegrationIT extends WireMockIntegrationTest {
+
+    @Autowired
+    private ClientRepository clientRepository;
 
     @Test
     void login_forwardsDpopHeaderToKeycloak() {
@@ -72,6 +87,35 @@ class DpopIntegrationIT extends WireMockIntegrationTest {
                 AppResponse.ErrorCode.UNAUTHORIZED.getDescription());
     }
 
+    @Test
+    void dpopBoundToken_withValidProofAndAuthorizationScheme_returnsOk() throws Exception {
+        Client client = clientRepository.save(Client.builder()
+                .firstName("Dpop")
+                .lastName("Client")
+                .phone("+3706" + Math.abs(UUID.randomUUID().hashCode() % 10_000_000))
+                .build());
+
+        String accessToken = "bound-access-token";
+        RSAKey key = generateRsaKey();
+        String jkt = key.toPublicJWK().computeThumbprint().toString();
+        stubIntrospectionWithJkt(jkt);
+
+        String targetUri = clientUrl + "/" + client.getId();
+        String dpopProof = createProof(key, "GET", targetUri, accessToken, UUID.randomUUID().toString());
+
+        ResponseEntity<AppResponse<Object>> response = requestGetDpop(
+                targetUri,
+                accessToken,
+                dpopProof,
+                new ParameterizedTypeReference<>() {}
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().code()).isZero();
+        assertThat(response.getBody().data()).isNotNull();
+    }
+
     private void stubIntrospectionWithJkt(String jkt) {
         stubFor(post(urlPathMatching(REALMS_PROTOCOL_OPENID_CONNECT_INTROSPECT))
                 .willReturn(aResponse()
@@ -97,6 +141,38 @@ class DpopIntegrationIT extends WireMockIntegrationTest {
         } catch (Exception ex) {
             throw new IllegalStateException(ex);
         }
+    }
+
+    private String createProof(RSAKey key,
+                               String method,
+                               String uri,
+                               String accessToken,
+                               String jti) throws Exception {
+        JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                .jwtID(jti)
+                .issueTime(Date.from(Instant.now()))
+                .claim("htm", method)
+                .claim("htu", uri)
+                .claim("ath", ath(accessToken))
+                .build();
+
+        SignedJWT jwt = new SignedJWT(
+                new JWSHeader.Builder(JWSAlgorithm.RS256)
+                        .type(new JOSEObjectType("dpop+jwt"))
+                        .jwk(key.toPublicJWK())
+                        .build(),
+                claims
+        );
+
+        jwt.sign(new RSASSASigner(key.toPrivateKey()));
+        return jwt.serialize();
+    }
+
+    private String ath(String token) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        return com.nimbusds.jose.util.Base64URL
+                .encode(digest.digest(token.getBytes(java.nio.charset.StandardCharsets.US_ASCII)))
+                .toString();
     }
 
     private RSAKey generateRsaKey() {
