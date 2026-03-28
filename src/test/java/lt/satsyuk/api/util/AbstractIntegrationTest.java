@@ -229,10 +229,6 @@ public abstract class AbstractIntegrationTest {
         return assertStatusAndBodyAndReturnBody(response, HttpStatus.OK, clazz);
     }
 
-    private HttpHeaders createHeaders(String token, String acceptLanguage) {
-        return createHeaders(token, acceptLanguage, null, false);
-    }
-
     private HttpHeaders createHeaders(String token, String acceptLanguage, String dpopProof, boolean dpopScheme) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

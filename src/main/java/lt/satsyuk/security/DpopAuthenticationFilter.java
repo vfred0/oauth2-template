@@ -83,7 +83,7 @@ public class DpopAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private void reject(HttpServletRequest request, HttpServletResponse response, String message) throws IOException, ServletException {
+    private void reject(HttpServletRequest request, HttpServletResponse response, String message) throws IOException {
         authEntryPoint.commence(request, response, new InsufficientAuthenticationException(message));
     }
 

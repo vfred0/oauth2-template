@@ -90,7 +90,7 @@ class DpopProofValidatorTest {
     }
 
     @Test
-    void rejectsNoneAlgorithm() throws Exception {
+    void rejectsNoneAlgorithm() {
         SignedJWT jwt = mock(SignedJWT.class);
         JWSHeader header = mock(JWSHeader.class);
         when(jwt.getHeader()).thenReturn(header);

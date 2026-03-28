@@ -71,7 +71,7 @@ public class DpopProofValidator {
     private SignedJWT parseSignedJwt(String dpopProof) {
         try {
             return SignedJWT.parse(dpopProof);
-        } catch (Exception ex) {
+        } catch (Exception _) {
             throw new DpopProofValidationException("Invalid DPoP proof format");
         }
     }
@@ -105,7 +105,7 @@ public class DpopProofValidator {
             if (!jwt.verify(verifier)) {
                 throw new DpopProofValidationException("Invalid DPoP proof signature");
             }
-        } catch (JOSEException ex) {
+        } catch (JOSEException _) {
             throw new DpopProofValidationException("Unable to verify DPoP proof signature");
         }
     }
@@ -140,7 +140,7 @@ public class DpopProofValidator {
             validateAccessTokenHash(claims, accessToken);
         } catch (DpopProofValidationException ex) {
             throw ex;
-        } catch (Exception ex) {
+        } catch (Exception _) {
             throw new DpopProofValidationException("Invalid DPoP proof claims");
         }
     }
@@ -187,19 +187,19 @@ public class DpopProofValidator {
             throw new DpopProofValidationException("DPoP proof ID is missing");
         }
 
-        Instant existing = usedProofIds.asMap().putIfAbsent(jti, Instant.now());
-        if (existing != null) {
+        if (usedProofIds.getIfPresent(jti) != null) {
             throw new DpopProofValidationException("DPoP proof replay detected");
         }
+        usedProofIds.put(jti, Instant.now());
     }
 
-    private void validateAccessTokenHash(JWTClaimsSet claims, String accessToken) throws Exception {
+    private void validateAccessTokenHash(JWTClaimsSet claims, String accessToken) {
         String ath = stringClaim(claims, ACCESS_TOKEN_HASH_CLAIM);
         if (!StringUtils.hasText(ath)) {
             throw new DpopProofValidationException("DPoP proof access token hash is missing");
         }
 
-        MessageDigest digest = MessageDigest.getInstance(SHA_256);
+        MessageDigest digest = createSha256Digest();
         byte[] hash = digest.digest(accessToken.getBytes(StandardCharsets.US_ASCII));
         String expectedAth = com.nimbusds.jose.util.Base64URL.encode(hash).toString();
 
@@ -218,8 +218,16 @@ public class DpopProofValidator {
                     expectedJkt.getBytes(StandardCharsets.US_ASCII))) {
                 throw new DpopProofValidationException("DPoP proof key thumbprint mismatch");
             }
-        } catch (JOSEException ex) {
+        } catch (JOSEException _) {
             throw new DpopProofValidationException("Unable to compute DPoP proof key thumbprint");
+        }
+    }
+
+    private MessageDigest createSha256Digest() {
+        try {
+            return MessageDigest.getInstance(SHA_256);
+        } catch (java.security.NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 is not available", ex);
         }
     }
 
