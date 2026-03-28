@@ -12,13 +12,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.DefaultOAuth2AuthenticatedPrincipal;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthentication;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import java.time.Instant;
 import java.util.List;
@@ -154,11 +157,49 @@ class DpopAuthenticationFilterTest {
         verify(filterChain, never()).doFilter(any(), any());
     }
 
+    @Test
+    void validatesJwtAuthenticationAndIncludesQueryStringInUri() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(
+                jwtAuthentication("jwt-token", Map.of("cnf", Map.of("jkt", "thumbprint")))
+        );
+        MockHttpServletRequest request = request("DPoP jwt-token", "proof", "sort=desc");
+
+        filter.doFilter(request, new MockHttpServletResponse(), filterChain);
+
+        verify(validator).validate("GET", "http://localhost:8080/api/clients/1?sort=desc",
+                "jwt-token", "proof", "thumbprint");
+        verify(filterChain).doFilter(any(), any());
+        verifyNoInteractions(authEntryPoint);
+    }
+
+    @Test
+    void validatesWithNullTokenAndExpectedJktForUnsupportedAuthenticationType() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        "user",
+                        "password",
+                        List.of(new SimpleGrantedAuthority("ROLE_CLIENT_GET"))
+                )
+        );
+        MockHttpServletRequest request = request("DPoP token", "proof");
+
+        filter.doFilter(request, new MockHttpServletResponse(), filterChain);
+
+        verify(validator).validate("GET", "http://localhost:8080/api/clients/1", null, "proof", null);
+        verify(filterChain).doFilter(any(), any());
+        verifyNoInteractions(authEntryPoint);
+    }
+
     private MockHttpServletRequest request(String authorization, String dpopProof) {
+        return request(authorization, dpopProof, null);
+    }
+
+    private MockHttpServletRequest request(String authorization, String dpopProof, String queryString) {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/clients/1");
         request.setScheme("http");
         request.setServerName("localhost");
         request.setServerPort(8080);
+        request.setQueryString(queryString);
         if (authorization != null) {
             request.addHeader(HttpHeaders.AUTHORIZATION, authorization);
         }
@@ -185,5 +226,20 @@ class DpopAuthenticationFilterTest {
                 Instant.now().plusSeconds(300)
         );
         return new BearerTokenAuthentication(principal, accessToken, principal.getAuthorities());
+    }
+
+    private JwtAuthenticationToken jwtAuthentication(String token, Map<String, Object> claims) {
+        Map<String, Object> tokenClaims = claims.isEmpty()
+                ? Map.of("sub", "user")
+                : claims;
+
+        Jwt jwt = Jwt.withTokenValue(token)
+                .header("alg", "RS256")
+                .claims(existingClaims -> existingClaims.putAll(tokenClaims))
+                .issuedAt(Instant.now().minusSeconds(60))
+                .expiresAt(Instant.now().plusSeconds(300))
+                .build();
+
+        return new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_CLIENT_GET")));
     }
 }
