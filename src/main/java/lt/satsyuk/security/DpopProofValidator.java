@@ -28,7 +28,7 @@ import java.util.Date;
 public class DpopProofValidator {
 
     private static final String PROOF_TYPE = "dpop+jwt";
-    private static final String HTP_METHOD_CLAIM = "htm";
+    private static final String HTTP_METHOD_CLAIM = "htm";
     private static final String HTTP_URI_CLAIM = "htu";
     private static final String ACCESS_TOKEN_HASH_CLAIM = "ath";
     private static final String SHA_256 = "SHA-256";
@@ -146,7 +146,7 @@ public class DpopProofValidator {
     }
 
     private void validateRequestMethod(JWTClaimsSet claims, String requestMethod) {
-        String htm = stringClaim(claims, HTP_METHOD_CLAIM);
+        String htm = stringClaim(claims, HTTP_METHOD_CLAIM);
         if (!StringUtils.hasText(htm) || !htm.equalsIgnoreCase(requestMethod)) {
             throw new DpopProofValidationException("DPoP proof method mismatch");
         }
