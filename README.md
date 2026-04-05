@@ -802,7 +802,7 @@ flowchart LR
   L --> G
 ```
 
-**Recommended properties for Variant B**
+**Recommended properties**
 
 - `management.opentelemetry.tracing.export.otlp.endpoint=${MANAGEMENT_OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}`
 - `management.tracing.export.otlp.enabled=true`

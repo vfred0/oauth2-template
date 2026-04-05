@@ -992,7 +992,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "sum by(level) (rate({service_name=\"jwt-demo\",level=~\".+\"} |= \"$log_keyword\" != \"/actuator/prometheus\" [1m])) + sum by(level) (rate({job=~\".*jwt-demo.*\",level=~\".+\"} |= \"$log_keyword\" != \"/actuator/prometheus\" [1m]))",
+          "expr": "sum by(level) (rate({service_name=\"jwt-demo\",level=~\".+\"} |= \"$log_keyword\" != \"/actuator/prometheus\" [1m]) or rate({job=~\".*jwt-demo.*\",level=~\".+\"} |= \"$log_keyword\" != \"/actuator/prometheus\" [1m]))",
           "legendFormat": "{{level}}",
           "queryType": "range",
           "refId": "A"
