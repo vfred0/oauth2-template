@@ -131,7 +131,8 @@ class KeycloakAuthServiceTest {
         KeycloakAuthService service = new KeycloakAuthService(realRestTemplate, props, registry);
         service.login(new LoginRequest(USERNAME, PASSWORD, CLIENT_ID, CLIENT_SECRET));
 
-        assertThatThrownBy(() -> service.login(new LoginRequest(USERNAME, PASSWORD, CLIENT_ID, CLIENT_SECRET)))
+        LoginRequest failedLoginRequest = new LoginRequest(USERNAME, PASSWORD, CLIENT_ID, CLIENT_SECRET);
+        assertThatThrownBy(() -> service.login(failedLoginRequest))
                 .isInstanceOf(KeycloakAuthException.class);
 
         mockServer.verify();
@@ -159,7 +160,8 @@ class KeycloakAuthServiceTest {
                 java.nio.charset.StandardCharsets.UTF_8
         )).when(rest).postForEntity(anyString(), any(HttpEntity.class), eq(KeycloakTokenResponse.class));
 
-        assertThatThrownBy(() -> service.refresh(new RefreshRequest(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET)))
+        RefreshRequest failedRefreshRequest = new RefreshRequest(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET);
+        assertThatThrownBy(() -> service.refresh(failedRefreshRequest))
                 .isInstanceOf(KeycloakAuthException.class);
 
         assertThat(counterCount(registry, "auth.refresh", "success")).isEqualTo(1.0);
@@ -179,7 +181,8 @@ class KeycloakAuthServiceTest {
         when(rest.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(ResponseEntity.ok("invalid_token"));
 
-        assertThatThrownBy(() -> service.logout(new LogoutRequest(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET)))
+        LogoutRequest failedLogoutRequest = new LogoutRequest(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET);
+        assertThatThrownBy(() -> service.logout(failedLogoutRequest))
                 .isInstanceOf(KeycloakAuthException.class);
 
         assertThat(counterCount(registry, "auth.logout", "success")).isEqualTo(1.0);
