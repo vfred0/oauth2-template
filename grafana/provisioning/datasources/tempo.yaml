@@ -12,8 +12,8 @@ datasources:
       httpMethod: GET
       tracesToLogs:
         datasourceUid: 'loki'
-        tags: ['job', 'instance', 'pod', 'namespace']
-        mappedTags: [{ key: 'service.name', value: 'service' }]
+        tags: ['service.name']
+        mappedTags: [{ key: 'service.name', value: 'service_name' }]
       serviceMap:
         datasourceUid: 'Tempo'
       nodeGraph:

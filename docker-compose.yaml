@@ -76,6 +76,7 @@ services:
       KEYCLOAK_RESOURCE_CLIENT_SECRET: ${KEYCLOAK_RESOURCE_CLIENT_SECRET}
 
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
+      MANAGEMENT_OTLP_LOGGING_ENDPOINT: http://otel-collector:4318/v1/logs
     depends_on:
       - keycloak
       - postgres-app
@@ -122,20 +123,6 @@ services:
       - loki-data:/loki
       - loki-wal:/wal
 
-  # ------------------------------------------------------------
-  # PROMTAIL (LOG SHIPPER)
-  # ------------------------------------------------------------
-  promtail:
-    image: grafana/promtail:2.8.2
-    container_name: promtail
-    volumes:
-      - /var/log:/var/log:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./promtail-config.yaml:/etc/promtail/promtail-config.yaml
-    command: -config.file=/etc/promtail/promtail-config.yaml
-    depends_on:
-      - loki
 
   # ------------------------------------------------------------
   # PROMETHEUS (METRICS)
