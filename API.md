@@ -29,6 +29,16 @@ Error response:
 }
 ```
 
+### Response Headers
+
+Every response may include correlation header:
+
+```http
+X-Trace-Id: <trace-id>
+```
+
+Use this value to correlate client-side errors with server logs/traces (including `401`, `403`, and `429` responses).
+
 ### Error Codes
 
 | Code | Meaning               |
@@ -506,4 +516,12 @@ Response:
 | `/api/clients.*`  | 20 requests/minute |
 
 When rate limit is exceeded, the API returns HTTP `429 Too Many Requests`.
+
+Typical response headers for a throttled request include `X-Trace-Id`, which can be used for diagnostics:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Content-Type: application/json
+X-Trace-Id: 2f0a3e58a2d7f97c3f6d9d6cc2b1aa93
+```
 

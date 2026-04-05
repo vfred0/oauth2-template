@@ -6,6 +6,7 @@ import lt.satsyuk.security.DpopAuthenticationFilter;
 import lt.satsyuk.security.KeycloakOpaqueRoleConverter;
 import lt.satsyuk.security.KeycloakOpaqueTokenIntrospector;
 import lt.satsyuk.security.RateLimitingFilter;
+import lt.satsyuk.security.TraceIdResponseHeaderFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -28,6 +29,7 @@ public class SecurityConfig {
                                                    OpaqueTokenIntrospector opaqueTokenIntrospector,
                                                    JsonAuthEntryPoint jsonAuthEntryPoint,
                                                    JsonAccessDeniedHandler jsonAccessDeniedHandler,
+                                                   TraceIdResponseHeaderFilter traceIdResponseHeaderFilter,
                                                    DpopAuthenticationFilter dpopAuthenticationFilter,
                                                    RateLimitingFilter rateLimitingFilter) {
 
@@ -53,6 +55,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(jsonAccessDeniedHandler)
                 );
 
+        http.addFilterBefore(traceIdResponseHeaderFilter, AuthenticationFilter.class);
         http.addFilterAfter(dpopAuthenticationFilter, AuthenticationFilter.class);
         http.addFilterAfter(rateLimitingFilter, DpopAuthenticationFilter.class);
 
