@@ -30,11 +30,15 @@
       },
       "targets": [
         {
-          "expr": "{job=\"jwt-demo\"}",
+          "expr": "{service_name=\"jwt-demo\"}",
           "refId": "A"
+        },
+        {
+          "expr": "{job=~\".*jwt-demo.*\",service_name!~\".+\"}",
+          "refId": "B"
         }
       ],
-      "title": "Recent logs (jwt-demo)",
+      "title": "Recent logs (jwt-demo via OTLP)",
       "type": "logs"
     }
   ],

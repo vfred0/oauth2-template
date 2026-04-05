@@ -51,7 +51,6 @@ The backend does not store client credentials for login/refresh/logout — the c
 ├── prometheus.yml              — Prometheus configuration
 ├── tempo.yaml                  — Tempo configuration
 ├── loki-config.yaml            — Loki configuration
-├── promtail-config.yaml        — Promtail configuration
 ├── otel.yaml                   — OpenTelemetry Collector configuration
 ├── src/main/java/lt/satsyuk/  — Source code
 │   ├── api/                    — Controllers, DTOs

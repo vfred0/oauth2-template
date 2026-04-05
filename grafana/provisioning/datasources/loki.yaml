@@ -13,4 +13,4 @@ datasources:
       derivedFields:
         - name: trace
           datasourceUid: tempo
-          matcher: "trace"
+          matcherRegex: '"traceId":"([a-f0-9]{32})"'

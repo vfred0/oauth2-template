@@ -78,7 +78,7 @@
           "limit": 20,
           "queryType": "traceql",
           "refId": "A",
-          "query": "{}"
+          "query": "{ span.http.route != \"/actuator/prometheus\" && name !~ \".*actuator/prometheus.*\" }"
         }
       ],
       "title": "Traces by Service",
@@ -138,7 +138,7 @@
           "limit": 20,
           "queryType": "traceql",
           "refId": "A",
-          "query": "{}"
+          "query": "{ name != \"http get /actuator/prometheus\" }"
         }
       ],
       "title": "Total Traces",
@@ -226,7 +226,7 @@
           "limit": 20,
           "queryType": "traceql",
           "refId": "A",
-          "query": "{}"
+          "query": "{ name != \"http get /actuator/prometheus\" }"
         }
       ],
       "title": "Request Duration (P95) by Service",
@@ -313,7 +313,7 @@
           "limit": 20,
           "queryType": "traceql",
           "refId": "A",
-          "query": "{}"
+          "query": "{ name != \"http get /actuator/prometheus\" }"
         }
       ],
       "title": "Request Rate by Service",
@@ -391,7 +391,7 @@
           "limit": 20,
           "queryType": "traceql",
           "refId": "A",
-          "query": "{ status = error }"
+          "query": "{ status = error && name != \"http get /actuator/prometheus\" }"
         }
       ],
       "title": "Error Traces",
@@ -503,7 +503,7 @@
           "limit": 50,
           "queryType": "traceql",
           "refId": "A",
-          "query": "{}"
+          "query": "{ name != \"http get /actuator/prometheus\" }"
         }
       ],
       "title": "Recent Traces",

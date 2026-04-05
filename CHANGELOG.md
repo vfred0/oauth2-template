@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Structured JSON logging with Logstash encoder and trace/span IDs
 - Prometheus metrics via Spring Boot Actuator
 - Swagger/OpenAPI documentation (SpringDoc)
-- Full observability stack via Docker Compose (Grafana, Prometheus, Tempo, Loki, Promtail)
+- Full observability stack via Docker Compose (Grafana, Prometheus, Tempo, Loki)
 - Comprehensive integration tests with Testcontainers (Keycloak, PostgreSQL)
 - Negative testing with WireMock (network failures, timeouts, error responses)
 - Phone uniqueness validation with conflict handling

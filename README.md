@@ -769,9 +769,46 @@ http://localhost:8081/actuator/prometheus
 http://localhost:8081/actuator/health
 ```
 
-**Tracing**: OpenTelemetry traces are exported to OTLP endpoint (configure in `application.properties`)
+**OTLP-first Observability (recommended)**
 
-**Logging**: Structured JSON logs with trace/span IDs via Logstash encoder
+- traces: `Spring Boot -> OTLP -> OTel Collector -> Tempo`
+- logs: `Spring Boot -> OTLP -> OTel Collector -> Loki`
+- metrics: `Prometheus` pulls `/actuator/prometheus`
+
+```mermaid
+flowchart LR
+  subgraph App[Spring Boot jwt-demo]
+    A1[HTTP metrics\nActuator /prometheus]
+    A2[Traces OTLP\nmanagement.opentelemetry.tracing.export.otlp.endpoint]
+    A3[Logs OTLP\nmanagement.opentelemetry.logging.export.otlp.endpoint]
+  end
+
+  subgraph Infra[Observability Infra]
+    C[OTel Collector]
+    T[Tempo]
+    L[Loki]
+    P[Prometheus]
+    G[Grafana]
+  end
+
+  A1 -->|pull /actuator/prometheus| P
+  A2 -->|OTLP traces| C
+  A3 -->|OTLP logs| C
+  C -->|traces| T
+  C -->|logs| L
+
+  P --> G
+  T --> G
+  L --> G
+```
+
+**Recommended properties**
+
+- `management.opentelemetry.tracing.export.otlp.endpoint=${MANAGEMENT_OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}`
+- `management.tracing.export.otlp.enabled=true`
+- `management.opentelemetry.logging.export.otlp.endpoint=${MANAGEMENT_OTLP_LOGGING_ENDPOINT:http://localhost:4318/v1/logs}`
+- `management.logging.export.otlp.enabled=true`
+- `management.otlp.metrics.export.enabled=false` (avoid duplicate metric ingestion with Prometheus scrape)
 
 ---
 

@@ -437,7 +437,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by(uri, le) (rate(http_server_requests_seconds_bucket{job=\"jwt-demo\",uri!=\"/actuator/prometheus\"}[5m]))) * 1000",
+          "expr": "(histogram_quantile(0.95, sum by(uri, le) (rate(http_server_requests_seconds_bucket{job=\"jwt-demo\",uri!=\"/actuator/prometheus\"}[5m]))) * 1000) or (avg by(uri) (http_server_requests_seconds{job=\"jwt-demo\",uri!=\"/actuator/prometheus\",quantile=\"0.95\"}) * 1000)",
           "legendFormat": "{{uri}}",
           "refId": "A"
         }
@@ -2011,7 +2011,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by(cache) (rate(cache_gets_total{job=\"jwt-demo\",result=\"hit\"}[5m])) / sum by(cache) (rate(cache_gets_total{job=\"jwt-demo\"}[5m]))",
+          "expr": "(sum by(cache) (rate(cache_gets_total{job=\"jwt-demo\",result=\"hit\"}[5m])) / clamp_min(sum by(cache) (rate(cache_gets_total{job=\"jwt-demo\"}[5m])), 1e-9)) or on() vector(0)",
           "legendFormat": "{{cache}}",
           "refId": "A"
         }
@@ -2098,7 +2098,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(cache_evictions_total{job=\"jwt-demo\"}[5m])",
+          "expr": "rate(cache_evictions_total{job=\"jwt-demo\"}[5m]) or on() vector(0)",
           "legendFormat": "{{cache}}",
           "refId": "A"
         }
@@ -2184,7 +2184,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "bucket4j_summary_consumed_total{job=\"jwt-demo\"}",
+          "expr": "bucket4j_summary_available_tokens{job=\"jwt-demo\"} or bucket4j_summary_consumed_total{job=\"jwt-demo\"}",
           "legendFormat": "{{id}}",
           "refId": "A"
         }
@@ -2271,7 +2271,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(bucket4j_summary_rejected_total{job=\"jwt-demo\"}[5m])",
+          "expr": "rate(bucket4j_summary_rejected_total{job=\"jwt-demo\"}[5m]) or on() vector(0)",
           "legendFormat": "{{id}}",
           "refId": "A"
         }
@@ -2358,7 +2358,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by(uri) (rate(http_client_requests_seconds_count{job=\"jwt-demo\"}[5m]))",
+          "expr": "sum by(uri) (rate(http_client_requests_seconds_count{job=\"jwt-demo\"}[5m])) or on() vector(0)",
           "legendFormat": "{{uri}}",
           "refId": "A"
         }
@@ -2445,7 +2445,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by(uri, le) (rate(http_client_requests_seconds_bucket{job=\"jwt-demo\"}[5m]))) * 1000",
+          "expr": "(histogram_quantile(0.95, sum by(uri, le) (rate(http_client_requests_seconds_bucket{job=\"jwt-demo\"}[5m]))) * 1000) or (avg by(uri) (http_client_requests_seconds{job=\"jwt-demo\",quantile=\"0.95\"}) * 1000) or on() vector(0)",
           "legendFormat": "{{uri}}",
           "refId": "A"
         }
@@ -2532,12 +2532,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(container_cpu_usage_seconds_total{container=~\"jwt-demo.*\"}[5m])",
-          "legendFormat": "{{container}}",
+          "expr": "process_cpu_usage{job=\"jwt-demo\"}",
+          "legendFormat": "process_cpu_usage",
           "refId": "A"
         }
       ],
-      "title": "Container CPU Usage",
+      "title": "Process CPU Usage",
       "type": "timeseries"
     },
     {
@@ -2619,12 +2619,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "container_memory_working_set_bytes{container=~\"jwt-demo.*\"}",
-          "legendFormat": "{{container}}",
+          "expr": "sum(jvm_memory_used_bytes{job=\"jwt-demo\",area=\"heap\"})",
+          "legendFormat": "jvm_heap_used",
           "refId": "A"
         }
       ],
-      "title": "Container Memory Working Set",
+      "title": "JVM Heap Used",
       "type": "timeseries"
     }
   ],
