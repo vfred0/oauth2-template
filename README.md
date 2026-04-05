@@ -779,8 +779,8 @@ http://localhost:8081/actuator/health
 flowchart LR
   subgraph App[Spring Boot jwt-demo]
     A1[HTTP metrics\nActuator /prometheus]
-    A2[Traces OTLP\nmanagement.otlp.tracing.endpoint]
-    A3[Logs OTLP\nmanagement.otlp.logging.endpoint]
+    A2[Traces OTLP\nmanagement.opentelemetry.tracing.export.otlp.endpoint]
+    A3[Logs OTLP\nmanagement.opentelemetry.logging.export.otlp.endpoint]
   end
 
   subgraph Infra[Observability Infra]
@@ -804,10 +804,10 @@ flowchart LR
 
 **Recommended properties for Variant B**
 
-- `management.otlp.tracing.endpoint=${MANAGEMENT_OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}`
-- `management.otlp.tracing.export.enabled=true`
-- `management.otlp.logging.endpoint=${MANAGEMENT_OTLP_LOGGING_ENDPOINT:http://localhost:4318/v1/logs}`
-- `management.otlp.logging.export.enabled=true`
+- `management.opentelemetry.tracing.export.otlp.endpoint=${MANAGEMENT_OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}`
+- `management.tracing.export.otlp.enabled=true`
+- `management.opentelemetry.logging.export.otlp.endpoint=${MANAGEMENT_OTLP_LOGGING_ENDPOINT:http://localhost:4318/v1/logs}`
+- `management.logging.export.otlp.enabled=true`
 - `management.otlp.metrics.export.enabled=false` (avoid duplicate metric ingestion with Prometheus scrape)
 
 ---

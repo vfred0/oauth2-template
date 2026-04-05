@@ -77,6 +77,7 @@ services:
 
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
       MANAGEMENT_OTLP_LOGGING_ENDPOINT: http://otel-collector:4318/v1/logs
+      OTEL_RESOURCE_ATTRIBUTES: service.name=jwt-demo,service.namespace=jwt-demo,deployment.environment=local
     depends_on:
       - keycloak
       - postgres-app

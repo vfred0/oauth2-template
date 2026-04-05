@@ -32,6 +32,10 @@
         {
           "expr": "{service_name=\"jwt-demo\"}",
           "refId": "A"
+        },
+        {
+          "expr": "{job=~\".*jwt-demo.*\",service_name!~\".+\"}",
+          "refId": "B"
         }
       ],
       "title": "Recent logs (jwt-demo via OTLP)",

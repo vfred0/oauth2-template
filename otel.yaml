@@ -15,15 +15,32 @@ exporters:
     endpoint: http://loki:3100/loki/api/v1/push
 
 processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
   batch:
+    timeout: 2s
+    send_batch_size: 1024
+  resource/logs:
+    attributes:
+      - action: upsert
+        key: service.name
+        value: jwt-demo
+      - action: upsert
+        key: loki.resource.labels
+        value: service.name,service.namespace,service.instance.id
+      - action: upsert
+        key: loki.attribute.labels
+        value: level,logger_name,traceId,spanId
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch]
+      processors: [memory_limiter, batch]
       exporters: [otlp]
     logs:
       receivers: [otlp]
-      processors: [batch]
+      processors: [memory_limiter, resource/logs, batch]
       exporters: [loki]
