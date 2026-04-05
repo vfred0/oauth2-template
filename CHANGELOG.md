@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Account endpoints (`GET /api/accounts/client/{clientId}`, `POST /api/accounts/balance/pessimistic`, `POST /api/accounts/balance/optimistic`)
 - Authentication endpoints (login, refresh, logout)
 - Rate limiting with Bucket4j (login: 5 req/min, clients: 20 req/min)
+- HTTP response header `X-Trace-Id` for request/trace correlation, including error responses (`401`, `403`, `429`)
 - Internationalization (i18n) — English and Russian
 - Flyway database migrations
 - OpenTelemetry tracing with OTLP exporter
