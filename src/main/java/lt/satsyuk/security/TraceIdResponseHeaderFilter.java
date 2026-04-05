@@ -35,7 +35,7 @@ public class TraceIdResponseHeaderFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
 
-        if (!response.containsHeader(TRACE_ID_HEADER)) {
+        if (!response.isCommitted() && !response.containsHeader(TRACE_ID_HEADER)) {
             String lateTraceId = resolveTraceId();
             if (StringUtils.hasText(lateTraceId)) {
                 response.setHeader(TRACE_ID_HEADER, lateTraceId);

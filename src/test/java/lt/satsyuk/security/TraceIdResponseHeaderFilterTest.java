@@ -66,6 +66,19 @@ class TraceIdResponseHeaderFilterTest {
         assertThat(response.getHeader(TraceIdResponseHeaderFilter.TRACE_ID_HEADER)).isNull();
     }
 
+    @Test
+    void addsHeaderWhenTraceIdAppearsAfterFilterChain() throws Exception {
+        when(tracer.currentSpan()).thenReturn(null);
+
+        TraceIdResponseHeaderFilter filter = new TraceIdResponseHeaderFilter(tracer);
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/clients");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, (req, res) -> MDC.put("traceId", "late-trace-id"));
+
+        assertThat(response.getHeader(TraceIdResponseHeaderFilter.TRACE_ID_HEADER)).isEqualTo("late-trace-id");
+    }
+
     private MockHttpServletResponse doFilter(TraceIdResponseHeaderFilter filter) throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/clients");
         MockHttpServletResponse response = new MockHttpServletResponse();

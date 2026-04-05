@@ -738,14 +738,14 @@ For DPoP-bound access tokens:
 - send `DPoP` proof for every protected request
 - ensure proof matches method+URL and is signed by key matching `cnf.jkt`
 
-If request fails, check response header `X-Trace-Id` and use it to find correlated logs/traces.
+If request fails and the response includes `X-Trace-Id`, use it to find correlated logs/traces.
 
 ---
 
 ### 🔎 Correlating errors with logs/traces
-The API returns `X-Trace-Id` response header for request correlation.
+The API may include `X-Trace-Id` response header for request correlation when a trace id is available.
 
-Use this header value when investigating `401`, `403`, and `429` responses in Grafana/Tempo/Loki.
+Use this header value, when present, when investigating `401`, `403`, and `429` responses in Grafana/Tempo/Loki.
 
 ---
 
