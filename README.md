@@ -79,8 +79,22 @@ Resource server introspection credentials (confidential client in Keycloak):
 
 ### 2. Start in DEV mode (auto-restart on code changes)
 
+Start services:
+
 ```pwsh
-docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up --build --watch
+docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up --build
+```
+
+Enable code watching (run in another terminal):
+
+```pwsh
+docker compose -f docker-compose.yaml -f docker-compose.dev.yaml watch
+```
+
+If `watch` is not supported by your Docker Compose version, keep `up --build` running and restart only the app container manually after code changes:
+
+```pwsh
+docker compose -f docker-compose.yaml -f docker-compose.dev.yaml restart jwt-demo
 ```
 
 Keycloak automatically imports:
