@@ -65,10 +65,8 @@ services:
     ports:
       - "8081:8081"
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: local
       KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
-
-      # 👉 Добавляем параметры подключения к новой БД
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-app:5432/appdb
       SPRING_DATASOURCE_USERNAME: app
       SPRING_DATASOURCE_PASSWORD: ${APP_DB_PASSWORD}

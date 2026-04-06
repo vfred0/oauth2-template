@@ -71,10 +71,16 @@ Resource server introspection credentials (confidential client in Keycloak):
 - `KEYCLOAK_RESOURCE_CLIENT_ID`
 - `KEYCLOAK_RESOURCE_CLIENT_SECRET`
 
-### 1. Start Keycloak (with automatic realm import)
+### 1. Compose files layout
 
-```bash
-docker compose up -d
+- `docker-compose.yaml` - shared stack (databases, Keycloak, observability, common `jwt-demo` settings)
+- `docker-compose.dev.yaml` - dev override for `jwt-demo` (Maven container + source mount + watch)
+- `docker-compose.prod.yaml` - prod override for `jwt-demo` (image build from `Dockerfile`)
+
+### 2. Start in DEV mode (auto-restart on code changes)
+
+```pwsh
+docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up --build --watch
 ```
 
 Keycloak automatically imports:
@@ -85,16 +91,42 @@ Keycloak automatically imports:
 - client `spring-app`
 - protocol mappers (roles → access_token)
 
+### 3. Start in PROD mode
+
+```pwsh
+docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --build
+```
+
+### 4. Alternative local run (without app container)
+
+```pwsh
+docker compose up -d postgres postgres-app keycloak
+```
+
+```pwsh
+mvn spring-boot:run
+```
+
+### 5. Stop and cleanup
+
+DEV mode:
+
+```pwsh
+docker compose -f docker-compose.yaml -f docker-compose.dev.yaml down
+docker compose -f docker-compose.yaml -f docker-compose.dev.yaml down -v
+```
+
+PROD mode:
+
+```pwsh
+docker compose -f docker-compose.yaml -f docker-compose.prod.yaml down
+docker compose -f docker-compose.yaml -f docker-compose.prod.yaml down -v
+```
+
 Keycloak UI:
 
 ```
 http://localhost:8080
-```
-
-### 2. Start Spring Boot
-
-```bash
-mvn spring-boot:run
 ```
 
 Application runs at:

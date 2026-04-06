@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  jwt-demo:
+    build: null
+    image: maven:3.9-eclipse-temurin-25
+    container_name: jwt-demo-dev
+    working_dir: /workspace
+    command: mvn -DskipTests spring-boot:run
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      OTEL_RESOURCE_ATTRIBUTES: service.name=jwt-demo,service.namespace=jwt-demo,deployment.environment=dev
+    volumes:
+      - ./:/workspace
+      - maven-cache:/root/.m2
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./src
+          target: /workspace/src
+        - action: rebuild
+          path: ./pom.xml
+
+volumes:
+  maven-cache:
+
+
+
