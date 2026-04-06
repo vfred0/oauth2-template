@@ -2,7 +2,6 @@ version: "3.9"
 
 services:
   jwt-demo:
-    build: null
     image: maven:3.9-eclipse-temurin-25
     container_name: jwt-demo-dev
     working_dir: /workspace

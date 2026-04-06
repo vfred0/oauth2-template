@@ -58,9 +58,6 @@ services:
   # JWT DEMO APPLICATION
   # ------------------------------------------------------------
   jwt-demo:
-    build:
-      context: .
-      dockerfile: Dockerfile
     container_name: jwt-demo
     ports:
       - "8081:8081"
