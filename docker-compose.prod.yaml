@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  jwt-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jwt-demo
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      OTEL_RESOURCE_ATTRIBUTES: service.name=jwt-demo,service.namespace=jwt-demo,deployment.environment=prod
+
+
