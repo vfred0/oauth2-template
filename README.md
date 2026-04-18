@@ -282,18 +282,12 @@ Reports are generated at:
 
 ## High-level flow
 
-```
-+-------------+        +-------------------+        +----------------+
-|   Client    | -----> | Spring Boot Proxy | -----> |   Keycloak     |
-| (Frontend)  |        |  (This project)   |        | Auth Server    |
-+-------------+        +-------------------+        +----------------+
-        |                       |                           |
-        |  username/password    |                           |
-        |  clientId/secret      |                           |
-        |---------------------->|                           |
-        |                       |  /token, /logout          |
-        |                       |-------------------------->|
-        |                       |                           |
+```mermaid
+flowchart LR
+    Client[Client<br/>Frontend] -->|username/password<br/>clientId/clientSecret| Proxy[Spring Boot Proxy<br/>This project]
+    Proxy -->|/token, /logout| Keycloak[Keycloak<br/>Auth Server]
+    Keycloak -->|tokens / logout result| Proxy
+    Proxy -->|AppResponse| Client
 ```
 
 ---
@@ -340,93 +334,52 @@ This ensures a clear separation of responsibilities:
 
 ## 📊 Sequence Diagram (Login / Refresh / Logout)
 
-```text
-===========================================================
-                 LOGIN FLOW
-===========================================================
+### Login Flow
 
-Client
-  |
-  | 1. POST /api/auth/login
-  |    { username, password, clientId, clientSecret }
-  v
-Spring Boot (AuthController)
-  |
-  | 2. KeycloakAuthService.login()
-  v
-Keycloak
-  |
-  | 3. POST /realms/my-realm/protocol/openid-connect/token
-  |      grant_type=password
-  |      username, password
-  |      client_id, client_secret
-  |
-  | 4. 200 OK
-  |      { access_token, refresh_token }
-  v
-Spring Boot
-  |
-  | 5. Wrap into AppResponse
-  v
-Client
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client
+    participant SpringBoot as Spring Boot (AuthController)
+    participant Keycloak
 
+    Client->>SpringBoot: POST /api/auth/login\n{username, password, clientId, clientSecret}
+    SpringBoot->>Keycloak: KeycloakAuthService.login()
+    Keycloak->>Keycloak: POST /realms/my-realm/protocol/openid-connect/token\ngrant_type=password\nusername, password\nclient_id, client_secret
+    Keycloak-->>SpringBoot: 200 OK\n{access_token, refresh_token}
+    SpringBoot-->>Client: AppResponse<AuthResponse>
+```
 
-===========================================================
-                 REFRESH FLOW
-===========================================================
+### Refresh Flow
 
-Client
-  |
-  | 1. POST /api/auth/refresh
-  |    { refreshToken, clientId, clientSecret }
-  v
-Spring Boot
-  |
-  | 2. KeycloakAuthService.refresh()
-  v
-Keycloak
-  |
-  | 3. POST /realms/my-realm/protocol/openid-connect/token
-  |      grant_type=refresh_token
-  |      refresh_token
-  |      client_id, client_secret
-  |
-  | 4. 200 OK
-  |      { new_access_token, new_refresh_token }
-  v
-Spring Boot
-  |
-  | 5. Wrap into AppResponse
-  v
-Client
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client
+    participant SpringBoot as Spring Boot (AuthController)
+    participant Keycloak
 
+    Client->>SpringBoot: POST /api/auth/refresh\n{refreshToken, clientId, clientSecret}
+    SpringBoot->>Keycloak: KeycloakAuthService.refresh()
+    Keycloak->>Keycloak: POST /realms/my-realm/protocol/openid-connect/token\ngrant_type=refresh_token\nrefresh_token\nclient_id, client_secret
+    Keycloak-->>SpringBoot: 200 OK\n{new_access_token, new_refresh_token}
+    SpringBoot-->>Client: AppResponse<AuthResponse>
+```
 
-===========================================================
-                 LOGOUT FLOW
-===========================================================
+### Logout Flow
 
-Client
-  |
-  | 1. POST /api/auth/logout
-  |    { refreshToken, clientId, clientSecret }
-  v
-Spring Boot
-  |
-  | 2. KeycloakAuthService.logout()
-  v
-Keycloak
-  |
-  | 3. POST /realms/my-realm/protocol/openid-connect/logout
-  |      client_id, client_secret
-  |      refresh_token
-  |
-  | 4. 200 OK (always)
-  v
-Spring Boot
-  |
-  | 5. Return AppResponse(success=true)
-  v
-Client
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client
+    participant SpringBoot as Spring Boot (AuthController)
+    participant Keycloak
+
+    Client->>SpringBoot: POST /api/auth/logout\n{refreshToken, clientId, clientSecret}
+    SpringBoot->>Keycloak: KeycloakAuthService.logout()
+    Keycloak->>Keycloak: POST /realms/my-realm/protocol/openid-connect/logout\nclient_id, client_secret\nrefresh_token
+    Keycloak-->>SpringBoot: 200 OK (always)
+    SpringBoot-->>Client: AppResponse(success=true)
 ```
 
 ---
