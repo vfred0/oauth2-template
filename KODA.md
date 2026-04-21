@@ -12,7 +12,7 @@ The backend does not store client credentials for login/refresh/logout — the c
 - 🔄 Token refresh
 - 🚪 Logout with refresh token revocation
 - 🛡 Opaque token validation via Spring Security introspection
-- 🎭 Role-based authorization (ADMIN, CLIENT_CREATE, CLIENT_GET, UPDATE_BALANCE)
+- 🎭 Role-based authorization (ADMIN, CLIENT_CREATE, CLIENT_GET, CLIENT_SEARCH, UPDATE_BALANCE)
 - 🚦 Rate limiting (Bucket4j)
 - 📊 OpenTelemetry tracing + JSON logging
 - 📈 Prometheus metrics
@@ -31,7 +31,7 @@ The backend does not store client credentials for login/refresh/logout — the c
 | Rate Limiting | Bucket4j core + custom servlet filter |
 | Cache | Caffeine |
 | Mapping | MapStruct |
-| Testing | JUnit 5, Testcontainers, WireMock |
+| Testing | JUnit Jupiter 6, Testcontainers, WireMock |
 | Documentation | SpringDoc OpenAPI |
 | Monitoring | Prometheus, Grafana, Tempo, Loki |
 | Tracing | OpenTelemetry |
@@ -41,7 +41,6 @@ The backend does not store client credentials for login/refresh/logout — the c
 ## Project Structure
 
 ```
-├── .github/workflows/ci.yml    — CI/CD pipeline (Maven, SonarCloud)
 ├── docker-compose.yaml         — Docker Compose (Keycloak, Postgres, Grafana, Tempo, Loki, Prometheus)
 ├── Dockerfile                  — Application Docker image
 ├── pom.xml                     — Maven configuration
@@ -52,13 +51,13 @@ The backend does not store client credentials for login/refresh/logout — the c
 ├── tempo.yaml                  — Tempo configuration
 ├── loki-config.yaml            — Loki configuration
 ├── otel.yaml                   — OpenTelemetry Collector configuration
-├── src/main/java/lt/satsyuk/  — Source code
-│   ├── api/                    — Controllers, DTOs
+├── src/main/java/lt/satsyuk/   — Source code
 │   ├── auth/                   — Keycloak integration
 │   ├── config/                 — Configuration classes
 │   ├── controller/             — REST controllers
 │   ├── dto/                    — Data Transfer Objects
 │   ├── exception/              — Exceptions and GlobalExceptionHandler
+│   ├── job/                    — Quartz jobs for async processing
 │   ├── mapper/                 — MapStruct mappers
 │   ├── model/                  — JPA entities
 │   ├── repository/             — Spring Data repositories
@@ -145,6 +144,7 @@ Required variables:
 | `ADMIN` | Administrative user |
 | `CLIENT_CREATE` | Create clients |
 | `CLIENT_GET` | Read client data |
+| `CLIENT_SEARCH` | Search clients by name |
 | `UPDATE_BALANCE` | Update account balance |
 
 ### Role Mapping
@@ -153,14 +153,15 @@ Keycloak → Spring Security:
 ADMIN → ROLE_ADMIN
 CLIENT_CREATE → checked via @PreAuthorize("hasRole('CLIENT_CREATE')")
 CLIENT_GET → checked via @PreAuthorize("hasRole('CLIENT_GET')")
+CLIENT_SEARCH → checked via @PreAuthorize("hasRole('CLIENT_SEARCH')")
 UPDATE_BALANCE → checked via @PreAuthorize("hasRole('UPDATE_BALANCE')")
 ```
 
 ### Access Matrix
-| User | `POST /api/clients` | `GET /api/requests/{id}` | `GET /api/clients/{id}` | `GET /api/accounts/client/{clientId}` | `POST /api/accounts/balance/pessimistic` | `POST /api/accounts/balance/optimistic` |
-|------|---------------------|--------------------------|-------------------------|----------------------------------------|-------------------------------------------|------------------------------------------|
-| user | ✅ (CLIENT_CREATE) | ✅ (CLIENT_CREATE) | ✅ (CLIENT_GET) | ✅ (CLIENT_GET) | ✅ (UPDATE_BALANCE) | ✅ (UPDATE_BALANCE) |
-| admin | ❌ Forbidden | ❌ Forbidden | ❌ Forbidden | ❌ Forbidden | ❌ Forbidden | ❌ Forbidden |
+| User | `POST /api/clients` | `GET /api/requests/{id}` | `GET /api/clients/{id}` | `GET /api/clients/search` | `GET /api/accounts/client/{clientId}` | `POST /api/accounts/balance/pessimistic` | `POST /api/accounts/balance/optimistic` |
+|------|---------------------|--------------------------|-------------------------|----------------------------|----------------------------------------|-------------------------------------------|------------------------------------------|
+| user | ✅ (CLIENT_CREATE) | ✅ (CLIENT_CREATE) | ✅ (CLIENT_GET) | ❌ Forbidden | ✅ (CLIENT_GET) | ✅ (UPDATE_BALANCE) | ✅ (UPDATE_BALANCE) |
+| admin | ❌ Forbidden | ❌ Forbidden | ❌ Forbidden | ❌ Forbidden | ❌ Forbidden | ❌ Forbidden | ❌ Forbidden |
 
 ---
 
@@ -235,6 +236,7 @@ Response:
 | POST | `/api/clients` | CLIENT_CREATE | Submit async client creation request |
 | GET | `/api/requests/{id}` | CLIENT_CREATE | Get async request status |
 | GET | `/api/clients/{id}` | CLIENT_GET | Get client by ID |
+| GET | `/api/clients/search?q=...` | CLIENT_SEARCH | Search clients by first/last name |
 | GET | `/api/accounts/client/{clientId}` | CLIENT_GET | Get account by client ID |
 | POST | `/api/accounts/balance/pessimistic` | UPDATE_BALANCE | Update account balance with pessimistic lock |
 | POST | `/api/accounts/balance/optimistic` | UPDATE_BALANCE | Update account balance with optimistic lock and retries |
@@ -243,7 +245,7 @@ Response:
 
 ## CI/CD
 
-### GitHub Actions (`.github/workflows/ci.yml`)
+### Typical CI pipeline
 1. Checkout code
 2. Install JDK 25
 3. Cache Maven and SonarQube packages
@@ -262,7 +264,9 @@ Response:
 ### ❌ 403 on protected endpoints
 Check that the token contains:
 ```json
-"realm_access": { "roles": ["CLIENT_GET", "CLIENT_CREATE", "UPDATE_BALANCE"] }
+{
+  "realm_access": { "roles": ["CLIENT_GET", "CLIENT_CREATE", "UPDATE_BALANCE"] }
+}
 ```
 
 ### ❌ Logout always returns 200

@@ -1,4 +1,3 @@
-```markdown
 # 🔐 Spring Boot + Keycloak OAuth2 Proxy  
 Dynamic authentication with client-provided `client_id` and `client_secret`
 
@@ -38,10 +37,10 @@ Supported features:
 - Keycloak 26+
 - Bucket4j core + custom servlet filter
 - Quartz Scheduler (JDBC job store)
-- JUnit 5 + RestTemplate-based integration tests
-- Testcontainers (Keycloak)
+- JUnit Jupiter 6 + RestTemplate-based integration tests
+- Testcontainers (Keycloak, PostgreSQL)
 - WireMock (Negative testing)
-- OpenTelemetry + Logstash encoder
+- OpenTelemetry + JSON logging (`logstash-logback-encoder`)
 - Micrometer + Prometheus
 - Docker Compose  
 
@@ -429,7 +428,13 @@ To add new roles:
 3. Protect endpoints:
 
 ```java
-@PreAuthorize("hasRole('MANAGER')")
+@RestController
+class ExampleController {
+    @PreAuthorize("hasRole('MANAGER')")
+    public AppResponse<Void> example() {
+        return AppResponse.ok(null);
+    }
+}
 ```
 
 No changes required in SecurityConfig.
@@ -639,12 +644,17 @@ Why use them
 Example (creating a client and then fetching it by id):
 
 ```java
-CreateClientRequest req = new CreateClientRequest("John", "Doe", "+37061234567");
-ClientResponse created = postAndGetData(clientUrl, token, req, ClientResponse.class);
-assertThat(created.id()).isNotNull();
-ClientResponse fetched = getAndGetData(clientUrl + "/" + created.id(), token, ClientResponse.class);
-assertThat(fetched.id()).isEqualTo(created.id());
-assertThat(fetched.phone()).isEqualTo(created.phone());
+class ClientIntegrationExample {
+    void createsAndFetchesClient() {
+        CreateClientRequest req = new CreateClientRequest("John", "Doe", "+37061234567");
+        ClientResponse created = postAndGetData(clientUrl, token, req, ClientResponse.class);
+        assertThat(created.id()).isNotNull();
+
+        ClientResponse fetched = getAndGetData(clientUrl + "/" + created.id(), token, ClientResponse.class);
+        assertThat(fetched.id()).isEqualTo(created.id());
+        assertThat(fetched.phone()).isEqualTo(created.phone());
+    }
+}
 ```
 
 Additional notes
@@ -706,8 +716,8 @@ Below is a short project structure: key files and folders with a brief purpose.
 
 - `pom.xml` — Maven build configuration and dependencies.
 - `Dockerfile`, `docker-compose.yaml` — containerization and local environment (Keycloak, Prometheus, Grafana, Tempo).
-- `src/main/java/lt/satsyuk/` — application source code: controllers, services, configurations, and security logic.
-  - notable packages: `api` (controllers/DTOs), `auth` (Keycloak integration), `config`, `exception`, `security`.
+- `src/main/java/lt/satsyuk/` — application source code: controllers, services, jobs, configurations, and security logic.
+  - notable packages: `controller`, `dto`, `auth` (Keycloak integration), `config`, `job`, `exception`, `security`.
 - `src/main/resources/` — configurations and resources (`application.properties`, `logback-spring.xml`, Flyway migrations).
 - `src/test/` — unit and integration tests (Testcontainers, WireMock).
 - `keycloak/` — exported Keycloak realm for local import (`realm-export.json`).
@@ -724,7 +734,9 @@ Below is a short project structure: key files and folders with a brief purpose.
 Check token contains:
 
 ```json
-"realm_access": { "roles": ["CLIENT_GET", "CLIENT_CREATE", "UPDATE_BALANCE"] }
+{
+  "realm_access": { "roles": ["CLIENT_GET", "CLIENT_CREATE", "UPDATE_BALANCE"] }
+}
 ```
 
 If missing → check Keycloak mappers.
