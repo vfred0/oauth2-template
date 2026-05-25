@@ -6,12 +6,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.test.context.TestConstructor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,12 +28,16 @@ import static org.assertj.core.api.Assertions.assertThat;
         }
 )
 @ExtendWith(OutputCaptureExtension.class)
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class LoggingCorrelationTest {
 
     private static final Logger log = LoggerFactory.getLogger(LoggingCorrelationTest.class);
 
-    @Autowired
-    private Tracer tracer;
+    private final Tracer tracer;
+
+    LoggingCorrelationTest(Tracer tracer) {
+        this.tracer = tracer;
+    }
 
     @Test
     void logLineContainsTraceIdAndSpanIdWhenSpanIsActive(CapturedOutput output) {

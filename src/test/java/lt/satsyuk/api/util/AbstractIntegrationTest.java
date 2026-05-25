@@ -15,9 +15,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestConstructor;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -40,6 +40,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("test")
 @Testcontainers
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 public abstract class AbstractIntegrationTest {
 
     // Testcontainers-managed shared containers for integration tests
@@ -82,16 +83,21 @@ public abstract class AbstractIntegrationTest {
         assumeTrue(pg != null && pg.isRunning(), "Postgres container must be running");
     }
 
-    @Autowired
-    protected KeycloakProperties props;
+    protected final KeycloakProperties props;
 
     protected RestTemplate restTemplate;
 
-    @Autowired
-    protected CacheManager cacheManager;
+    protected final CacheManager cacheManager;
 
-    @Autowired
-    protected RateLimitingFilter rateLimitingFilter;
+    protected final RateLimitingFilter rateLimitingFilter;
+
+    protected AbstractIntegrationTest(KeycloakProperties props,
+                                      CacheManager cacheManager,
+                                      RateLimitingFilter rateLimitingFilter) {
+        this.props = props;
+        this.cacheManager = cacheManager;
+        this.rateLimitingFilter = rateLimitingFilter;
+    }
 
     // Use a local ObjectMapper in Boot 4 PoC so integration tests do not depend on a Spring-managed bean.
     protected final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();

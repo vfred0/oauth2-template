@@ -3,10 +3,14 @@ package lt.satsyuk.api.integrationtest;
 import lt.satsyuk.MainApplication;
 import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.api.util.WireMockIntegrationTest;
+import lt.satsyuk.config.KeycloakProperties;
 import lt.satsyuk.dto.KeycloakTokenResponse;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.*;
+import lt.satsyuk.security.RateLimitingFilter;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
@@ -17,6 +21,12 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 class KeycloakNegativeIT extends WireMockIntegrationTest {
+
+    KeycloakNegativeIT(@Qualifier("keycloakProperties") KeycloakProperties props,
+                       CacheManager cacheManager,
+                       RateLimitingFilter rateLimitingFilter) {
+        super(props, cacheManager, rateLimitingFilter);
+    }
 
     // ------------------------------------------------------------
     // KEYCLOAK CONNECTION FAILURES

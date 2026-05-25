@@ -17,9 +17,12 @@ import lt.satsyuk.repository.RequestRepository;
 import lt.satsyuk.service.ClientService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.*;
+import lt.satsyuk.config.KeycloakProperties;
+import lt.satsyuk.security.RateLimitingFilter;
 
 import java.util.Set;
 import java.util.UUID;
@@ -39,12 +42,21 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
     public static final String ALICE = "Alice";
     public static final String SMITH = "Smith";
     public static final String PHONE = "+37061234567";
-    @Autowired
-    ClientRepository repo;
-    @Autowired
-    AccountRepository accountRepository;
-    @Autowired
-    RequestRepository requestRepository;
+    private final ClientRepository repo;
+    private final AccountRepository accountRepository;
+    private final RequestRepository requestRepository;
+
+    ClientIntegrationIT(@Qualifier("keycloakProperties") KeycloakProperties props,
+                        CacheManager cacheManager,
+                        RateLimitingFilter rateLimitingFilter,
+                        ClientRepository repo,
+                        AccountRepository accountRepository,
+                        RequestRepository requestRepository) {
+        super(props, cacheManager, rateLimitingFilter);
+        this.repo = repo;
+        this.accountRepository = accountRepository;
+        this.requestRepository = requestRepository;
+    }
 
     @BeforeEach
     void setUp() {

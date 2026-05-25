@@ -11,9 +11,12 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import lt.satsyuk.config.KeycloakProperties;
+import lt.satsyuk.security.RateLimitingFilter;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.annotation.DirtiesContext;
@@ -32,6 +35,12 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class WireMockIntegrationTest extends AbstractIntegrationTest {
+
+    protected WireMockIntegrationTest(KeycloakProperties props,
+                                      CacheManager cacheManager,
+                                      RateLimitingFilter rateLimitingFilter) {
+        super(props, cacheManager, rateLimitingFilter);
+    }
 
     protected static final String REALMS_PROTOCOL_OPENID_CONNECT_TOKEN = "/realms/.*/protocol/openid-connect/token";
     protected static final String REALMS_PROTOCOL_OPENID_CONNECT_LOGOUT = "/realms/.*/protocol/openid-connect/logout";
