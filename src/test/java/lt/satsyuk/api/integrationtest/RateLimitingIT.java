@@ -3,10 +3,14 @@ package lt.satsyuk.api.integrationtest;
 import lt.satsyuk.MainApplication;
 import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.api.util.WireMockIntegrationTest;
+import lt.satsyuk.config.KeycloakProperties;
 import lt.satsyuk.dto.KeycloakTokenResponse;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.*;
+import lt.satsyuk.security.RateLimitingFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +25,12 @@ import static org.awaitility.Awaitility.await;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 class RateLimitingIT extends WireMockIntegrationTest {
+
+    RateLimitingIT(@Qualifier("keycloakProperties") KeycloakProperties props,
+                   CacheManager cacheManager,
+                   RateLimitingFilter rateLimitingFilter) {
+        super(props, cacheManager, rateLimitingFilter);
+    }
 
     // ------------------------------------------------------------
     // LOGIN RATE LIMIT TESTS (5 requests per minute)

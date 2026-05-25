@@ -14,11 +14,14 @@ import lt.satsyuk.dto.KeycloakTokenResponse;
 import lt.satsyuk.model.Client;
 import lt.satsyuk.repository.ClientRepository;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.cache.CacheManager;
+import lt.satsyuk.config.KeycloakProperties;
+import lt.satsyuk.security.RateLimitingFilter;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -38,8 +41,15 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 )
 class DpopIntegrationIT extends WireMockIntegrationTest {
 
-    @Autowired
-    private ClientRepository clientRepository;
+    private final ClientRepository clientRepository;
+
+    DpopIntegrationIT(@Qualifier("keycloakProperties") KeycloakProperties props,
+                      CacheManager cacheManager,
+                      RateLimitingFilter rateLimitingFilter,
+                      ClientRepository clientRepository) {
+        super(props, cacheManager, rateLimitingFilter);
+        this.clientRepository = clientRepository;
+    }
 
     @Test
     void login_forwardsDpopHeaderToKeycloak() {

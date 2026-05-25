@@ -11,10 +11,13 @@ import lt.satsyuk.repository.AccountRepository;
 import lt.satsyuk.repository.ClientRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import lt.satsyuk.config.KeycloakProperties;
+import lt.satsyuk.security.RateLimitingFilter;
 
 import java.math.BigDecimal;
 
@@ -26,11 +29,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 )
 class AccountIntegrationIT extends KeycloakIntegrationTest {
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
+    private final ClientRepository clientRepository;
 
-    @Autowired
-    private ClientRepository clientRepository;
+    AccountIntegrationIT(@Qualifier("keycloakProperties") KeycloakProperties props,
+                         CacheManager cacheManager,
+                         RateLimitingFilter rateLimitingFilter,
+                         AccountRepository accountRepository,
+                         ClientRepository clientRepository) {
+        super(props, cacheManager, rateLimitingFilter);
+        this.accountRepository = accountRepository;
+        this.clientRepository = clientRepository;
+    }
 
     @BeforeEach
     void setUp() {

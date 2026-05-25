@@ -1,7 +1,10 @@
 package lt.satsyuk.api.util;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
+import lt.satsyuk.config.KeycloakProperties;
+import lt.satsyuk.security.RateLimitingFilter;
 import org.junit.jupiter.api.BeforeAll;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Container;
@@ -9,6 +12,12 @@ import org.testcontainers.junit.jupiter.Container;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public abstract class KeycloakIntegrationTest extends AbstractIntegrationTest {
+
+    protected KeycloakIntegrationTest(KeycloakProperties props,
+                                      CacheManager cacheManager,
+                                      RateLimitingFilter rateLimitingFilter) {
+        super(props, cacheManager, rateLimitingFilter);
+    }
 
     @Container
     protected static KeycloakContainer keycloak = new KeycloakContainer("quay.io/keycloak/keycloak:26.0.0")
