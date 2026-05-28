@@ -59,6 +59,8 @@ services:
   # ------------------------------------------------------------
   jwt-demo:
     container_name: jwt-demo
+    build:
+      context: .
     ports:
       - "8081:8081"
     environment:

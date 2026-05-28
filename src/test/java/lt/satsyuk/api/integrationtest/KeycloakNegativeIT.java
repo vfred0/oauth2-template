@@ -4,7 +4,7 @@ import lt.satsyuk.MainApplication;
 import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.api.util.WireMockIntegrationTest;
 import lt.satsyuk.config.KeycloakProperties;
-import lt.satsyuk.dto.KeycloakTokenResponse;
+import lt.satsyuk.dto.TokenResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,7 +40,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"internal_server_error\"}")));
 
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "test-client",
@@ -59,7 +59,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withFixedDelay(3000) // 3 seconds delay
                         .withBody("{}")));
 
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "test-client",
@@ -79,7 +79,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("invalid-json")));
 
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "test-client",
@@ -103,7 +103,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"invalid_grant\",\"error_description\":\"Invalid user credentials\"}")));
 
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(
                 "user",
                 "wrongpassword",
                 "test-client",
@@ -123,7 +123,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"invalid_grant\",\"error_description\":\"Account disabled\"}")));
 
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(
                 "disabled-user",
                 "password",
                 "test-client",
@@ -143,7 +143,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"invalid_client\",\"error_description\":\"Invalid client credentials\"}")));
 
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "wrong-client",
@@ -167,7 +167,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"invalid_grant\",\"error_description\":\"Invalid refresh token\"}")));
 
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = refreshRequest(
+        ResponseEntity<AppResponse<TokenResponse>> response = refreshRequest(
                 "invalid-refresh-token",
                 "test-client",
                 "test-secret"
@@ -186,7 +186,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                         .withBody("{\"error\":\"invalid_grant\",\"error_description\":\"Token expired\"}")));
 
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = refreshRequest(
+        ResponseEntity<AppResponse<TokenResponse>> response = refreshRequest(
                 "expired-refresh-token",
                 "test-client",
                 "test-secret"
@@ -249,7 +249,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                 .willReturn(aResponse()
                         .withFault(com.github.tomakehurst.wiremock.http.Fault.CONNECTION_RESET_BY_PEER)));
 
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "test-client",
@@ -267,7 +267,7 @@ class KeycloakNegativeIT extends WireMockIntegrationTest {
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.NO_CONTENT.value()))); // truly empty response
 
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "test-client",

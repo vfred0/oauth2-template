@@ -4,7 +4,7 @@ import lt.satsyuk.MainApplication;
 import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.api.util.AbstractIntegrationTest;
 import lt.satsyuk.config.KeycloakProperties;
-import lt.satsyuk.dto.KeycloakTokenResponse;
+import lt.satsyuk.dto.TokenResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,12 +25,7 @@ class AuthValidationIT extends AbstractIntegrationTest {
 
     @Test
     void login_emptyFields_badRequest() {
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
-                "",
-                "",
-                "",
-                ""
-        );
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest("", "", "", "");
 
         Set<String> expected = Set.of(
                 "username: Username is required",
@@ -39,33 +34,20 @@ class AuthValidationIT extends AbstractIntegrationTest {
                 "clientSecret: ClientSecret is required"
         );
 
-        assertErrorStatusAndBody(
-                response,
-                HttpStatus.BAD_REQUEST,
-                AppResponse.ErrorCode.BAD_REQUEST.getCode(),
-                expected
-        );
+        assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
+                AppResponse.ErrorCode.BAD_REQUEST.getCode(), expected);
     }
 
     @Test
     void refresh_emptyBody_badRequest() {
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = refreshRequest(
-                "",
-                "",
-                ""
-        );
+        ResponseEntity<AppResponse<TokenResponse>> response = refreshRequest("any-token", "", "");
 
         Set<String> expected = Set.of(
-                "refreshToken: RefreshToken is required",
                 "clientId: ClientId is required",
                 "clientSecret: ClientSecret is required"
         );
 
-        assertErrorStatusAndBody(
-                response,
-                HttpStatus.BAD_REQUEST,
-                AppResponse.ErrorCode.BAD_REQUEST.getCode(),
-                expected
-        );
+        assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
+                AppResponse.ErrorCode.BAD_REQUEST.getCode(), expected);
     }
 }

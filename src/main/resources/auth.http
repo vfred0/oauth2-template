@@ -1,0 +1,159 @@
+### ============================================================
+### AUTH FLOW — jwt-demo
+### Run with environment: local (http-client.env.json)
+###
+### Cookie note: IntelliJ HTTP client manages the cookie jar
+### automatically. After login, the refresh_token cookie is
+### stored and sent on every subsequent /api/auth/* request.
+###
+### If refresh/logout show "Refresh token is missing", go to:
+### Tools → HTTP Client → Show Cookies
+### and verify refresh_token was set after login.
+### ============================================================
+
+
+### ── 1. LOGIN ────────────────────────────────────────────────
+### Expected: 200 OK
+###   Body  → { access_token, token_type, expires_in }
+###   Cookie → Set-Cookie: refresh_token=...; HttpOnly; Secure; SameSite=Strict
+### The access_token is saved to {{access_token}} automatically.
+
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}",
+  "clientId": "{{clientId}}",
+  "clientSecret": "{{clientSecret}}"
+}
+
+> {%
+  client.test("Login: status 200", function () {
+    client.assert(response.status === 200, "Expected 200, got " + response.status);
+  });
+  client.test("Login: access_token present", function () {
+    client.assert(response.body.data.access_token, "access_token should not be empty");
+  });
+  client.test("Login: no refresh_token in body (should be in cookie)", function () {
+    client.assert(!response.body.data.refresh_token, "refresh_token must NOT be in body");
+  });
+  client.global.set("access_token", response.body.data.access_token);
+%}
+
+
+### ── 2. GET CURRENT USER PROFILE ────────────────────────────
+### Expected: 200 OK
+###   Body → { username, role, permissions: [...] }
+### Uses the access_token saved by login.
+
+GET {{baseUrl}}/api/me
+Authorization: Bearer {{access_token}}
+
+
+### ── 3. REFRESH TOKEN ─────────────────────────────────────────
+### Expected: 200 OK
+###   Body  → new { access_token, token_type, expires_in }
+###   Cookie → rotated refresh_token (new Set-Cookie header)
+### The refresh_token cookie is sent automatically from the jar.
+
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "clientId": "{{clientId}}",
+  "clientSecret": "{{clientSecret}}"
+}
+
+> {%
+  client.test("Refresh: status 200", function () {
+    client.assert(response.status === 200, "Expected 200, got " + response.status);
+  });
+  client.test("Refresh: new access_token present", function () {
+    client.assert(response.body.data.access_token, "new access_token should not be empty");
+  });
+  client.global.set("access_token", response.body.data.access_token);
+%}
+
+
+### ── 4. VERIFY ACCESS AFTER REFRESH ─────────────────────────
+### Expected: 200 OK — confirms the new AT works.
+
+GET {{baseUrl}}/api/me
+Authorization: Bearer {{access_token}}
+
+
+### ── 5. LOGOUT ───────────────────────────────────────────────
+### Expected: 200 OK
+###   Keycloak revokes the refresh token server-side.
+###   Cookie → Set-Cookie: refresh_token=; Max-Age=0 (cleared)
+
+POST {{baseUrl}}/api/auth/logout
+Content-Type: application/json
+
+{
+  "clientId": "{{clientId}}",
+  "clientSecret": "{{clientSecret}}"
+}
+
+> {%
+  client.test("Logout: status 200", function () {
+    client.assert(response.status === 200, "Expected 200, got " + response.status);
+  });
+%}
+
+
+### ── 6. VERIFY ACCESS AFTER LOGOUT ──────────────────────────
+### Expected: 401 Unauthorized — AT is now invalid (revoked in Keycloak).
+
+GET {{baseUrl}}/api/me
+Authorization: Bearer {{access_token}}
+
+
+### ── 7. REFRESH AFTER LOGOUT (should fail) ──────────────────
+### Expected: 401 — cookie was cleared, no refresh_token sent.
+
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "clientId": "{{clientId}}",
+  "clientSecret": "{{clientSecret}}"
+}
+
+
+### ── 8. CREATE USER VIA KEYCLOAK ADMIN API ──────────────────
+### Step 1: get admin token from Keycloak directly.
+### Run this first, then run step 2 below.
+
+POST {{keycloakUrl}}/realms/master/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=admin-cli&username={{adminUsername}}&password={{adminPassword}}
+
+> {%
+  client.global.set("admin_token", response.body.access_token);
+%}
+
+
+### Step 2: create the new user.
+### Change username/email/password as needed.
+
+POST {{keycloakUrl}}/admin/realms/{{realm}}/users
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "username": "john",
+  "email": "john@company.com",
+  "firstName": "John",
+  "lastName": "Smith",
+  "enabled": true,
+  "credentials": [
+    {
+      "type": "password",
+      "value": "P@ssw0rd!",
+      "temporary": false
+    }
+  ]
+}

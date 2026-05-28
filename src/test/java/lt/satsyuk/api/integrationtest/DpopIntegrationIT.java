@@ -10,7 +10,7 @@ import com.nimbusds.jwt.SignedJWT;
 import lt.satsyuk.MainApplication;
 import lt.satsyuk.api.util.WireMockIntegrationTest;
 import lt.satsyuk.dto.AppResponse;
-import lt.satsyuk.dto.KeycloakTokenResponse;
+import lt.satsyuk.dto.TokenResponse;
 import lt.satsyuk.model.Client;
 import lt.satsyuk.repository.ClientRepository;
 import org.junit.jupiter.api.Test;
@@ -68,7 +68,7 @@ class DpopIntegrationIT extends WireMockIntegrationTest {
                                 }
                                 """)));
 
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "test-client",

@@ -4,7 +4,7 @@ import lt.satsyuk.MainApplication;
 import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.api.util.WireMockIntegrationTest;
 import lt.satsyuk.config.KeycloakProperties;
-import lt.satsyuk.dto.KeycloakTokenResponse;
+import lt.satsyuk.dto.TokenResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -45,7 +45,7 @@ class RateLimitingIT extends WireMockIntegrationTest {
         }
 
         // 6th request should be rate limited (429 Too Many Requests)
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(response.getBody()).isNotNull();
@@ -61,7 +61,7 @@ class RateLimitingIT extends WireMockIntegrationTest {
         }
 
         // Verify rate limit is active
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> blockedResponse = loginRequest(USERNAME, USER_PASSWORD);
+        ResponseEntity<AppResponse<TokenResponse>> blockedResponse = loginRequest(USERNAME, USER_PASSWORD);
         assertThat(blockedResponse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(blockedResponse.getBody()).isNotNull();
         assertThat(blockedResponse.getBody().code()).isEqualTo(AppResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());
@@ -71,7 +71,7 @@ class RateLimitingIT extends WireMockIntegrationTest {
                 .atMost(25, TimeUnit.SECONDS)
                 .pollInterval(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
+                    ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
                     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
                 });
     }
@@ -163,7 +163,7 @@ class RateLimitingIT extends WireMockIntegrationTest {
         }
 
         // Verify login is rate limited
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> loginResponse = loginRequest(USERNAME, USER_PASSWORD);
+        ResponseEntity<AppResponse<TokenResponse>> loginResponse = loginRequest(USERNAME, USER_PASSWORD);
         assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(loginResponse.getBody()).isNotNull();
         assertThat(loginResponse.getBody().code()).isEqualTo(AppResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());

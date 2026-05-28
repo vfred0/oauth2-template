@@ -5,7 +5,7 @@ import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.api.util.KeycloakIntegrationTest;
 import lt.satsyuk.dto.ClientResponse;
 import lt.satsyuk.dto.CreateClientRequest;
-import lt.satsyuk.dto.KeycloakTokenResponse;
+import lt.satsyuk.dto.TokenResponse;
 import lt.satsyuk.dto.RequestAcceptedResponse;
 import lt.satsyuk.dto.RequestStatusResponse;
 import lt.satsyuk.model.Account;
@@ -197,13 +197,13 @@ class ClientIntegrationIT extends KeycloakIntegrationTest {
     @Test
     void get_client_unauthorized_after_logout() {
         Client saved = repo.save(Client.builder().firstName(ALICE).lastName(SMITH).phone("+37060000000").build());
-        KeycloakTokenResponse tokens = loginAndGetData(USERNAME, USER_PASSWORD);
-        String accessToken = tokens.getAccessToken();
+        String accessToken = loginAndGetAccess(USERNAME, USER_PASSWORD);
+        String refreshToken = loginAndGetRefresh(USERNAME, USER_PASSWORD);
 
         ResponseEntity<AppResponse<Object>> resp = requestGet(clientUrl + "/" + saved.getId(), accessToken);
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        ResponseEntity<AppResponse<Void>> logoutResponse = logoutRequest(tokens.getRefreshToken());
+        ResponseEntity<AppResponse<Void>> logoutResponse = logoutRequest(refreshToken);
         assertThat(logoutResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         ResponseEntity<AppResponse<Object>> errorResponse = requestGet(clientUrl + "/" + saved.getId(), accessToken);

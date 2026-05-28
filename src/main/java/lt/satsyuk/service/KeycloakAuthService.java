@@ -176,17 +176,17 @@ public class KeycloakAuthService {
     // ------------------------------------------------------------
     // REFRESH
     // ------------------------------------------------------------
-    public KeycloakTokenResponse refresh(RefreshRequest req) {
-        return refresh(req, null);
+    public KeycloakTokenResponse refresh(RefreshRequest req, String refreshToken) {
+        return refresh(req, refreshToken, null);
     }
 
-    public KeycloakTokenResponse refresh(RefreshRequest req, String dpopProof) {
+    public KeycloakTokenResponse refresh(RefreshRequest req, String refreshToken, String dpopProof) {
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add(CLIENT_ID, req.clientId());
         form.add(CLIENT_SECRET, req.clientSecret());
         form.add(GRANT_TYPE, REFRESH_TOKEN);
-        form.add(REFRESH_TOKEN, req.refreshToken());
+        form.add(REFRESH_TOKEN, refreshToken);
 
         // Required for offline refresh tokens in Keycloak 26
         form.add(SCOPE, OFFLINE_ACCESS);
@@ -229,16 +229,16 @@ public class KeycloakAuthService {
     // ------------------------------------------------------------
     // LOGOUT
     // ------------------------------------------------------------
-    public void logout(LogoutRequest req) {
-        logout(req, null);
+    public void logout(LogoutRequest req, String refreshToken) {
+        logout(req, refreshToken, null);
     }
 
-    public void logout(LogoutRequest req, String dpopProof) {
+    public void logout(LogoutRequest req, String refreshToken, String dpopProof) {
 
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add(CLIENT_ID, req.clientId());
         form.add(CLIENT_SECRET, req.clientSecret());
-        form.add(REFRESH_TOKEN, req.refreshToken());
+        form.add(REFRESH_TOKEN, refreshToken);
 
         HttpEntity<MultiValueMap<String, String>> entity = createFormEntity(form, dpopProof);
 

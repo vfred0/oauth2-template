@@ -57,9 +57,9 @@ class KeycloakAuthServiceTest {
         )).thenReturn(ResponseEntity.ok().body(null));
 
         KeycloakAuthService service = new KeycloakAuthService(rest, props, new SimpleMeterRegistry());
-        RefreshRequest request = new RefreshRequest(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET);
+        RefreshRequest request = new RefreshRequest(CLIENT_ID, CLIENT_SECRET);
 
-        assertThatThrownBy(() -> service.refresh(request))
+        assertThatThrownBy(() -> service.refresh(request, REFRESH_TOKEN))
                 .isInstanceOf(KeycloakAuthException.class)
                 .hasMessage("Empty response")
                 .satisfies(ex -> {
@@ -79,9 +79,9 @@ class KeycloakAuthServiceTest {
         )).thenReturn(ResponseEntity.ok("invalid_token"));
 
         KeycloakAuthService service = new KeycloakAuthService(rest, props, new SimpleMeterRegistry());
-        LogoutRequest request = new LogoutRequest(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET);
+        LogoutRequest request = new LogoutRequest(CLIENT_ID, CLIENT_SECRET);
 
-        assertThatThrownBy(() -> service.logout(request))
+        assertThatThrownBy(() -> service.logout(request, REFRESH_TOKEN))
                 .isInstanceOf(KeycloakAuthException.class)
                 .hasMessage("invalid_token")
                 .satisfies(ex -> {
@@ -151,7 +151,7 @@ class KeycloakAuthServiceTest {
                 .thenReturn(ResponseEntity.ok(tokenResponse));
 
         KeycloakAuthService service = new KeycloakAuthService(rest, props, registry);
-        service.refresh(new RefreshRequest(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET));
+        service.refresh(new RefreshRequest(CLIENT_ID, CLIENT_SECRET), REFRESH_TOKEN);
 
         doThrow(new org.springframework.web.client.HttpClientErrorException(
                 HttpStatus.BAD_REQUEST,
@@ -160,8 +160,8 @@ class KeycloakAuthServiceTest {
                 java.nio.charset.StandardCharsets.UTF_8
         )).when(rest).postForEntity(anyString(), any(HttpEntity.class), eq(KeycloakTokenResponse.class));
 
-        RefreshRequest failedRefreshRequest = new RefreshRequest(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET);
-        assertThatThrownBy(() -> service.refresh(failedRefreshRequest))
+        RefreshRequest failedRefreshRequest = new RefreshRequest(CLIENT_ID, CLIENT_SECRET);
+        assertThatThrownBy(() -> service.refresh(failedRefreshRequest, REFRESH_TOKEN))
                 .isInstanceOf(KeycloakAuthException.class);
 
         assertThat(counterCount(registry, "auth.refresh", "success")).isEqualTo(1.0);
@@ -176,13 +176,13 @@ class KeycloakAuthServiceTest {
                 .thenReturn(ResponseEntity.ok(""));
 
         KeycloakAuthService service = new KeycloakAuthService(rest, props, registry);
-        service.logout(new LogoutRequest(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET));
+        service.logout(new LogoutRequest(CLIENT_ID, CLIENT_SECRET), REFRESH_TOKEN);
 
         when(rest.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(ResponseEntity.ok("invalid_token"));
 
-        LogoutRequest failedLogoutRequest = new LogoutRequest(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET);
-        assertThatThrownBy(() -> service.logout(failedLogoutRequest))
+        LogoutRequest failedLogoutRequest = new LogoutRequest(CLIENT_ID, CLIENT_SECRET);
+        assertThatThrownBy(() -> service.logout(failedLogoutRequest, REFRESH_TOKEN))
                 .isInstanceOf(KeycloakAuthException.class);
 
         assertThat(counterCount(registry, "auth.logout", "success")).isEqualTo(1.0);

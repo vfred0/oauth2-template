@@ -4,7 +4,7 @@ import lt.satsyuk.MainApplication;
 import lt.satsyuk.dto.AppResponse;
 import lt.satsyuk.api.util.KeycloakIntegrationTest;
 import lt.satsyuk.config.KeycloakProperties;
-import lt.satsyuk.dto.KeycloakTokenResponse;
+import lt.satsyuk.dto.TokenResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,17 +32,21 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
     @Test
     void login_success() {
-        KeycloakTokenResponse data = loginAndGetData(USERNAME, USER_PASSWORD);
-        assertThat(data.getAccessToken()).as("Access token should not be blank").isNotBlank();
-        assertThat(data.getRefreshToken()).as("Refresh token should not be blank").isNotBlank();
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        TokenResponse data = assertStatusAndBodyAndReturnBody(response, TokenResponse.class);
+        assertThat(data.accessToken()).as("Access token should not be blank").isNotBlank();
+
+        String refreshCookie = response.getHeaders().getOrEmpty(HttpHeaders.SET_COOKIE).stream()
+                .filter(c -> c.startsWith("refresh_token="))
+                .findFirst().orElse(null);
+        assertThat(refreshCookie).as("Refresh token cookie should be set").isNotBlank();
     }
 
     @Test
     void login_wrong_password() {
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
-                USERNAME,
-                "wrongpassword"
-        );
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(USERNAME, "wrongpassword");
 
         assertErrorStatusAndBody(response, HttpStatus.UNAUTHORIZED,
                 AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
@@ -51,10 +55,7 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
     @Test
     void login_unknown_user() {
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(
-                "unknownuser",
-                "whatever"
-        );
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest("unknownuser", "whatever");
 
         assertErrorStatusAndBody(response, HttpStatus.UNAUTHORIZED,
                 AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
@@ -67,9 +68,11 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
     @Test
     void admin_login_success() {
-        KeycloakTokenResponse data = loginAndGetData(ADMIN, ADMIN_PASSWORD);
-        assertThat(data.getAccessToken()).as("Access token should not be blank").isNotBlank();
-        assertThat(data.getRefreshToken()).as("Refresh token should not be blank").isNotBlank();
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(ADMIN, ADMIN_PASSWORD);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        TokenResponse data = assertStatusAndBodyAndReturnBody(response, TokenResponse.class);
+        assertThat(data.accessToken()).as("Access token should not be blank").isNotBlank();
     }
 
     // ------------------------------------------------------------
@@ -80,21 +83,21 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
     void refresh_success() {
         String refreshToken = loginAndGetRefresh(USERNAME, USER_PASSWORD);
 
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> refreshResponse = refreshRequest(refreshToken);
+        ResponseEntity<AppResponse<TokenResponse>> refreshResponse = refreshRequest(refreshToken);
 
         assertThat(refreshResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        TokenResponse refreshData = assertStatusAndBodyAndReturnBody(refreshResponse, TokenResponse.class);
+        assertThat(refreshData.accessToken()).as("Access token should not be blank").isNotBlank();
 
-        AppResponse<KeycloakTokenResponse> refreshApi = refreshResponse.getBody();
-        assertThat(refreshApi).isNotNull();
-        KeycloakTokenResponse refreshData = refreshApi.data();
-        assertThat(refreshData).isNotNull();
-        assertThat(refreshData.getAccessToken()).as("Access token should not be blank").isNotBlank();
-        assertThat(refreshData.getRefreshToken()).as("Refresh token should not be blank").isNotBlank();
+        String newRefreshCookie = refreshResponse.getHeaders().getOrEmpty(HttpHeaders.SET_COOKIE).stream()
+                .filter(c -> c.startsWith("refresh_token="))
+                .findFirst().orElse(null);
+        assertThat(newRefreshCookie).as("New refresh token cookie should be set").isNotBlank();
     }
 
     @Test
     void refresh_wrong_token() {
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> refreshResponse = refreshRequest("invalid-token");
+        ResponseEntity<AppResponse<TokenResponse>> refreshResponse = refreshRequest("invalid-token");
 
         assertErrorStatusAndBody(refreshResponse, HttpStatus.BAD_REQUEST,
                 AppResponse.ErrorCode.INVALID_GRANT.getCode(),

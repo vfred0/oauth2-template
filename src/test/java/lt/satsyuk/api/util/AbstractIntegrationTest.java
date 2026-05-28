@@ -9,6 +9,7 @@ import lt.satsyuk.dto.KeycloakTokenResponse;
 import lt.satsyuk.dto.LoginRequest;
 import lt.satsyuk.dto.LogoutRequest;
 import lt.satsyuk.dto.RefreshRequest;
+import lt.satsyuk.dto.TokenResponse;
 import lt.satsyuk.security.RateLimitingFilter;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeAll;
@@ -301,82 +302,99 @@ public abstract class AbstractIntegrationTest {
         return requestGet(url, null);
     }
 
-    protected ResponseEntity<AppResponse<KeycloakTokenResponse>> loginRequest(String username,
-                                                               String password,
-                                                               String clientId,
-                                                               String clientSecret) {
+    protected ResponseEntity<AppResponse<TokenResponse>> loginRequest(String username,
+                                                                      String password,
+                                                                      String clientId,
+                                                                      String clientSecret) {
         return loginRequest(username, password, clientId, clientSecret, null);
     }
 
-    protected ResponseEntity<AppResponse<KeycloakTokenResponse>> loginRequest(String username,
-                                                                               String password,
-                                                                               String clientId,
-                                                                               String clientSecret,
-                                                                               String dpopProof) {
-
-        LoginRequest request = new LoginRequest(
-                username,
-                password,
-                clientId,
-                clientSecret
-        );
+    protected ResponseEntity<AppResponse<TokenResponse>> loginRequest(String username,
+                                                                       String password,
+                                                                       String clientId,
+                                                                       String clientSecret,
+                                                                       String dpopProof) {
+        LoginRequest request = new LoginRequest(username, password, clientId, clientSecret);
         return requestPostDpop(loginUrl, null, null, dpopProof, request, new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<AppResponse<KeycloakTokenResponse>> loginRequest(String username,
-                                                               String password) {
-
+    protected ResponseEntity<AppResponse<TokenResponse>> loginRequest(String username, String password) {
         return loginRequest(username, password, props.getClientId(), props.getClientSecret());
     }
 
-    protected KeycloakTokenResponse loginAndGetData(String username, String password) {
-        ResponseEntity<AppResponse<KeycloakTokenResponse>> response = loginRequest(username, password);
-
-        return assertStatusAndBodyAndReturnBody(response, KeycloakTokenResponse.class);
+    protected TokenResponse loginAndGetData(String username, String password) {
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(username, password);
+        return assertStatusAndBodyAndReturnBody(response, TokenResponse.class);
     }
 
     protected String loginAndGetAccess(String username, String password) {
-        return loginAndGetData(username, password).getAccessToken();
+        return loginAndGetData(username, password).accessToken();
     }
 
     protected String loginAndGetRefresh(String username, String password) {
-        return loginAndGetData(username, password).getRefreshToken();
+        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(username, password);
+        return extractRefreshCookie(response.getHeaders());
+    }
+
+    private String extractRefreshCookie(HttpHeaders headers) {
+        return headers.getOrEmpty(HttpHeaders.SET_COOKIE).stream()
+                .filter(c -> c.startsWith("refresh_token="))
+                .map(c -> c.split(";")[0].substring("refresh_token=".length()))
+                .findFirst()
+                .orElse(null);
     }
 
     protected ResponseEntity<AppResponse<Void>> logoutRequest(String refreshToken,
-                                                                String clientId,
-                                                                String clientSecret) {
+                                                               String clientId,
+                                                               String clientSecret) {
         return logoutRequest(refreshToken, clientId, clientSecret, null);
     }
 
     protected ResponseEntity<AppResponse<Void>> logoutRequest(String refreshToken,
-                                                              String clientId,
-                                                              String clientSecret,
-                                                              String dpopProof) {
-        LogoutRequest logoutRequest = new LogoutRequest(refreshToken, clientId, clientSecret);
-        return requestPostDpop(logoutUrl, null, null, dpopProof, logoutRequest, new ParameterizedTypeReference<>() {});
+                                                               String clientId,
+                                                               String clientSecret,
+                                                               String dpopProof) {
+        LogoutRequest req = new LogoutRequest(clientId, clientSecret);
+        return requestPostWithCookie(logoutUrl, refreshToken, dpopProof, req, new ParameterizedTypeReference<>() {});
     }
 
     protected ResponseEntity<AppResponse<Void>> logoutRequest(String refreshToken) {
         return logoutRequest(refreshToken, props.getClientId(), props.getClientSecret());
     }
 
-    protected ResponseEntity<AppResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken,
-                                                                String clientId,
-                                                                String clientSecret) {
+    protected ResponseEntity<AppResponse<TokenResponse>> refreshRequest(String refreshToken,
+                                                                         String clientId,
+                                                                         String clientSecret) {
         return refreshRequest(refreshToken, clientId, clientSecret, null);
     }
 
-    protected ResponseEntity<AppResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken,
-                                                                                String clientId,
-                                                                                String clientSecret,
-                                                                                String dpopProof) {
-        RefreshRequest request = new RefreshRequest(refreshToken, clientId, clientSecret);
-        return requestPostDpop(refreshUrl, null, null, dpopProof, request, new ParameterizedTypeReference<>() {});
+    protected ResponseEntity<AppResponse<TokenResponse>> refreshRequest(String refreshToken,
+                                                                          String clientId,
+                                                                          String clientSecret,
+                                                                          String dpopProof) {
+        RefreshRequest request = new RefreshRequest(clientId, clientSecret);
+        return requestPostWithCookie(refreshUrl, refreshToken, dpopProof, request, new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<AppResponse<KeycloakTokenResponse>> refreshRequest(String refreshToken) {
+    protected ResponseEntity<AppResponse<TokenResponse>> refreshRequest(String refreshToken) {
         return refreshRequest(refreshToken, props.getClientId(), props.getClientSecret());
+    }
+
+    private <T> ResponseEntity<AppResponse<T>> requestPostWithCookie(String url,
+                                                                       String refreshToken,
+                                                                       String dpopProof,
+                                                                       Object body,
+                                                                       ParameterizedTypeReference<AppResponse<T>> responseType) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON, MediaType.ALL));
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            headers.set(HttpHeaders.COOKIE, "refresh_token=" + refreshToken);
+        }
+        if (dpopProof != null && !dpopProof.isBlank()) {
+            headers.set("DPoP", dpopProof);
+        }
+        return exchangeForAppResponse(url, HttpMethod.POST, new HttpEntity<>(body, headers), responseType);
     }
 
     // Helper: do POST and return typed data (convert via ObjectMapper)

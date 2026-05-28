@@ -3,10 +3,12 @@ package lt.satsyuk.config;
 import lt.satsyuk.auth.JsonAccessDeniedHandler;
 import lt.satsyuk.auth.JsonAuthEntryPoint;
 import lt.satsyuk.security.DpopAuthenticationFilter;
+import lt.satsyuk.security.DpopAwareBearerTokenResolver;
 import lt.satsyuk.security.KeycloakOpaqueRoleConverter;
 import lt.satsyuk.security.KeycloakOpaqueTokenIntrospector;
 import lt.satsyuk.security.RateLimitingFilter;
 import lt.satsyuk.security.TraceIdResponseHeaderFilter;
+import lt.satsyuk.service.UserPermissionService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -24,14 +26,15 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    @SuppressWarnings("java:S4502") // Stateless REST API uses Bearer JWT; no cookies, so CSRF is not applicable.
+    @SuppressWarnings("java:S4502")
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    OpaqueTokenIntrospector opaqueTokenIntrospector,
+                                                   DpopAwareBearerTokenResolver dpopAwareBearerTokenResolver,
                                                    JsonAuthEntryPoint jsonAuthEntryPoint,
                                                    JsonAccessDeniedHandler jsonAccessDeniedHandler,
                                                    TraceIdResponseHeaderFilter traceIdResponseHeaderFilter,
                                                    DpopAuthenticationFilter dpopAuthenticationFilter,
-                                                   RateLimitingFilter rateLimitingFilter) {
+                                                   RateLimitingFilter rateLimitingFilter) throws Exception {
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -45,6 +48,7 @@ public class SecurityConfig {
                 )
 
                 .oauth2ResourceServer(oauth2 -> oauth2
+                        .bearerTokenResolver(dpopAwareBearerTokenResolver)
                         .opaqueToken(opaque -> opaque.introspector(opaqueTokenIntrospector))
                         .authenticationEntryPoint(jsonAuthEntryPoint)
                         .accessDeniedHandler(jsonAccessDeniedHandler)
@@ -63,14 +67,20 @@ public class SecurityConfig {
     }
 
     @Bean
+    public DpopAwareBearerTokenResolver dpopAwareBearerTokenResolver() {
+        return new DpopAwareBearerTokenResolver();
+    }
+
+    @Bean
     public OpaqueTokenIntrospector opaqueTokenIntrospector(KeycloakProperties props,
-                                                           KeycloakOpaqueRoleConverter roleConverter) {
+                                                           KeycloakOpaqueRoleConverter roleConverter,
+                                                           UserPermissionService userPermissionService) {
         return new KeycloakOpaqueTokenIntrospector(
                 props.getIntrospectionUrl(),
                 props.getResourceClientId(),
                 props.getResourceClientSecret(),
-                roleConverter
+                roleConverter,
+                userPermissionService
         );
     }
-
 }
