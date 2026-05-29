@@ -71,6 +71,15 @@ public class GlobalExceptionHandler {
                 .body(AppResponse.<Void>error(AppResponse.ErrorCode.NOT_FOUND.getCode(), message));
     }
 
+    @ExceptionHandler(ApiKeyNotFoundException.class)
+    public ResponseEntity<AppResponse<Void>> handleApiKeyNotFound(ApiKeyNotFoundException ex) {
+        String message = messageService.getMessage(ex.getMessageCode(), new Object[]{String.valueOf(ex.getApiKeyId())});
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(AppResponse.<Void>error(AppResponse.ErrorCode.NOT_FOUND.getCode(), message));
+    }
+
     @ExceptionHandler(ClientSearchQueryTooShortException.class)
     public ResponseEntity<AppResponse<Void>> handleClientSearchQueryTooShort(ClientSearchQueryTooShortException ex) {
         String message = messageService.getMessage(ex.getMessageCode(), new Object[]{String.valueOf(ex.getMinLength())});
