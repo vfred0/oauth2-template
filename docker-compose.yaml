@@ -7,6 +7,7 @@ services:
   postgres:
     image: postgres:16
     container_name: postgres
+    profiles: ["keycloak"]
     environment:
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
@@ -37,6 +38,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0.0
     container_name: keycloak
+    profiles: ["keycloak"]
     command:
       - start-dev
       - --import-realm
@@ -65,6 +67,7 @@ services:
       - "8081:8081"
     environment:
       SPRING_PROFILES_ACTIVE: local
+      APP_SECURITY_MODE: ${APP_SECURITY_MODE:-KEYCLOAK_OPAQUE}
       KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-app:5432/appdb
       SPRING_DATASOURCE_USERNAME: app
@@ -76,7 +79,6 @@ services:
       MANAGEMENT_OTLP_LOGGING_ENDPOINT: http://otel-collector:4318/v1/logs
       OTEL_RESOURCE_ATTRIBUTES: service.name=jwt-demo,service.namespace=jwt-demo,deployment.environment=local
     depends_on:
-      - keycloak
       - postgres-app
       - otel-collector
 
