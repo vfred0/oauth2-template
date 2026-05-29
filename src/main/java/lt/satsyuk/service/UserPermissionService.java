@@ -9,6 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,10 +22,16 @@ public class UserPermissionService {
     @Transactional(readOnly = true)
     public List<GrantedAuthority> loadAuthorities(String keycloakSub) {
         return userRoleRepository.findByKeycloakSub(keycloakSub)
-                .map(userRole -> userRole.getRole().getPermissions().stream()
-                        .map(p -> (GrantedAuthority) new SimpleGrantedAuthority(p.getResource() + ":" + p.getAction()))
-                        .collect(Collectors.toList()))
+                .map(this::toAuthorities)
                 .orElse(List.of());
+    }
+
+    private List<GrantedAuthority> toAuthorities(UserRole userRole) {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + userRole.getRole().getName()));
+        userRole.getRole().getPermissions().forEach(p ->
+                authorities.add(new SimpleGrantedAuthority(p.getResource() + ":" + p.getAction())));
+        return authorities;
     }
 
     @Transactional(readOnly = true)
