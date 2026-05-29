@@ -1,6 +1,5 @@
 package lt.satsyuk.security;
 
-import lt.satsyuk.service.UserPermissionService;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.DefaultOAuth2AuthenticatedPrincipal;
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
@@ -14,19 +13,19 @@ public class KeycloakOpaqueTokenIntrospector implements OpaqueTokenIntrospector 
 
     private final OpaqueTokenIntrospector delegate;
     private final KeycloakOpaqueRoleConverter roleConverter;
-    private final UserPermissionService userPermissionService;
+    private final RbacAuthoritiesLoader rbacAuthoritiesLoader;
 
     public KeycloakOpaqueTokenIntrospector(String introspectionUrl,
                                            String clientId,
                                            String clientSecret,
                                            KeycloakOpaqueRoleConverter roleConverter,
-                                           UserPermissionService userPermissionService) {
+                                           RbacAuthoritiesLoader rbacAuthoritiesLoader) {
         this.delegate = SpringOpaqueTokenIntrospector.withIntrospectionUri(introspectionUrl)
                 .clientId(clientId)
                 .clientSecret(clientSecret)
                 .build();
         this.roleConverter = roleConverter;
-        this.userPermissionService = userPermissionService;
+        this.rbacAuthoritiesLoader = rbacAuthoritiesLoader;
     }
 
     @Override
@@ -35,7 +34,7 @@ public class KeycloakOpaqueTokenIntrospector implements OpaqueTokenIntrospector 
 
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.addAll(roleConverter.convert(principal.getAttributes()));
-        authorities.addAll(userPermissionService.loadAuthorities(principal.getName()));
+        authorities.addAll(rbacAuthoritiesLoader.loadFor(principal.getName()));
 
         return new DefaultOAuth2AuthenticatedPrincipal(
                 principal.getName(),
