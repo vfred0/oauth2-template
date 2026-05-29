@@ -19,6 +19,7 @@ public class KeycloakProperties {
     private String tokenUrl;
     private String logoutUrl;
     private String introspectionUrl;
+    private String jwkSetUri;
 
     private Duration connectTimeout = Duration.ofSeconds(2);
     private Duration readTimeout = Duration.ofSeconds(2);
