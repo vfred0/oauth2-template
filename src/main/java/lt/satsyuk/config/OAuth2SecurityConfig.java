@@ -1,14 +1,15 @@
 package lt.satsyuk.config;
 
-import lt.satsyuk.auth.JsonAccessDeniedHandler;
-import lt.satsyuk.auth.JsonAuthEntryPoint;
-import lt.satsyuk.security.DpopAuthenticationFilter;
-import lt.satsyuk.security.DpopAwareBearerTokenResolver;
-import lt.satsyuk.security.KeycloakOpaqueRoleConverter;
-import lt.satsyuk.security.KeycloakOpaqueTokenIntrospector;
-import lt.satsyuk.security.RateLimitingFilter;
-import lt.satsyuk.security.RbacAuthoritiesLoader;
-import lt.satsyuk.security.TraceIdResponseHeaderFilter;
+import lt.satsyuk.config.security.JsonAccessDeniedHandler;
+import lt.satsyuk.config.security.JsonAuthEntryPoint;
+import lt.satsyuk.config.keycloak.KeycloakProperties;
+import lt.satsyuk.config.dpop.DpopAuthenticationFilter;
+import lt.satsyuk.config.dpop.DpopAwareBearerTokenResolver;
+import lt.satsyuk.config.keycloak.KeycloakOpaqueRoleConverter;
+import lt.satsyuk.config.keycloak.KeycloakOpaqueTokenIntrospector;
+import lt.satsyuk.config.security.RateLimitingFilter;
+import lt.satsyuk.config.security.RbacAuthoritiesLoader;
+import lt.satsyuk.config.security.TraceIdResponseHeaderFilter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

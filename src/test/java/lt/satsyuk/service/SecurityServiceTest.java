@@ -1,5 +1,6 @@
 package lt.satsyuk.service;
 
+import lt.satsyuk.service.core.rbac.SecurityService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

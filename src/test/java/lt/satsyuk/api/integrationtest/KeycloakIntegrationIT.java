@@ -1,16 +1,17 @@
 package lt.satsyuk.api.integrationtest;
 
 import lt.satsyuk.MainApplication;
-import lt.satsyuk.dto.AppResponse;
+import lt.satsyuk.api.dtos.core.ApiResult;
+import lt.satsyuk.api.http_errors.ApiErrorType;
 import lt.satsyuk.api.util.KeycloakIntegrationTest;
-import lt.satsyuk.config.KeycloakProperties;
-import lt.satsyuk.dto.TokenResponse;
+import lt.satsyuk.config.keycloak.KeycloakProperties;
+import lt.satsyuk.api.dtos.auth.TokenResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.*;
-import lt.satsyuk.security.RateLimitingFilter;
+import lt.satsyuk.config.security.RateLimitingFilter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,7 +33,7 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
     @Test
     void login_success() {
-        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
+        ResponseEntity<ApiResult<TokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         TokenResponse data = assertStatusAndBodyAndReturnBody(response, TokenResponse.class);
@@ -46,19 +47,19 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
     @Test
     void login_wrong_password() {
-        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(USERNAME, "wrongpassword");
+        ResponseEntity<ApiResult<TokenResponse>> response = loginRequest(USERNAME, "wrongpassword");
 
         assertErrorStatusAndBody(response, HttpStatus.UNAUTHORIZED,
-                AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
+                ApiErrorType.UNAUTHORIZED.code(),
                 INVALID_GRANT);
     }
 
     @Test
     void login_unknown_user() {
-        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest("unknownuser", "whatever");
+        ResponseEntity<ApiResult<TokenResponse>> response = loginRequest("unknownuser", "whatever");
 
         assertErrorStatusAndBody(response, HttpStatus.UNAUTHORIZED,
-                AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
+                ApiErrorType.UNAUTHORIZED.code(),
                 INVALID_GRANT);
     }
 
@@ -68,7 +69,7 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
     @Test
     void admin_login_success() {
-        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(ADMIN, ADMIN_PASSWORD);
+        ResponseEntity<ApiResult<TokenResponse>> response = loginRequest(ADMIN, ADMIN_PASSWORD);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         TokenResponse data = assertStatusAndBodyAndReturnBody(response, TokenResponse.class);
@@ -83,7 +84,7 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
     void refresh_success() {
         String refreshToken = loginAndGetRefresh(USERNAME, USER_PASSWORD);
 
-        ResponseEntity<AppResponse<TokenResponse>> refreshResponse = refreshRequest(refreshToken);
+        ResponseEntity<ApiResult<TokenResponse>> refreshResponse = refreshRequest(refreshToken);
 
         assertThat(refreshResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         TokenResponse refreshData = assertStatusAndBodyAndReturnBody(refreshResponse, TokenResponse.class);
@@ -97,10 +98,10 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
 
     @Test
     void refresh_wrong_token() {
-        ResponseEntity<AppResponse<TokenResponse>> refreshResponse = refreshRequest("invalid-token");
+        ResponseEntity<ApiResult<TokenResponse>> refreshResponse = refreshRequest("invalid-token");
 
         assertErrorStatusAndBody(refreshResponse, HttpStatus.BAD_REQUEST,
-                AppResponse.ErrorCode.INVALID_GRANT.getCode(),
+                ApiErrorType.INVALID_GRANT.code(),
                 INVALID_GRANT);
     }
 
@@ -112,17 +113,17 @@ class KeycloakIntegrationIT extends KeycloakIntegrationTest {
     void logout_success() {
         String refreshToken = loginAndGetRefresh(USERNAME, USER_PASSWORD);
 
-        ResponseEntity<AppResponse<Void>> logoutResponse = logoutRequest(refreshToken);
+        ResponseEntity<ApiResult<Void>> logoutResponse = logoutRequest(refreshToken);
 
         assertThat(logoutResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
     void logout_wrong_token() {
-        ResponseEntity<AppResponse<Void>> response = logoutRequest("invalid-token");
+        ResponseEntity<ApiResult<Void>> response = logoutRequest("invalid-token");
 
         assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
-                AppResponse.ErrorCode.INVALID_TOKEN.getCode(),
+                ApiErrorType.INVALID_TOKEN.code(),
                 INVALID_GRANT);
     }
 }

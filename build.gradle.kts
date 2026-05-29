@@ -1,6 +1,6 @@
 plugins {
     java
-    id("org.springframework.boot") version "4.0.3"
+    id("org.springframework.boot") version "4.0.5"
     id("io.spring.dependency-management") version "1.1.7"
     jacoco
 }
@@ -18,7 +18,6 @@ repositories {
     mavenCentral()
 }
 
-// Variables para versiones que no son gestionadas automáticamente por Spring Boot
 val mapstructVersion = "1.6.3"
 val flywayVersion = "10.22.0"
 val bucket4jVersion = "8.0.1"
@@ -26,6 +25,7 @@ val oauth2OidcSdkVersion = "11.9.1"
 val springdocVersion = "2.8.0"
 val mockitoVersion = "5.20.0"
 val jackson2Version = "2.21.1"
+val modelmapperVersion = "3.2.6"
 
 // Configuración personalizada para extraer el javaagent de Mockito en tiempo de ejecución
 val mockitoAgent by configurations.creating
@@ -84,6 +84,7 @@ dependencies {
 
     implementation("org.mapstruct:mapstruct:$mapstructVersion")
     annotationProcessor("org.mapstruct:mapstruct-processor:$mapstructVersion")
+    implementation("org.modelmapper:modelmapper:$modelmapperVersion")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
@@ -192,4 +193,17 @@ val jacocoIntegrationCoverageVerification = tasks.register<JacocoCoverageVerific
 tasks.check {
     dependsOn(integrationTest)
     dependsOn(jacocoIntegrationCoverageVerification)
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+    jvmArgs("--enable-preview")
+}
+
+tasks.withType<JavaCompile> {
+    options.compilerArgs.add("--enable-preview")
+}
+
+tasks.withType<JavaExec> {
+    jvmArgs("--enable-preview")
 }

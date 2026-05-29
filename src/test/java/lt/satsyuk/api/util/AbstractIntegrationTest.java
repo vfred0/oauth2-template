@@ -3,14 +3,14 @@ package lt.satsyuk.api.util;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lt.satsyuk.dto.AppResponse;
-import lt.satsyuk.config.KeycloakProperties;
-import lt.satsyuk.dto.KeycloakTokenResponse;
-import lt.satsyuk.dto.LoginRequest;
-import lt.satsyuk.dto.LogoutRequest;
-import lt.satsyuk.dto.RefreshRequest;
-import lt.satsyuk.dto.TokenResponse;
-import lt.satsyuk.security.RateLimitingFilter;
+import lt.satsyuk.api.dtos.core.ApiResult;
+import lt.satsyuk.api.http_errors.ApiErrorType;
+import lt.satsyuk.config.keycloak.KeycloakProperties;
+import lt.satsyuk.api.dtos.auth.SignInRequest;
+import lt.satsyuk.api.dtos.auth.SignOutRequest;
+import lt.satsyuk.api.dtos.auth.RefreshRequest;
+import lt.satsyuk.api.dtos.auth.TokenResponse;
+import lt.satsyuk.config.security.RateLimitingFilter;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -186,8 +186,8 @@ public abstract class AbstractIntegrationTest {
         return template;
     }
 
-    protected <T> void assertErrorBody(ResponseEntity<AppResponse<T>> response, int expectedCode, Object expectedMessage) {
-        AppResponse<T> body = response.getBody();
+    protected <T> void assertErrorBody(ResponseEntity<ApiResult<T>> response, int expectedCode, Object expectedMessage) {
+        ApiResult<T> body = response.getBody();
         assertThat(body).as(RESPONSE_BODY_SHOULD_NOT_BE_NULL).isNotNull();
         assertThat(body.code()).as(RESPONSE_CODE_SHOULD_MATCH_EXPECTED).isEqualTo(expectedCode);
         if (expectedMessage instanceof String) {
@@ -204,7 +204,7 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
-    protected <T> void assertErrorStatusAndBody(ResponseEntity<AppResponse<T>> response,
+    protected <T> void assertErrorStatusAndBody(ResponseEntity<ApiResult<T>> response,
                                             HttpStatus expectedStatus,
                                             int expectedCode,
                                             Object expectedMessage) {
@@ -213,15 +213,15 @@ public abstract class AbstractIntegrationTest {
     }
 
     // Make this method fully generic and return T to avoid unchecked casts in tests
-    protected <T> T assertStatusAndBodyAndReturnBody(ResponseEntity<AppResponse<T>> response,
+    protected <T> T assertStatusAndBodyAndReturnBody(ResponseEntity<ApiResult<T>> response,
                                                     HttpStatus expectedStatus,
                                                     Class<T> clazz) {
         assertThat(response.getStatusCode()).as(RESPONSE_HTTP_STATUS_SHOULD_BE_OK).isEqualTo(expectedStatus);
         assertThat(response.getBody()).as(RESPONSE_BODY_SHOULD_NOT_BE_NULL).isNotNull();
 
-        AppResponse<T> api = response.getBody();
+        ApiResult<T> api = response.getBody();
         assertThat(api).as(RESPONSE_BODY_SHOULD_NOT_BE_NULL).isNotNull();
-        assertThat(api.code()).as(RESPONSE_CODE_SHOULD_BE_ZERO).isZero();
+        assertThat(api.code()).as(RESPONSE_CODE_SHOULD_BE_ZERO).isEqualTo(0);
 
         Object raw = api.data();
         assertThat(raw).as(RESPONSE_DATA_SHOULD_NOT_BE_NULL).isNotNull();
@@ -232,7 +232,7 @@ public abstract class AbstractIntegrationTest {
         return data;
     }
 
-    protected <T> T assertStatusAndBodyAndReturnBody(ResponseEntity<AppResponse<T>> response, Class<T> clazz) {
+    protected <T> T assertStatusAndBodyAndReturnBody(ResponseEntity<ApiResult<T>> response, Class<T> clazz) {
         return assertStatusAndBodyAndReturnBody(response, HttpStatus.OK, clazz);
     }
 
@@ -257,73 +257,73 @@ public abstract class AbstractIntegrationTest {
         return headers;
     }
 
-    protected <T> ResponseEntity<AppResponse<T>> requestPost(String url, String token, String acceptLanguage, Object body, ParameterizedTypeReference<AppResponse<T>> responseType) {
+    protected <T> ResponseEntity<ApiResult<T>> requestPost(String url, String token, String acceptLanguage, Object body, ParameterizedTypeReference<ApiResult<T>> responseType) {
         HttpHeaders headers = createHeaders(token, acceptLanguage, null, false);
 
         return exchangeForAppResponse(url, HttpMethod.POST, new HttpEntity<>(body, headers), responseType);
     }
 
-    protected <T> ResponseEntity<AppResponse<T>> requestPostDpop(String url,
+    protected <T> ResponseEntity<ApiResult<T>> requestPostDpop(String url,
                                                                  String token,
                                                                  String acceptLanguage,
                                                                  String dpopProof,
                                                                  Object body,
-                                                                 ParameterizedTypeReference<AppResponse<T>> responseType) {
+                                                                 ParameterizedTypeReference<ApiResult<T>> responseType) {
         HttpHeaders headers = createHeaders(token, acceptLanguage, dpopProof, true);
 
         return exchangeForAppResponse(url, HttpMethod.POST, new HttpEntity<>(body, headers), responseType);
     }
 
-    protected ResponseEntity<AppResponse<Object>> requestPost(String url, String token, String acceptLanguage, Record body) {
+    protected ResponseEntity<ApiResult<Object>> requestPost(String url, String token, String acceptLanguage, Record body) {
         return requestPost(url, token, acceptLanguage, body, new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<AppResponse<Object>> requestPost(String url, String acceptLanguage, Record body) {
+    protected ResponseEntity<ApiResult<Object>> requestPost(String url, String acceptLanguage, Record body) {
         return requestPost(url, null, acceptLanguage, body);
     }
 
-    protected <T> ResponseEntity<AppResponse<T>> requestGet(String url, String token, ParameterizedTypeReference<AppResponse<T>> responseType) {
+    protected <T> ResponseEntity<ApiResult<T>> requestGet(String url, String token, ParameterizedTypeReference<ApiResult<T>> responseType) {
         HttpHeaders headers = createHeaders(token, null, null, false);
 
         return exchangeForAppResponse(url, HttpMethod.GET, new HttpEntity<>(headers), responseType);
     }
 
-    protected <T> ResponseEntity<AppResponse<T>> requestGetDpop(String url, String token, String dpopProof, ParameterizedTypeReference<AppResponse<T>> responseType) {
+    protected <T> ResponseEntity<ApiResult<T>> requestGetDpop(String url, String token, String dpopProof, ParameterizedTypeReference<ApiResult<T>> responseType) {
         HttpHeaders headers = createHeaders(token, null, dpopProof, true);
 
         return exchangeForAppResponse(url, HttpMethod.GET, new HttpEntity<>(headers), responseType);
     }
 
-    protected ResponseEntity<AppResponse<Object>> requestGet(String url, String token) {
+    protected ResponseEntity<ApiResult<Object>> requestGet(String url, String token) {
         return requestGet(url, token, new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<AppResponse<Object>> requestGet(String url) {
+    protected ResponseEntity<ApiResult<Object>> requestGet(String url) {
         return requestGet(url, null);
     }
 
-    protected ResponseEntity<AppResponse<TokenResponse>> loginRequest(String username,
+    protected ResponseEntity<ApiResult<TokenResponse>> loginRequest(String username,
                                                                       String password,
                                                                       String clientId,
                                                                       String clientSecret) {
         return loginRequest(username, password, clientId, clientSecret, null);
     }
 
-    protected ResponseEntity<AppResponse<TokenResponse>> loginRequest(String username,
+    protected ResponseEntity<ApiResult<TokenResponse>> loginRequest(String username,
                                                                        String password,
                                                                        String clientId,
                                                                        String clientSecret,
                                                                        String dpopProof) {
-        LoginRequest request = new LoginRequest(username, password, clientId, clientSecret);
+        SignInRequest request = new SignInRequest(username, password, clientId, clientSecret);
         return requestPostDpop(loginUrl, null, null, dpopProof, request, new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<AppResponse<TokenResponse>> loginRequest(String username, String password) {
+    protected ResponseEntity<ApiResult<TokenResponse>> loginRequest(String username, String password) {
         return loginRequest(username, password, props.getClientId(), props.getClientSecret());
     }
 
     protected TokenResponse loginAndGetData(String username, String password) {
-        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(username, password);
+        ResponseEntity<ApiResult<TokenResponse>> response = loginRequest(username, password);
         return assertStatusAndBodyAndReturnBody(response, TokenResponse.class);
     }
 
@@ -332,7 +332,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected String loginAndGetRefresh(String username, String password) {
-        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(username, password);
+        ResponseEntity<ApiResult<TokenResponse>> response = loginRequest(username, password);
         return extractRefreshCookie(response.getHeaders());
     }
 
@@ -344,31 +344,31 @@ public abstract class AbstractIntegrationTest {
                 .orElse(null);
     }
 
-    protected ResponseEntity<AppResponse<Void>> logoutRequest(String refreshToken,
+    protected ResponseEntity<ApiResult<Void>> logoutRequest(String refreshToken,
                                                                String clientId,
                                                                String clientSecret) {
         return logoutRequest(refreshToken, clientId, clientSecret, null);
     }
 
-    protected ResponseEntity<AppResponse<Void>> logoutRequest(String refreshToken,
+    protected ResponseEntity<ApiResult<Void>> logoutRequest(String refreshToken,
                                                                String clientId,
                                                                String clientSecret,
                                                                String dpopProof) {
-        LogoutRequest req = new LogoutRequest(clientId, clientSecret);
+        SignOutRequest req = new SignOutRequest(clientId, clientSecret);
         return requestPostWithCookie(logoutUrl, refreshToken, dpopProof, req, new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<AppResponse<Void>> logoutRequest(String refreshToken) {
+    protected ResponseEntity<ApiResult<Void>> logoutRequest(String refreshToken) {
         return logoutRequest(refreshToken, props.getClientId(), props.getClientSecret());
     }
 
-    protected ResponseEntity<AppResponse<TokenResponse>> refreshRequest(String refreshToken,
+    protected ResponseEntity<ApiResult<TokenResponse>> refreshRequest(String refreshToken,
                                                                          String clientId,
                                                                          String clientSecret) {
         return refreshRequest(refreshToken, clientId, clientSecret, null);
     }
 
-    protected ResponseEntity<AppResponse<TokenResponse>> refreshRequest(String refreshToken,
+    protected ResponseEntity<ApiResult<TokenResponse>> refreshRequest(String refreshToken,
                                                                           String clientId,
                                                                           String clientSecret,
                                                                           String dpopProof) {
@@ -376,15 +376,15 @@ public abstract class AbstractIntegrationTest {
         return requestPostWithCookie(refreshUrl, refreshToken, dpopProof, request, new ParameterizedTypeReference<>() {});
     }
 
-    protected ResponseEntity<AppResponse<TokenResponse>> refreshRequest(String refreshToken) {
+    protected ResponseEntity<ApiResult<TokenResponse>> refreshRequest(String refreshToken) {
         return refreshRequest(refreshToken, props.getClientId(), props.getClientSecret());
     }
 
-    private <T> ResponseEntity<AppResponse<T>> requestPostWithCookie(String url,
+    private <T> ResponseEntity<ApiResult<T>> requestPostWithCookie(String url,
                                                                        String refreshToken,
                                                                        String dpopProof,
                                                                        Object body,
-                                                                       ParameterizedTypeReference<AppResponse<T>> responseType) {
+                                                                       ParameterizedTypeReference<ApiResult<T>> responseType) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON, MediaType.ALL));
@@ -399,27 +399,27 @@ public abstract class AbstractIntegrationTest {
 
     // Helper: do POST and return typed data (convert via ObjectMapper)
     protected <T> T postAndReturnData(String url, String token, Object body, Class<T> clazz) {
-        ResponseEntity<AppResponse<T>> resp = requestPost(url, token, null, body, new ParameterizedTypeReference<>() {});
+        ResponseEntity<ApiResult<T>> resp = requestPost(url, token, null, body, new ParameterizedTypeReference<>() {});
         return assertStatusAndBodyAndReturnBody(resp, clazz);
     }
 
     protected <T> T postAndReturnData(String url, String token, Object body, HttpStatus expectedStatus, Class<T> clazz) {
-        ResponseEntity<AppResponse<T>> resp = requestPost(url, token, null, body, new ParameterizedTypeReference<>() {});
+        ResponseEntity<ApiResult<T>> resp = requestPost(url, token, null, body, new ParameterizedTypeReference<>() {});
         return assertStatusAndBodyAndReturnBody(resp, expectedStatus, clazz);
     }
 
     // Helper: do GET and return typed data (convert via ObjectMapper)
     protected <T> T getAndReturnData(String url, String token, Class<T> clazz) {
-        ResponseEntity<AppResponse<T>> resp = requestGet(url, token, new ParameterizedTypeReference<>() {});
+        ResponseEntity<ApiResult<T>> resp = requestGet(url, token, new ParameterizedTypeReference<>() {});
         return assertStatusAndBodyAndReturnBody(resp, clazz);
     }
 
-    private <T> ResponseEntity<AppResponse<T>> exchangeForAppResponse(String url,
+    private <T> ResponseEntity<ApiResult<T>> exchangeForAppResponse(String url,
                                                                       HttpMethod method,
                                                                       HttpEntity<?> entity,
-                                                                       ParameterizedTypeReference<AppResponse<T>> responseType) {
+                                                                       ParameterizedTypeReference<ApiResult<T>> responseType) {
         ResponseEntity<String> response = restTemplate.exchange(url, method, entity, String.class);
-        AppResponse<T> body = deserializeAppResponse(response.getBody(), responseType);
+        ApiResult<T> body = deserializeAppResponse(response.getBody(), responseType);
 
         if (body == null) {
             body = fallbackErrorBody(response.getStatusCode());
@@ -428,8 +428,8 @@ public abstract class AbstractIntegrationTest {
         return new ResponseEntity<>(body, response.getHeaders(), response.getStatusCode());
     }
 
-    private <T> AppResponse<T> deserializeAppResponse(String rawBody,
-                                                      ParameterizedTypeReference<AppResponse<T>> responseType) {
+    private <T> ApiResult<T> deserializeAppResponse(String rawBody,
+                                                      ParameterizedTypeReference<ApiResult<T>> responseType) {
         if (rawBody == null || rawBody.isBlank()) {
             return null;
         }
@@ -442,25 +442,25 @@ public abstract class AbstractIntegrationTest {
                 );
             }
 
-            return objectMapper.readValue(rawBody, new TypeReference<AppResponse<T>>() {});
+            return objectMapper.readValue(rawBody, new TypeReference<ApiResult<T>>() {});
         } catch (Exception ex) {
             throw new IllegalStateException("Failed to deserialize API response: " + rawBody, ex);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private <T> AppResponse<T> fallbackErrorBody(HttpStatusCode statusCode) {
+    private <T> ApiResult<T> fallbackErrorBody(HttpStatusCode statusCode) {
         if (statusCode != null && statusCode.value() == HttpStatus.UNAUTHORIZED.value()) {
-            return (AppResponse<T>) AppResponse.error(
-                    AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
-                    AppResponse.ErrorCode.UNAUTHORIZED.getDescription()
+            return (ApiResult<T>) ApiResult.error(
+                    ApiErrorType.UNAUTHORIZED,
+                    ApiErrorType.UNAUTHORIZED.message()
             );
         }
 
         if (statusCode != null && statusCode.value() == HttpStatus.FORBIDDEN.value()) {
-            return (AppResponse<T>) AppResponse.error(
-                    AppResponse.ErrorCode.FORBIDDEN.getCode(),
-                    AppResponse.ErrorCode.FORBIDDEN.getDescription()
+            return (ApiResult<T>) ApiResult.error(
+                    ApiErrorType.FORBIDDEN,
+                    ApiErrorType.FORBIDDEN.message()
             );
         }
 

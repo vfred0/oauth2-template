@@ -1,16 +1,17 @@
 package lt.satsyuk.api.integrationtest;
 
 import lt.satsyuk.MainApplication;
-import lt.satsyuk.dto.AppResponse;
+import lt.satsyuk.api.dtos.core.ApiResult;
+import lt.satsyuk.api.http_errors.ApiErrorType;
 import lt.satsyuk.api.util.WireMockIntegrationTest;
-import lt.satsyuk.config.KeycloakProperties;
-import lt.satsyuk.dto.TokenResponse;
+import lt.satsyuk.config.keycloak.KeycloakProperties;
+import lt.satsyuk.api.dtos.auth.TokenResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.*;
-import lt.satsyuk.security.RateLimitingFilter;
+import lt.satsyuk.config.security.RateLimitingFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,11 +46,11 @@ class RateLimitingIT extends WireMockIntegrationTest {
         }
 
         // 6th request should be rate limited (429 Too Many Requests)
-        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
+        ResponseEntity<ApiResult<TokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().code()).isEqualTo(AppResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());
+        assertThat(response.getBody().code()).isEqualTo(ApiErrorType.TOO_MANY_REQUESTS.code());
     }
 
     @Test
@@ -61,17 +62,17 @@ class RateLimitingIT extends WireMockIntegrationTest {
         }
 
         // Verify rate limit is active
-        ResponseEntity<AppResponse<TokenResponse>> blockedResponse = loginRequest(USERNAME, USER_PASSWORD);
+        ResponseEntity<ApiResult<TokenResponse>> blockedResponse = loginRequest(USERNAME, USER_PASSWORD);
         assertThat(blockedResponse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(blockedResponse.getBody()).isNotNull();
-        assertThat(blockedResponse.getBody().code()).isEqualTo(AppResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());
+        assertThat(blockedResponse.getBody().code()).isEqualTo(ApiErrorType.TOO_MANY_REQUESTS.code());
 
         // Wait for rate limit to reset (20 seconds + buffer)
         await()
                 .atMost(25, TimeUnit.SECONDS)
                 .pollInterval(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
+                    ResponseEntity<ApiResult<TokenResponse>> response = loginRequest(USERNAME, USER_PASSWORD);
                     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
                 });
     }
@@ -124,7 +125,7 @@ class RateLimitingIT extends WireMockIntegrationTest {
                 .atMost(25, TimeUnit.SECONDS)
                 .pollInterval(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ResponseEntity<AppResponse<Object>> response = requestGet(clientUrl + "/invalid-id", token);
+                    ResponseEntity<ApiResult<Object>> response = requestGet(clientUrl + "/invalid-id", token);
                     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
                 });
     }
@@ -163,13 +164,13 @@ class RateLimitingIT extends WireMockIntegrationTest {
         }
 
         // Verify login is rate limited
-        ResponseEntity<AppResponse<TokenResponse>> loginResponse = loginRequest(USERNAME, USER_PASSWORD);
+        ResponseEntity<ApiResult<TokenResponse>> loginResponse = loginRequest(USERNAME, USER_PASSWORD);
         assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(loginResponse.getBody()).isNotNull();
-        assertThat(loginResponse.getBody().code()).isEqualTo(AppResponse.ErrorCode.TOO_MANY_REQUESTS.getCode());
+        assertThat(loginResponse.getBody().code()).isEqualTo(ApiErrorType.TOO_MANY_REQUESTS.code());
 
         // Clients endpoint should still work (independent rate limit)
-        ResponseEntity<AppResponse<Object>> response = requestGet(clientUrl + "/invalid-id", token);
+        ResponseEntity<ApiResult<Object>> response = requestGet(clientUrl + "/invalid-id", token);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
@@ -178,7 +179,7 @@ class RateLimitingIT extends WireMockIntegrationTest {
 
         for (int i = 0; i < count; i++) {
             futures.add(CompletableFuture.supplyAsync(() -> {
-                ResponseEntity<AppResponse<Object>> resp = requestGet(clientUrl + "/invalid-id", token);
+                ResponseEntity<ApiResult<Object>> resp = requestGet(clientUrl + "/invalid-id", token);
                 return resp.getStatusCode();
             }));
         }

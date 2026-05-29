@@ -1,5 +1,6 @@
 package lt.satsyuk.config;
 
+import lt.satsyuk.config.keycloak.KeycloakProperties;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;

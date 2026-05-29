@@ -1,8 +1,9 @@
 package lt.satsyuk.controller;
 
-import lt.satsyuk.dto.AccountResponse;
-import lt.satsyuk.dto.UpdateBalanceRequest;
-import lt.satsyuk.service.AccountService;
+import lt.satsyuk.api.resources.AccountResource;
+import lt.satsyuk.api.dtos.account.AccountResponse;
+import lt.satsyuk.api.dtos.account.UpdateBalanceRequest;
+import lt.satsyuk.service.core.AccountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,11 +22,11 @@ class AccountControllerTest {
     @Mock
     private AccountService accountService;
 
-    private AccountController accountController;
+    private AccountResource accountResource;
 
     @BeforeEach
     void setUp() {
-        accountController = new AccountController(accountService);
+        accountResource = new AccountResource(accountService);
     }
 
     @Test
@@ -34,7 +35,7 @@ class AccountControllerTest {
         AccountResponse response = new AccountResponse(2L, 1L, new BigDecimal("110.00"));
         when(accountService.updateBalancePessimistic(request)).thenReturn(response);
 
-        var apiResponse = accountController.updateBalancePessimistic(request);
+        var apiResponse = accountResource.updateBalancePessimistic(request);
 
         assertThat(apiResponse.code()).isZero();
         assertThat(apiResponse.data()).isEqualTo(response);
@@ -47,7 +48,7 @@ class AccountControllerTest {
         AccountResponse response = new AccountResponse(2L, 1L, new BigDecimal("110.00"));
         when(accountService.updateBalanceOptimistic(request)).thenReturn(response);
 
-        var apiResponse = accountController.updateBalanceOptimistic(request);
+        var apiResponse = accountResource.updateBalanceOptimistic(request);
 
         assertThat(apiResponse.code()).isZero();
         assertThat(apiResponse.data()).isEqualTo(response);
@@ -59,7 +60,7 @@ class AccountControllerTest {
         AccountResponse response = new AccountResponse(2L, 1L, new BigDecimal("110.00"));
         when(accountService.getByClientId(1L)).thenReturn(response);
 
-        var apiResponse = accountController.getByClientId(1L);
+        var apiResponse = accountResource.getByClientId(1L);
 
         assertThat(apiResponse.code()).isZero();
         assertThat(apiResponse.data()).isEqualTo(response);

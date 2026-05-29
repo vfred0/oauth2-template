@@ -1,16 +1,17 @@
 package lt.satsyuk.api.integrationtest;
 
 import lt.satsyuk.MainApplication;
-import lt.satsyuk.dto.AppResponse;
+import lt.satsyuk.api.dtos.core.ApiResult;
+import lt.satsyuk.api.http_errors.ApiErrorType;
 import lt.satsyuk.api.util.AbstractIntegrationTest;
-import lt.satsyuk.config.KeycloakProperties;
-import lt.satsyuk.dto.TokenResponse;
+import lt.satsyuk.config.keycloak.KeycloakProperties;
+import lt.satsyuk.api.dtos.auth.TokenResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.*;
-import lt.satsyuk.security.RateLimitingFilter;
+import lt.satsyuk.config.security.RateLimitingFilter;
 
 import java.util.Set;
 
@@ -25,7 +26,7 @@ class AuthValidationIT extends AbstractIntegrationTest {
 
     @Test
     void login_emptyFields_badRequest() {
-        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest("", "", "", "");
+        ResponseEntity<ApiResult<TokenResponse>> response = loginRequest("", "", "", "");
 
         Set<String> expected = Set.of(
                 "username: Username is required",
@@ -35,12 +36,12 @@ class AuthValidationIT extends AbstractIntegrationTest {
         );
 
         assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
-                AppResponse.ErrorCode.BAD_REQUEST.getCode(), expected);
+                ApiErrorType.BAD_REQUEST.code(), expected);
     }
 
     @Test
     void refresh_emptyBody_badRequest() {
-        ResponseEntity<AppResponse<TokenResponse>> response = refreshRequest("any-token", "", "");
+        ResponseEntity<ApiResult<TokenResponse>> response = refreshRequest("any-token", "", "");
 
         Set<String> expected = Set.of(
                 "clientId: ClientId is required",
@@ -48,6 +49,6 @@ class AuthValidationIT extends AbstractIntegrationTest {
         );
 
         assertErrorStatusAndBody(response, HttpStatus.BAD_REQUEST,
-                AppResponse.ErrorCode.BAD_REQUEST.getCode(), expected);
+                ApiErrorType.BAD_REQUEST.code(), expected);
     }
 }

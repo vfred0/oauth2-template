@@ -1,8 +1,11 @@
 package lt.satsyuk.security;
 
 import jakarta.servlet.FilterChain;
-import lt.satsyuk.auth.JsonAuthEntryPoint;
+import lt.satsyuk.config.security.JsonAuthEntryPoint;
 import lt.satsyuk.config.DpopProperties;
+import lt.satsyuk.config.dpop.DpopAuthenticationFilter;
+import lt.satsyuk.config.dpop.DpopProofValidationException;
+import lt.satsyuk.config.dpop.DpopProofValidator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,14 +1,15 @@
 package lt.satsyuk.service;
 
 import jakarta.persistence.OptimisticLockException;
-import lt.satsyuk.dto.AccountResponse;
-import lt.satsyuk.dto.UpdateBalanceRequest;
-import lt.satsyuk.exception.AccountNotFoundException;
-import lt.satsyuk.exception.AccountOptimisticLockException;
-import lt.satsyuk.mapper.AccountMapper;
-import lt.satsyuk.model.Account;
-import lt.satsyuk.model.Client;
-import lt.satsyuk.repository.AccountRepository;
+import lt.satsyuk.api.dtos.account.AccountResponse;
+import lt.satsyuk.api.dtos.account.UpdateBalanceRequest;
+import lt.satsyuk.api.http_errors.exceptions.AccountNotFoundException;
+import lt.satsyuk.api.http_errors.exceptions.AccountOptimisticLockException;
+import lt.satsyuk.config.mapper.AccountMapper;
+import lt.satsyuk.data.entities.core.rbac.Account;
+import lt.satsyuk.data.entities.core.Client;
+import lt.satsyuk.data.daos.AccountRepository;
+import lt.satsyuk.service.core.AccountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

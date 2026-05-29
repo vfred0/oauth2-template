@@ -1,18 +1,19 @@
 package lt.satsyuk.api.integrationtest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lt.satsyuk.config.KeycloakProperties;
-import lt.satsyuk.dto.AccessProbeResponse;
-import lt.satsyuk.dto.AppResponse;
-import lt.satsyuk.model.Role;
-import lt.satsyuk.model.UserRole;
-import lt.satsyuk.repository.ApiKeyRepository;
-import lt.satsyuk.repository.RoleRepository;
-import lt.satsyuk.repository.UserRoleRepository;
-import lt.satsyuk.security.RateLimitingFilter;
-import lt.satsyuk.service.ApiKeyManagementService;
-import lt.satsyuk.service.CreateApiKeyCommand;
-import lt.satsyuk.service.IssuedApiKey;
+import lt.satsyuk.api.util.AbstractIntegrationTest;
+import lt.satsyuk.config.keycloak.KeycloakProperties;
+import lt.satsyuk.api.dtos.rbac.AccessProbeResponse;
+import lt.satsyuk.api.dtos.core.ApiResult;
+import lt.satsyuk.data.entities.core.rbac.Role;
+import lt.satsyuk.data.entities.core.rbac.UserRole;
+import lt.satsyuk.data.daos.ApiKeyRepository;
+import lt.satsyuk.data.daos.RoleRepository;
+import lt.satsyuk.data.daos.UserRoleRepository;
+import lt.satsyuk.config.security.RateLimitingFilter;
+import lt.satsyuk.service.core.api_key.ApiKeyManagementService;
+import lt.satsyuk.service.core.api_key.CreateApiKeyCommand;
+import lt.satsyuk.service.core.api_key.IssuedApiKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -152,7 +153,7 @@ class ApiKeyRbacIT extends AbstractIntegrationTest {
 
     private AccessProbeResponse probeBody(String endpoint, String apiKey) throws Exception {
         ObjectMapper mapper = objectMapper;
-        AppResponse<?> response = mapper.readValue(exchange(endpoint, apiKey).getBody(), AppResponse.class);
+        ApiResult<?> response = mapper.readValue(exchange(endpoint, apiKey).getBody(), ApiResult.class);
         return mapper.convertValue(response.data(), AccessProbeResponse.class);
     }
 

@@ -1,5 +1,6 @@
 package lt.satsyuk.service;
 
+import lt.satsyuk.service.core.shared.MessageService;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;

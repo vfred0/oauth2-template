@@ -1,8 +1,8 @@
 package lt.satsyuk.api.util;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
-import lt.satsyuk.config.KeycloakProperties;
-import lt.satsyuk.security.RateLimitingFilter;
+import lt.satsyuk.config.keycloak.KeycloakProperties;
+import lt.satsyuk.config.security.RateLimitingFilter;
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.cache.CacheManager;
 import org.springframework.test.context.DynamicPropertyRegistry;

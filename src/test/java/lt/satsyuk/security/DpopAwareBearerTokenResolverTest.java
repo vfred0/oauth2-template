@@ -1,5 +1,6 @@
 package lt.satsyuk.security;
 
+import lt.satsyuk.config.dpop.DpopAwareBearerTokenResolver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

@@ -1,12 +1,13 @@
 package lt.satsyuk.service;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import lt.satsyuk.config.KeycloakProperties;
-import lt.satsyuk.dto.KeycloakTokenResponse;
-import lt.satsyuk.dto.LoginRequest;
-import lt.satsyuk.dto.LogoutRequest;
-import lt.satsyuk.dto.RefreshRequest;
-import lt.satsyuk.exception.KeycloakAuthException;
+import lt.satsyuk.config.keycloak.KeycloakProperties;
+import lt.satsyuk.api.dtos.auth.KeycloakTokenResponse;
+import lt.satsyuk.api.dtos.auth.SignInRequest;
+import lt.satsyuk.api.dtos.auth.SignOutRequest;
+import lt.satsyuk.api.dtos.auth.RefreshRequest;
+import lt.satsyuk.api.http_errors.exceptions.KeycloakAuthException;
+import lt.satsyuk.service.core.KeycloakAuthService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -53,7 +54,7 @@ class KeycloakAuthServiceTest {
         when(rest.postForEntity(
                 anyString(),
                 any(HttpEntity.class),
-                eq(lt.satsyuk.dto.KeycloakTokenResponse.class)
+                eq(KeycloakTokenResponse.class)
         )).thenReturn(ResponseEntity.ok().body(null));
 
         KeycloakAuthService service = new KeycloakAuthService(rest, props, new SimpleMeterRegistry());
@@ -79,7 +80,7 @@ class KeycloakAuthServiceTest {
         )).thenReturn(ResponseEntity.ok("invalid_token"));
 
         KeycloakAuthService service = new KeycloakAuthService(rest, props, new SimpleMeterRegistry());
-        LogoutRequest request = new LogoutRequest(CLIENT_ID, CLIENT_SECRET);
+        SignOutRequest request = new SignOutRequest(CLIENT_ID, CLIENT_SECRET);
 
         assertThatThrownBy(() -> service.logout(request, REFRESH_TOKEN))
                 .isInstanceOf(KeycloakAuthException.class)
@@ -129,10 +130,10 @@ class KeycloakAuthServiceTest {
                         .body("{\"error\":\"invalid_client\"}"));
 
         KeycloakAuthService service = new KeycloakAuthService(realRestTemplate, props, registry);
-        service.login(new LoginRequest(USERNAME, PASSWORD, CLIENT_ID, CLIENT_SECRET));
+        service.login(new SignInRequest(USERNAME, PASSWORD, CLIENT_ID, CLIENT_SECRET));
 
-        LoginRequest failedLoginRequest = new LoginRequest(USERNAME, PASSWORD, CLIENT_ID, CLIENT_SECRET);
-        assertThatThrownBy(() -> service.login(failedLoginRequest))
+        SignInRequest failedSignInRequest = new SignInRequest(USERNAME, PASSWORD, CLIENT_ID, CLIENT_SECRET);
+        assertThatThrownBy(() -> service.login(failedSignInRequest))
                 .isInstanceOf(KeycloakAuthException.class);
 
         mockServer.verify();
@@ -176,13 +177,13 @@ class KeycloakAuthServiceTest {
                 .thenReturn(ResponseEntity.ok(""));
 
         KeycloakAuthService service = new KeycloakAuthService(rest, props, registry);
-        service.logout(new LogoutRequest(CLIENT_ID, CLIENT_SECRET), REFRESH_TOKEN);
+        service.logout(new SignOutRequest(CLIENT_ID, CLIENT_SECRET), REFRESH_TOKEN);
 
         when(rest.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(ResponseEntity.ok("invalid_token"));
 
-        LogoutRequest failedLogoutRequest = new LogoutRequest(CLIENT_ID, CLIENT_SECRET);
-        assertThatThrownBy(() -> service.logout(failedLogoutRequest, REFRESH_TOKEN))
+        SignOutRequest failedSignOutRequest = new SignOutRequest(CLIENT_ID, CLIENT_SECRET);
+        assertThatThrownBy(() -> service.logout(failedSignOutRequest, REFRESH_TOKEN))
                 .isInstanceOf(KeycloakAuthException.class);
 
         assertThat(counterCount(registry, "auth.logout", "success")).isEqualTo(1.0);

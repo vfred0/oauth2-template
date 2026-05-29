@@ -1,14 +1,19 @@
 package lt.satsyuk.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lt.satsyuk.dto.AppResponse;
-import lt.satsyuk.dto.CreateClientRequest;
-import lt.satsyuk.dto.RequestAcceptedResponse;
-import lt.satsyuk.dto.RequestStatusResponse;
-import lt.satsyuk.model.Request;
-import lt.satsyuk.model.RequestStatus;
-import lt.satsyuk.model.RequestType;
-import lt.satsyuk.repository.RequestRepository;
+import lt.satsyuk.api.dtos.core.ApiResult;
+import lt.satsyuk.api.dtos.client.CreateClientRequest;
+import lt.satsyuk.api.http_errors.ApiErrorType;
+import lt.satsyuk.api.dtos.auth.RequestAcceptedResponse;
+import lt.satsyuk.api.dtos.auth.RequestStatusResponse;
+import lt.satsyuk.data.entities.core.request.Request;
+import lt.satsyuk.data.entities.core.request.RequestStatus;
+import lt.satsyuk.data.entities.core.request.RequestType;
+import lt.satsyuk.data.daos.RequestRepository;
+import lt.satsyuk.service.core.request.RequestSchedulerService;
+import lt.satsyuk.service.core.request.RequestService;
+import lt.satsyuk.service.core.request.RequestStateService;
+import lt.satsyuk.service.core.shared.MessageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -130,8 +135,8 @@ class RequestServiceTest {
         Request savedRequest = requestCaptor.getValue();
         verify(requestStateService).markFailed(
                 savedRequest.getId(),
-                objectMapper.writeValueAsString(AppResponse.error(
-                        AppResponse.ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
+                objectMapper.writeValueAsString(ApiResult.error(
+                        ApiErrorType.INTERNAL_SERVER_ERROR,
                         "Failed to schedule request processing"
                 ))
         );

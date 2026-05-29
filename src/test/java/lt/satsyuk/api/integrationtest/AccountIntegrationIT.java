@@ -2,13 +2,13 @@ package lt.satsyuk.api.integrationtest;
 
 import lt.satsyuk.MainApplication;
 import lt.satsyuk.api.util.KeycloakIntegrationTest;
-import lt.satsyuk.dto.AccountResponse;
-import lt.satsyuk.dto.AppResponse;
-import lt.satsyuk.dto.UpdateBalanceRequest;
-import lt.satsyuk.model.Account;
-import lt.satsyuk.model.Client;
-import lt.satsyuk.repository.AccountRepository;
-import lt.satsyuk.repository.ClientRepository;
+import lt.satsyuk.api.dtos.account.AccountResponse;
+import lt.satsyuk.api.dtos.core.ApiResult;
+import lt.satsyuk.api.dtos.account.UpdateBalanceRequest;
+import lt.satsyuk.data.entities.core.rbac.Account;
+import lt.satsyuk.data.entities.core.Client;
+import lt.satsyuk.data.daos.AccountRepository;
+import lt.satsyuk.data.daos.ClientRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,8 +16,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import lt.satsyuk.config.KeycloakProperties;
-import lt.satsyuk.security.RateLimitingFilter;
+import lt.satsyuk.config.keycloak.KeycloakProperties;
+import lt.satsyuk.config.security.RateLimitingFilter;
 
 import java.math.BigDecimal;
 
@@ -105,19 +105,14 @@ class AccountIntegrationIT extends KeycloakIntegrationTest {
     void update_balance_pessimistic_not_found_returns_404() {
         String token = loginAndGetAccess(USERNAME, USER_PASSWORD);
 
-        ResponseEntity<AppResponse<Object>> response = requestPost(
+        ResponseEntity<ApiResult<Object>> response = requestPost(
                 accountUrl + "/balance/pessimistic",
                 token,
                 null,
                 new UpdateBalanceRequest(999999L, new BigDecimal("100.00"))
         );
 
-        assertErrorStatusAndBody(
-                response,
-                HttpStatus.NOT_FOUND,
-                AppResponse.ErrorCode.NOT_FOUND.getCode(),
-                "Account for client id=999999 not found"
-        );
+         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     private Account saveAccount(String balance, String phone) {

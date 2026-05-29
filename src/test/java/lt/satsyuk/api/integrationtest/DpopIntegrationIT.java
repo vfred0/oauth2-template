@@ -9,10 +9,11 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lt.satsyuk.MainApplication;
 import lt.satsyuk.api.util.WireMockIntegrationTest;
-import lt.satsyuk.dto.AppResponse;
-import lt.satsyuk.dto.TokenResponse;
-import lt.satsyuk.model.Client;
-import lt.satsyuk.repository.ClientRepository;
+import lt.satsyuk.api.dtos.core.ApiResult;
+import lt.satsyuk.api.http_errors.ApiErrorType;
+import lt.satsyuk.api.dtos.auth.TokenResponse;
+import lt.satsyuk.data.entities.core.Client;
+import lt.satsyuk.data.daos.ClientRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,8 +21,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.cache.CacheManager;
-import lt.satsyuk.config.KeycloakProperties;
-import lt.satsyuk.security.RateLimitingFilter;
+import lt.satsyuk.config.keycloak.KeycloakProperties;
+import lt.satsyuk.config.security.RateLimitingFilter;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -68,7 +69,7 @@ class DpopIntegrationIT extends WireMockIntegrationTest {
                                 }
                                 """)));
 
-        ResponseEntity<AppResponse<TokenResponse>> response = loginRequest(
+        ResponseEntity<ApiResult<TokenResponse>> response = loginRequest(
                 "user",
                 "password",
                 "test-client",
@@ -90,11 +91,11 @@ class DpopIntegrationIT extends WireMockIntegrationTest {
         String jkt = randomJkt();
         stubIntrospectionWithJkt(jkt);
 
-        ResponseEntity<AppResponse<Object>> response = requestGet(clientUrl + "/1", accessToken);
+        ResponseEntity<ApiResult<Object>> response = requestGet(clientUrl + "/1", accessToken);
 
         assertErrorStatusAndBody(response, HttpStatus.UNAUTHORIZED,
-                AppResponse.ErrorCode.UNAUTHORIZED.getCode(),
-                AppResponse.ErrorCode.UNAUTHORIZED.getDescription());
+                ApiErrorType.UNAUTHORIZED.code(),
+                ApiErrorType.UNAUTHORIZED.message());
     }
 
     @Test
@@ -113,7 +114,7 @@ class DpopIntegrationIT extends WireMockIntegrationTest {
         String targetUri = clientUrl + "/" + client.getId();
         String dpopProof = createProof(key, "GET", targetUri, accessToken, UUID.randomUUID().toString());
 
-        ResponseEntity<AppResponse<Object>> response = requestGetDpop(
+        ResponseEntity<ApiResult<Object>> response = requestGetDpop(
                 targetUri,
                 accessToken,
                 dpopProof,

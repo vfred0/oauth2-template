@@ -1,14 +1,15 @@
 package lt.satsyuk.service;
 
-import lt.satsyuk.dto.ClientResponse;
-import lt.satsyuk.dto.CreateClientRequest;
-import lt.satsyuk.exception.ClientSearchQueryTooShortException;
-import lt.satsyuk.exception.PhoneAlreadyExistsException;
-import lt.satsyuk.mapper.ClientMapper;
-import lt.satsyuk.model.Account;
-import lt.satsyuk.model.Client;
-import lt.satsyuk.repository.AccountRepository;
-import lt.satsyuk.repository.ClientRepository;
+import lt.satsyuk.api.dtos.client.ClientResponse;
+import lt.satsyuk.api.dtos.client.CreateClientRequest;
+import lt.satsyuk.api.http_errors.exceptions.ClientSearchQueryTooShortException;
+import lt.satsyuk.api.http_errors.exceptions.PhoneAlreadyExistsException;
+import lt.satsyuk.config.mapper.ClientMapper;
+import lt.satsyuk.data.entities.core.rbac.Account;
+import lt.satsyuk.data.entities.core.Client;
+import lt.satsyuk.data.daos.AccountRepository;
+import lt.satsyuk.data.daos.ClientRepository;
+import lt.satsyuk.service.core.ClientService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
